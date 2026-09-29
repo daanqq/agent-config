@@ -1,0 +1,12 @@
+[Unit]
+Description=SSH tunnel to remote CLIProxyAPI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/ssh -N -T -o BatchMode=yes -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -L 127.0.0.1:8317:127.0.0.1:8317 cliproxy-server
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

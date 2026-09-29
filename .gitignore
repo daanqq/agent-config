@@ -1,0 +1,31 @@
+# Local state and dependencies
+.backups/
+.audit/
+node_modules/
+__pycache__/
+*.py[cod]
+.cache/
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*
+
+# Credentials and machine-local configuration
+secrets/
+auth.json
+.credentials.json
+settings.local.json
+.env
+.env.*
+*.key
+*.pem
+
+# Client runtime data must stay in HOME, not in this repository
+sessions/
+subagent-sessions/
+projects/
+backups/
+cache/
+usage-data/
+history.jsonl

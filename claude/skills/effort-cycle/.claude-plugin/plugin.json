@@ -1,0 +1,10 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "effort-cycle",
+  "version": "0.1.0",
+  "description": "/effort-next raises effort low → medium → high → xhigh → low, skipping max; bind it to a key with command:effort-next",
+  "author": {
+    "name": "Danila Andreev",
+    "email": "daanqq@proton.me"
+  }
+}

@@ -1,0 +1,8 @@
+# Lightweight zsh startup file for pi user_bash commands.
+# Keep this non-interactive: aliases, exports, small helper functions only.
+# Do not load prompt/ZLE plugins here.
+
+export EDITOR="nano"
+
+alias g="git"
+alias rmf="rm -rf"

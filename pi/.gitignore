@@ -1,0 +1,46 @@
+# Secrets / local auth
+agent/auth.json
+agent/secrets/
+**/auth.json**
+*.key
+*.pem
+.env
+.env.*
+
+# Runtime state
+agent/trust.json
+agent/models-store.json
+agent/mcp-cache.json
+agent/mcp-npx-cache.json
+agent/mcp-onboarding.json
+agent/fff/
+agent/sessions/
+agent/subagent-sessions/
+cache/
+logs/
+memory/
+session-search/
+web-search-cache/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Local editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Package/cache noise
+node_modules/
+.cache/
+tmp/
+temp/
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]

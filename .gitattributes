@@ -1,0 +1,4 @@
+# Preserve whitespace in exact upstream skill copies. Source checks enforce
+# their complete content; platform-owned files keep Git's default checks.
+common/skills/dnd-kit-implementation/** whitespace=-blank-at-eol
+common/skills/vercel-react-best-practices/** whitespace=-blank-at-eol

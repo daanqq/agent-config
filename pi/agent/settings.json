@@ -1,0 +1,71 @@
+{
+  "lastChangelogVersion": "0.99.1",
+  "defaultThinkingLevel": "medium",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-sol",
+  "packages": [
+    "npm:@ff-labs/pi-fff",
+    "npm:@plannotator/pi-extension",
+    "npm:pi-context-view",
+    "npm:@ogulcancelik/pi-codex-compaction"
+  ],
+  "skills": [
+    "-skills/plannotator/SKILL.md"
+  ],
+  "hideThinkingBlock": false,
+  "theme": "alabaster",
+  "quietStartup": false,
+  "compaction": {
+    "enabled": false
+  },
+  "enabledModels": [
+    "openai-codex/gpt-6.1-sol",
+    "openai-codex/gpt-6-astra",
+    "openai-codex/gpt-5.6-luna",
+    "openrouter/xiaomi/mimo-v2.6-pro"
+  ],
+  "externalEditor": "code --wait",
+  "transport": "websocket-cached",
+  "collapseChangelog": true,
+  "treeFilterMode": "no-tools",
+  "steeringMode": "all",
+  "terminal": {
+    "showTerminalProgress": true,
+    "clearOnShrink": false
+  },
+  "editorPaddingX": 0,
+  "showHardwareCursor": false,
+  "images": {
+    "autoResize": true,
+    "blockImages": false
+  },
+  "enableSkillCommands": false,
+  "autocompleteMaxVisible": 5,
+  "followUpMode": "all",
+  "enableInstallTelemetry": true,
+  "doubleEscapeAction": "tree",
+  "httpIdleTimeoutMs": 120000,
+  "defaultProjectTrust": "always",
+  "outputPad": 0,
+  "fullscreenScrollbar": "auto",
+  "tuiMode": "fullscreen",
+  "showCacheMissNotices": true,
+  "fullscreenExitOutput": "resume-hint",
+  "modelThinkingLevels": {
+    "openai-codex/gpt-6-astra": "low",
+    "openai-codex/gpt-5.6-sol": "medium",
+    "openai-codex/gpt-5.6-luna": "high",
+    "openrouter/z-ai/glm-5.3-flash": "high"
+  },
+  "markdown": {
+    "mermaid": "final"
+  },
+  "fullscreenCopyOnSelect": true,
+  "extensions": [
+    "-extensions/00-ui-editor.ts",
+    "-extensions/video-analysis/index.ts",
+    "-extensions/web-access.ts",
+    "-extensions/00-ui-header.ts"
+  ],
+  "cacheWarming": "idle"
+}

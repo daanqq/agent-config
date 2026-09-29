@@ -1,0 +1,39 @@
+# Secrets
+secrets/
+sessions/
+backups/
+*.key
+.credentials.json
+settings.local.json
+
+# Runtime state and history
+projects/
+history.jsonl
+todos/
+jobs/
+debug/
+cache/
+session-env/
+shell-snapshots/
+statsig/
+usage-data/
+stats-cache.json
+mcp-needs-auth-cache.json
+telemetry/
+ide/
+file-history/
+paste-cache/
+daemon/
+daemon.log
+*.log
+
+# Plugins: keep only the lists of installed plugins and marketplaces
+plugins/cache/
+plugins/marketplaces/
+plugins/plugin-catalog-cache.json
+.last-*
+plugins/.last_inuse_sweep
+
+# Skills installed by the plannotator plugin
+skills/plannotator/
+skills/plannotator-*/

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--headless",
+        "--userDataDir=/home/user/.cache/chrome-devtools-mcp/chrome-profile",
+        "--chromeArg=--window-size=1920,1080"
+      ],
+      "directTools": false
+    }
+  }
+}

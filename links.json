@@ -1,0 +1,865 @@
+{
+  "version": 1,
+  "links": [
+    {
+      "source": "common/skills/bro",
+      "target": ".agents/skills/bro"
+    },
+    {
+      "source": "common/skills/codebase-design",
+      "target": ".agents/skills/codebase-design"
+    },
+    {
+      "source": "common/skills/dnd-kit-implementation",
+      "target": ".agents/skills/dnd-kit-implementation"
+    },
+    {
+      "source": "common/skills/eutp-worktree",
+      "target": ".agents/skills/eutp-worktree"
+    },
+    {
+      "source": "common/skills/eutp-worktree-transfer",
+      "target": ".agents/skills/eutp-worktree-transfer"
+    },
+    {
+      "source": "common/skills/fetch-eutp",
+      "target": ".agents/skills/fetch-eutp"
+    },
+    {
+      "source": "common/skills/fix-merge-conflicts",
+      "target": ".agents/skills/fix-merge-conflicts"
+    },
+    {
+      "source": "common/skills/grill-me",
+      "target": ".agents/skills/grill-me"
+    },
+    {
+      "source": "common/skills/grilling",
+      "target": ".agents/skills/grilling"
+    },
+    {
+      "source": "common/skills/handoff",
+      "target": ".agents/skills/handoff"
+    },
+    {
+      "source": "common/skills/herdr-build",
+      "target": ".agents/skills/herdr-build"
+    },
+    {
+      "source": "common/skills/improve-react",
+      "target": ".agents/skills/improve-react"
+    },
+    {
+      "source": "common/skills/optimize-images",
+      "target": ".agents/skills/optimize-images"
+    },
+    {
+      "source": "common/skills/prototype",
+      "target": ".agents/skills/prototype"
+    },
+    {
+      "source": "common/skills/show-me",
+      "target": ".agents/skills/show-me"
+    },
+    {
+      "source": "common/skills/teach",
+      "target": ".agents/skills/teach"
+    },
+    {
+      "source": "common/skills/thermo-nuclear-code-quality-review",
+      "target": ".agents/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "common/skills/unslop",
+      "target": ".agents/skills/unslop"
+    },
+    {
+      "source": "common/skills/update-skills",
+      "target": ".agents/skills/update-skills"
+    },
+    {
+      "source": "common/skills/vercel-react-best-practices",
+      "target": ".agents/skills/vercel-react-best-practices"
+    },
+    {
+      "source": "claude/CLAUDE.md",
+      "target": ".claude/CLAUDE.md"
+    },
+    {
+      "source": "claude/hooks/herdr-agent-state.sh",
+      "target": ".claude/hooks/herdr-agent-state.sh"
+    },
+    {
+      "source": "claude/keybindings.json",
+      "target": ".claude/keybindings.json"
+    },
+    {
+      "source": "claude/plugins/known_marketplaces.json",
+      "target": ".claude/plugins/known_marketplaces.json"
+    },
+    {
+      "source": "claude/settings.json",
+      "target": ".claude/settings.json"
+    },
+    {
+      "source": "claude/skills-maintenance",
+      "target": ".claude/skills-maintenance"
+    },
+    {
+      "source": "claude/skills/analyze-eutp",
+      "target": ".claude/skills/analyze-eutp"
+    },
+    {
+      "source": "claude/skills/blast-radius",
+      "target": ".claude/skills/blast-radius"
+    },
+    {
+      "source": "claude/skills/bro",
+      "target": ".claude/skills/bro"
+    },
+    {
+      "source": "claude/skills/code-review",
+      "target": ".claude/skills/code-review"
+    },
+    {
+      "source": "claude/skills/codebase-design",
+      "target": ".claude/skills/codebase-design"
+    },
+    {
+      "source": "claude/skills/coding-discipline",
+      "target": ".claude/skills/coding-discipline"
+    },
+    {
+      "source": "claude/skills/diagnosing-bugs",
+      "target": ".claude/skills/diagnosing-bugs"
+    },
+    {
+      "source": "claude/skills/dnd-kit-implementation",
+      "target": ".claude/skills/dnd-kit-implementation"
+    },
+    {
+      "source": "claude/skills/effort-cycle",
+      "target": ".claude/skills/effort-cycle"
+    },
+    {
+      "source": "claude/skills/eutp-worktree",
+      "target": ".claude/skills/eutp-worktree"
+    },
+    {
+      "source": "claude/skills/eutp-worktree-transfer",
+      "target": ".claude/skills/eutp-worktree-transfer"
+    },
+    {
+      "source": "claude/skills/fetch-eutp",
+      "target": ".claude/skills/fetch-eutp"
+    },
+    {
+      "source": "claude/skills/fix-gitlab-mr-conflicts",
+      "target": ".claude/skills/fix-gitlab-mr-conflicts"
+    },
+    {
+      "source": "claude/skills/fix-gitlab-mr-review",
+      "target": ".claude/skills/fix-gitlab-mr-review"
+    },
+    {
+      "source": "claude/skills/fix-merge-conflicts",
+      "target": ".claude/skills/fix-merge-conflicts"
+    },
+    {
+      "source": "claude/skills/grill-me",
+      "target": ".claude/skills/grill-me"
+    },
+    {
+      "source": "claude/skills/grilling",
+      "target": ".claude/skills/grilling"
+    },
+    {
+      "source": "claude/skills/handoff",
+      "target": ".claude/skills/handoff"
+    },
+    {
+      "source": "claude/skills/herdr-build",
+      "target": ".claude/skills/herdr-build"
+    },
+    {
+      "source": "claude/skills/how",
+      "target": ".claude/skills/how"
+    },
+    {
+      "source": "claude/skills/improve-codebase-architecture",
+      "target": ".claude/skills/improve-codebase-architecture"
+    },
+    {
+      "source": "claude/skills/improve-react",
+      "target": ".claude/skills/improve-react"
+    },
+    {
+      "source": "claude/skills/librarian",
+      "target": ".claude/skills/librarian"
+    },
+    {
+      "source": "claude/skills/mr-echat",
+      "target": ".claude/skills/mr-echat"
+    },
+    {
+      "source": "claude/skills/mr-review",
+      "target": ".claude/skills/mr-review"
+    },
+    {
+      "source": "claude/skills/optimize-images",
+      "target": ".claude/skills/optimize-images"
+    },
+    {
+      "source": "claude/skills/prototype",
+      "target": ".claude/skills/prototype"
+    },
+    {
+      "source": "claude/skills/prove-it-works",
+      "target": ".claude/skills/prove-it-works"
+    },
+    {
+      "source": "claude/skills/retro",
+      "target": ".claude/skills/retro"
+    },
+    {
+      "source": "claude/skills/review-gpt",
+      "target": ".claude/skills/review-gpt"
+    },
+    {
+      "source": "claude/skills/review-plan-gpt",
+      "target": ".claude/skills/review-plan-gpt"
+    },
+    {
+      "source": "claude/skills/show-me",
+      "target": ".claude/skills/show-me"
+    },
+    {
+      "source": "claude/skills/show-me-your-work",
+      "target": ".claude/skills/show-me-your-work"
+    },
+    {
+      "source": "claude/skills/tdd",
+      "target": ".claude/skills/tdd"
+    },
+    {
+      "source": "claude/skills/teach",
+      "target": ".claude/skills/teach"
+    },
+    {
+      "source": "claude/skills/thermo-nuclear-code-quality-review",
+      "target": ".claude/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "claude/skills/typescript-best-practices",
+      "target": ".claude/skills/typescript-best-practices"
+    },
+    {
+      "source": "claude/skills/unslop",
+      "target": ".claude/skills/unslop"
+    },
+    {
+      "source": "claude/skills/update-proxies",
+      "target": ".claude/skills/update-proxies"
+    },
+    {
+      "source": "claude/skills/update-skills",
+      "target": ".claude/skills/update-skills"
+    },
+    {
+      "source": "claude/skills/vercel-react-best-practices",
+      "target": ".claude/skills/vercel-react-best-practices"
+    },
+    {
+      "source": "claude/skills/why",
+      "target": ".claude/skills/why"
+    },
+    {
+      "source": "claude/skills/writing-for-agents",
+      "target": ".claude/skills/writing-for-agents"
+    },
+    {
+      "source": "claude/skills/yeet",
+      "target": ".claude/skills/yeet"
+    },
+    {
+      "source": "claude/statusline-command.sh",
+      "target": ".claude/statusline-command.sh"
+    },
+    {
+      "source": "claude/statusline-quota-refresh.sh",
+      "target": ".claude/statusline-quota-refresh.sh"
+    },
+    {
+      "source": "claude/themes/alabaster.json",
+      "target": ".claude/themes/alabaster.json"
+    },
+    {
+      "source": "pi/agent/AGENTS.md",
+      "target": ".pi/agent/AGENTS.md"
+    },
+    {
+      "source": "pi/agent/extensions/.npmrc",
+      "target": ".pi/agent/extensions/.npmrc"
+    },
+    {
+      "source": "pi/agent/extensions/00-ui-00-transition.ts",
+      "target": ".pi/agent/extensions/00-ui-00-transition.ts"
+    },
+    {
+      "source": "pi/agent/extensions/00-ui-editor.ts",
+      "target": ".pi/agent/extensions/00-ui-editor.ts"
+    },
+    {
+      "source": "pi/agent/extensions/00-ui-footer.ts",
+      "target": ".pi/agent/extensions/00-ui-footer.ts"
+    },
+    {
+      "source": "pi/agent/extensions/00-ui-header.ts",
+      "target": ".pi/agent/extensions/00-ui-header.ts"
+    },
+    {
+      "source": "pi/agent/extensions/agent-pulse.ts",
+      "target": ".pi/agent/extensions/agent-pulse.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/darwin-arm64/apply_patch",
+      "target": ".pi/agent/extensions/apply-patch/bin/darwin-arm64/apply_patch"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/darwin-x64/apply_patch",
+      "target": ".pi/agent/extensions/apply-patch/bin/darwin-x64/apply_patch"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/linux-arm64/apply_patch",
+      "target": ".pi/agent/extensions/apply-patch/bin/linux-arm64/apply_patch"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/linux-x64/apply_patch",
+      "target": ".pi/agent/extensions/apply-patch/bin/linux-x64/apply_patch"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/win32-arm64/apply_patch.exe",
+      "target": ".pi/agent/extensions/apply-patch/bin/win32-arm64/apply_patch.exe"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/bin/win32-x64/apply_patch.exe",
+      "target": ".pi/agent/extensions/apply-patch/bin/win32-x64/apply_patch.exe"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/diff-lines.test.ts",
+      "target": ".pi/agent/extensions/apply-patch/diff-lines.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/diff-lines.ts",
+      "target": ".pi/agent/extensions/apply-patch/diff-lines.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/index.ts",
+      "target": ".pi/agent/extensions/apply-patch/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/patch-actions.test.ts",
+      "target": ".pi/agent/extensions/apply-patch/patch-actions.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/patch-actions.ts",
+      "target": ".pi/agent/extensions/apply-patch/patch-actions.ts"
+    },
+    {
+      "source": "pi/agent/extensions/apply-patch/preview-budget.ts",
+      "target": ".pi/agent/extensions/apply-patch/preview-budget.ts"
+    },
+    {
+      "source": "pi/agent/extensions/auto-session-name/index.test.ts",
+      "target": ".pi/agent/extensions/auto-session-name/index.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/auto-session-name/index.ts",
+      "target": ".pi/agent/extensions/auto-session-name/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/balance.ts",
+      "target": ".pi/agent/extensions/balance.ts"
+    },
+    {
+      "source": "pi/agent/extensions/cliproxy-quota/README.md",
+      "target": ".pi/agent/extensions/cliproxy-quota/README.md"
+    },
+    {
+      "source": "pi/agent/extensions/cliproxy-quota/index.ts",
+      "target": ".pi/agent/extensions/cliproxy-quota/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/cliproxy-quota/quota.test.ts",
+      "target": ".pi/agent/extensions/cliproxy-quota/quota.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/cliproxy-quota/quota.ts",
+      "target": ".pi/agent/extensions/cliproxy-quota/quota.ts"
+    },
+    {
+      "source": "pi/agent/extensions/cliproxy-quota/windows.ts",
+      "target": ".pi/agent/extensions/cliproxy-quota/windows.ts"
+    },
+    {
+      "source": "pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts",
+      "target": ".pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/codex-ws-diagnostics/diagnostics.ts",
+      "target": ".pi/agent/extensions/codex-ws-diagnostics/diagnostics.ts"
+    },
+    {
+      "source": "pi/agent/extensions/codex-ws-diagnostics/index.ts",
+      "target": ".pi/agent/extensions/codex-ws-diagnostics/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/context-limit-warning.ts",
+      "target": ".pi/agent/extensions/context-limit-warning.ts"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/index.test.ts",
+      "target": ".pi/agent/extensions/firecrawl-search/index.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/index.ts",
+      "target": ".pi/agent/extensions/firecrawl-search/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/package-lock.json",
+      "target": ".pi/agent/extensions/firecrawl-search/package-lock.json"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/package.json",
+      "target": ".pi/agent/extensions/firecrawl-search/package.json"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/prompt.ts",
+      "target": ".pi/agent/extensions/firecrawl-search/prompt.ts"
+    },
+    {
+      "source": "pi/agent/extensions/firecrawl-search/tsconfig.json",
+      "target": ".pi/agent/extensions/firecrawl-search/tsconfig.json"
+    },
+    {
+      "source": "pi/agent/extensions/fullscreen-scroll-speed.ts",
+      "target": ".pi/agent/extensions/fullscreen-scroll-speed.ts"
+    },
+    {
+      "source": "pi/agent/extensions/herdr-agent-state.ts",
+      "target": ".pi/agent/extensions/herdr-agent-state.ts"
+    },
+    {
+      "source": "pi/agent/extensions/mr-echat.ts",
+      "target": ".pi/agent/extensions/mr-echat.ts"
+    },
+    {
+      "source": "pi/agent/extensions/orca-agent-status.ts",
+      "target": ".pi/agent/extensions/orca-agent-status.ts"
+    },
+    {
+      "source": "pi/agent/extensions/package-lock.json",
+      "target": ".pi/agent/extensions/package-lock.json"
+    },
+    {
+      "source": "pi/agent/extensions/package.json",
+      "target": ".pi/agent/extensions/package.json"
+    },
+    {
+      "source": "pi/agent/extensions/pi-paste.ts",
+      "target": ".pi/agent/extensions/pi-paste.ts"
+    },
+    {
+      "source": "pi/agent/extensions/session-delete.ts",
+      "target": ".pi/agent/extensions/session-delete.ts"
+    },
+    {
+      "source": "pi/agent/extensions/shake.ts",
+      "target": ".pi/agent/extensions/shake.ts"
+    },
+    {
+      "source": "pi/agent/extensions/shared/text-stream-metrics.test.ts",
+      "target": ".pi/agent/extensions/shared/text-stream-metrics.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/shared/text-stream-metrics.ts",
+      "target": ".pi/agent/extensions/shared/text-stream-metrics.ts"
+    },
+    {
+      "source": "pi/agent/extensions/shared/tool-call-timeout.test.ts",
+      "target": ".pi/agent/extensions/shared/tool-call-timeout.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/shared/tool-call-timeout.ts",
+      "target": ".pi/agent/extensions/shared/tool-call-timeout.ts"
+    },
+    {
+      "source": "pi/agent/extensions/skill-dollar.ts",
+      "target": ".pi/agent/extensions/skill-dollar.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/.npmrc",
+      "target": ".pi/agent/extensions/subagents/.npmrc"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/by-the-way.test.ts",
+      "target": ".pi/agent/extensions/subagents/by-the-way.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/codex.test.ts",
+      "target": ".pi/agent/extensions/subagents/codex.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/context-usage.test.ts",
+      "target": ".pi/agent/extensions/subagents/context-usage.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/docs/design-plan.md",
+      "target": ".pi/agent/extensions/subagents/docs/design-plan.md"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/docs/effect-v4-extension-guide.md",
+      "target": ".pi/agent/extensions/subagents/docs/effect-v4-extension-guide.md"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/docs/effect-v4-notes.md",
+      "target": ".pi/agent/extensions/subagents/docs/effect-v4-notes.md"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/format.test.ts",
+      "target": ".pi/agent/extensions/subagents/format.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/index.ts",
+      "target": ".pi/agent/extensions/subagents/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/manager.test.ts",
+      "target": ".pi/agent/extensions/subagents/manager.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/native-resume.test.ts",
+      "target": ".pi/agent/extensions/subagents/native-resume.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/package-lock.json",
+      "target": ".pi/agent/extensions/subagents/package-lock.json"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/package.json",
+      "target": ".pi/agent/extensions/subagents/package.json"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/performance.test.ts",
+      "target": ".pi/agent/extensions/subagents/performance.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/result-delivery.test.ts",
+      "target": ".pi/agent/extensions/subagents/result-delivery.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/backend.ts",
+      "target": ".pi/agent/extensions/subagents/src/backend.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/backends/codex.ts",
+      "target": ".pi/agent/extensions/subagents/src/backends/codex.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/backends/pi.ts",
+      "target": ".pi/agent/extensions/subagents/src/backends/pi.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/backends/stub.ts",
+      "target": ".pi/agent/extensions/subagents/src/backends/stub.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/by-the-way.ts",
+      "target": ".pi/agent/extensions/subagents/src/by-the-way.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/domain.ts",
+      "target": ".pi/agent/extensions/subagents/src/domain.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/format.ts",
+      "target": ".pi/agent/extensions/subagents/src/format.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/manager.ts",
+      "target": ".pi/agent/extensions/subagents/src/manager.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/prompt.ts",
+      "target": ".pi/agent/extensions/subagents/src/prompt.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/result-delivery.ts",
+      "target": ".pi/agent/extensions/subagents/src/result-delivery.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/runtime.ts",
+      "target": ".pi/agent/extensions/subagents/src/runtime.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/ui/takeover.ts",
+      "target": ".pi/agent/extensions/subagents/src/ui/takeover.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/src/ui/transcript.ts",
+      "target": ".pi/agent/extensions/subagents/src/ui/transcript.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/takeover.test.ts",
+      "target": ".pi/agent/extensions/subagents/takeover.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/subagents/tsconfig.json",
+      "target": ".pi/agent/extensions/subagents/tsconfig.json"
+    },
+    {
+      "source": "pi/agent/extensions/system-info.ts",
+      "target": ".pi/agent/extensions/system-info.ts"
+    },
+    {
+      "source": "pi/agent/extensions/tests/00-ui-transition.test.ts",
+      "target": ".pi/agent/extensions/tests/00-ui-transition.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/token-efficiency.ts",
+      "target": ".pi/agent/extensions/token-efficiency.ts"
+    },
+    {
+      "source": "pi/agent/extensions/video-analysis/index.ts",
+      "target": ".pi/agent/extensions/video-analysis/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/web-access.ts",
+      "target": ".pi/agent/extensions/web-access.ts"
+    },
+    {
+      "source": "pi/agent/extensions/zsh.ts",
+      "target": ".pi/agent/extensions/zsh.ts"
+    },
+    {
+      "source": "pi/agent/keybindings.json",
+      "target": ".pi/agent/keybindings.json"
+    },
+    {
+      "source": "pi/agent/mcp.json",
+      "target": ".pi/agent/mcp.json"
+    },
+    {
+      "source": "pi/agent/pi-fff.json",
+      "target": ".pi/agent/pi-fff.json"
+    },
+    {
+      "source": "pi/agent/prompts/update-proxies.md",
+      "target": ".pi/agent/prompts/update-proxies.md"
+    },
+    {
+      "source": "pi/agent/prompts/yeet.md",
+      "target": ".pi/agent/prompts/yeet.md"
+    },
+    {
+      "source": "pi/agent/scripts/install-dependencies.mjs",
+      "target": ".pi/agent/scripts/install-dependencies.mjs"
+    },
+    {
+      "source": "pi/agent/settings.json",
+      "target": ".pi/agent/settings.json"
+    },
+    {
+      "source": "pi/agent/skills-maintenance",
+      "target": ".pi/agent/skills-maintenance"
+    },
+    {
+      "source": "pi/agent/skills/analyze-eutp",
+      "target": ".pi/agent/skills/analyze-eutp"
+    },
+    {
+      "source": "pi/agent/skills/blast-radius",
+      "target": ".pi/agent/skills/blast-radius"
+    },
+    {
+      "source": "pi/agent/skills/bro",
+      "target": ".pi/agent/skills/bro"
+    },
+    {
+      "source": "pi/agent/skills/code-review",
+      "target": ".pi/agent/skills/code-review"
+    },
+    {
+      "source": "pi/agent/skills/codebase-design",
+      "target": ".pi/agent/skills/codebase-design"
+    },
+    {
+      "source": "pi/agent/skills/coding-discipline",
+      "target": ".pi/agent/skills/coding-discipline"
+    },
+    {
+      "source": "pi/agent/skills/diagnosing-bugs",
+      "target": ".pi/agent/skills/diagnosing-bugs"
+    },
+    {
+      "source": "pi/agent/skills/dnd-kit-implementation",
+      "target": ".pi/agent/skills/dnd-kit-implementation"
+    },
+    {
+      "source": "pi/agent/skills/eutp-worktree",
+      "target": ".pi/agent/skills/eutp-worktree"
+    },
+    {
+      "source": "pi/agent/skills/eutp-worktree-transfer",
+      "target": ".pi/agent/skills/eutp-worktree-transfer"
+    },
+    {
+      "source": "pi/agent/skills/fetch-eutp",
+      "target": ".pi/agent/skills/fetch-eutp"
+    },
+    {
+      "source": "pi/agent/skills/fix-gitlab-mr-conflicts",
+      "target": ".pi/agent/skills/fix-gitlab-mr-conflicts"
+    },
+    {
+      "source": "pi/agent/skills/fix-gitlab-mr-review",
+      "target": ".pi/agent/skills/fix-gitlab-mr-review"
+    },
+    {
+      "source": "pi/agent/skills/fix-merge-conflicts",
+      "target": ".pi/agent/skills/fix-merge-conflicts"
+    },
+    {
+      "source": "pi/agent/skills/frontend-design",
+      "target": ".pi/agent/skills/frontend-design"
+    },
+    {
+      "source": "pi/agent/skills/grill-me",
+      "target": ".pi/agent/skills/grill-me"
+    },
+    {
+      "source": "pi/agent/skills/grilling",
+      "target": ".pi/agent/skills/grilling"
+    },
+    {
+      "source": "pi/agent/skills/handoff",
+      "target": ".pi/agent/skills/handoff"
+    },
+    {
+      "source": "pi/agent/skills/herdr-build",
+      "target": ".pi/agent/skills/herdr-build"
+    },
+    {
+      "source": "pi/agent/skills/how",
+      "target": ".pi/agent/skills/how"
+    },
+    {
+      "source": "pi/agent/skills/improve-codebase-architecture",
+      "target": ".pi/agent/skills/improve-codebase-architecture"
+    },
+    {
+      "source": "pi/agent/skills/improve-react",
+      "target": ".pi/agent/skills/improve-react"
+    },
+    {
+      "source": "pi/agent/skills/librarian",
+      "target": ".pi/agent/skills/librarian"
+    },
+    {
+      "source": "pi/agent/skills/mr-review",
+      "target": ".pi/agent/skills/mr-review"
+    },
+    {
+      "source": "pi/agent/skills/optimize-images",
+      "target": ".pi/agent/skills/optimize-images"
+    },
+    {
+      "source": "pi/agent/skills/prototype",
+      "target": ".pi/agent/skills/prototype"
+    },
+    {
+      "source": "pi/agent/skills/prove-it-works",
+      "target": ".pi/agent/skills/prove-it-works"
+    },
+    {
+      "source": "pi/agent/skills/retro",
+      "target": ".pi/agent/skills/retro"
+    },
+    {
+      "source": "pi/agent/skills/review-deepseek",
+      "target": ".pi/agent/skills/review-deepseek"
+    },
+    {
+      "source": "pi/agent/skills/review-gpt",
+      "target": ".pi/agent/skills/review-gpt"
+    },
+    {
+      "source": "pi/agent/skills/review-plan-gpt",
+      "target": ".pi/agent/skills/review-plan-gpt"
+    },
+    {
+      "source": "pi/agent/skills/show-me",
+      "target": ".pi/agent/skills/show-me"
+    },
+    {
+      "source": "pi/agent/skills/show-me-your-work",
+      "target": ".pi/agent/skills/show-me-your-work"
+    },
+    {
+      "source": "pi/agent/skills/subagents",
+      "target": ".pi/agent/skills/subagents"
+    },
+    {
+      "source": "pi/agent/skills/tdd",
+      "target": ".pi/agent/skills/tdd"
+    },
+    {
+      "source": "pi/agent/skills/teach",
+      "target": ".pi/agent/skills/teach"
+    },
+    {
+      "source": "pi/agent/skills/thermo-nuclear-code-quality-review",
+      "target": ".pi/agent/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "pi/agent/skills/typescript-best-practices",
+      "target": ".pi/agent/skills/typescript-best-practices"
+    },
+    {
+      "source": "pi/agent/skills/unslop",
+      "target": ".pi/agent/skills/unslop"
+    },
+    {
+      "source": "pi/agent/skills/update-skills",
+      "target": ".pi/agent/skills/update-skills"
+    },
+    {
+      "source": "pi/agent/skills/vercel-react-best-practices",
+      "target": ".pi/agent/skills/vercel-react-best-practices"
+    },
+    {
+      "source": "pi/agent/skills/why",
+      "target": ".pi/agent/skills/why"
+    },
+    {
+      "source": "pi/agent/skills/writing-for-agents",
+      "target": ".pi/agent/skills/writing-for-agents"
+    },
+    {
+      "source": "pi/agent/systemd/cliproxy-tunnel.service",
+      "target": ".pi/agent/systemd/cliproxy-tunnel.service"
+    },
+    {
+      "source": "pi/agent/themes/alabaster.json",
+      "target": ".pi/agent/themes/alabaster.json"
+    },
+    {
+      "source": "pi/agent/themes/poimandres.json",
+      "target": ".pi/agent/themes/poimandres.json"
+    },
+    {
+      "source": "pi/agent/zshrc",
+      "target": ".pi/agent/zshrc"
+    }
+  ]
+}

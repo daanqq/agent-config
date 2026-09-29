@@ -1,0 +1,412 @@
+{
+  "schema_version": 2,
+  "repositories": {
+    "atman-workspace": {
+      "url": "https://github.com/atman-33/atman-workspace.git",
+      "cache": "github.com/atman-33/atman-workspace",
+      "revision": "b94e2306f54ccbf7678e9b2b3f90040a1718e84f"
+    },
+    "cursor-plugins": {
+      "url": "https://github.com/cursor/plugins.git",
+      "cache": "github.com/cursor/plugins",
+      "revision": "57fc467a229cf2853329f19c9e6a9fd83ddc2ea2"
+    },
+    "humanlayer-skills": {
+      "url": "https://github.com/humanlayer/skills.git",
+      "cache": "github.com/humanlayer/skills",
+      "revision": "ca7c8088db69e315a8b2deea43820270457f8f3c"
+    },
+    "mattpocock-skills": {
+      "url": "https://github.com/mattpocock/skills.git",
+      "cache": "github.com/mattpocock/skills",
+      "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7"
+    },
+    "react-doctor": {
+      "url": "https://github.com/aidenybai/react-doctor.git",
+      "cache": "github.com/aidenybai/react-doctor",
+      "revision": "95db911e3c9aa5a0c64ded8d94e810fea9a6bf52"
+    },
+    "vercel-agent-skills": {
+      "url": "https://github.com/vercel-labs/agent-skills.git",
+      "cache": "github.com/vercel-labs/agent-skills",
+      "revision": "063bee94c3f4df8453406c830b0a7df0f2860278"
+    }
+  },
+  "skills": {
+    "common": {
+      "bro": {
+        "tracking": "exact",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/bro",
+        "installed_hash": "0b3491f66df14a912ee01683853ebbd45e72486b34eab6a82e446d9f19ff5421"
+      },
+      "codebase-design": {
+        "tracking": "exact",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/codebase-design",
+        "installed_hash": "d9c9dd5926e62a695a2fc406b111137067f1189922897e5da38699e09b888427"
+      },
+      "dnd-kit-implementation": {
+        "tracking": "exact",
+        "repository": "atman-workspace",
+        "path": "skills/dnd-kit-implementation",
+        "installed_hash": "a4aa410fae08d4f325b8d033b03686bd2c8432a6f250b2ba562a3d377717237d"
+      },
+      "eutp-worktree": {
+        "tracking": "local",
+        "installed_hash": "900258b78c7c1f13197f9a63fa3f56cb18261dffda62161d29372aed9b8e7076"
+      },
+      "eutp-worktree-transfer": {
+        "tracking": "local",
+        "installed_hash": "814941149959ea23485b926301f5527411b9073a5a3c5f1a1604ad8206f60dc8"
+      },
+      "fix-merge-conflicts": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "cursor-team-kit/skills/fix-merge-conflicts",
+        "overlay": "overlays/common/fix-merge-conflicts.md",
+        "installed_hash": "be97726b992385fb07af2c1e68507f838317efab6a0cc921a215da9e66380768"
+      },
+      "grill-me": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/grill-me",
+        "overlay": "overlays/common/grill-me.md",
+        "installed_hash": "abd5d8650846e12787cf8a697a90a4b6074068c6094639ae9f3f37e8a669bda9"
+      },
+      "grilling": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/grilling",
+        "overlay": "overlays/common/grilling.md",
+        "installed_hash": "4ebc0bb44b7abe71e824a47f43cb3699f904f617e07b5bf4e84882bc2deaab7f"
+      },
+      "handoff": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/handoff",
+        "overlay": "overlays/common/handoff.md",
+        "installed_hash": "1853cc5aeb572376219714595a8874331752d04ba3ef35916fa51c6f61901842"
+      },
+      "herdr-build": {
+        "tracking": "local",
+        "installed_hash": "1739c22dac9b578a943d8359cb0528219255c87632c91140cb0fd28c459e7132"
+      },
+      "improve-react": {
+        "tracking": "overlay",
+        "repository": "react-doctor",
+        "path": "skills/improve-react",
+        "overlay": "overlays/common/improve-react.md",
+        "installed_hash": "41f01a37ea99d7244ea90766715817ec92f539cefc4136949e613c8e3b43283b"
+      },
+      "optimize-images": {
+        "tracking": "local",
+        "installed_hash": "446311a7c3b3402a45c6e794023ba718afd1a4050ec01d0e06e3f69386f2eca6"
+      },
+      "prototype": {
+        "tracking": "exact",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/prototype",
+        "installed_hash": "30e1ce1ac7544a84c00181812fa376b7f39b9932a706551289759215fb029674"
+      },
+      "show-me": {
+        "tracking": "overlay",
+        "repository": "humanlayer-skills",
+        "path": "plugins/show-me/skills/show-me",
+        "overlay": "overlays/common/show-me.md",
+        "installed_hash": "c0435b582f5a9bb97f492a65ad94c9cb5ade548ced0c3e911aae759ae434420d"
+      },
+      "teach": {
+        "tracking": "exact",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/teach",
+        "installed_hash": "56a99e2f75653c6397d1279881c80406f1b911eaeb0ee365b2c884ea8eec13a0"
+      },
+      "thermo-nuclear-code-quality-review": {
+        "tracking": "exact",
+        "repository": "cursor-plugins",
+        "path": "cursor-team-kit/skills/thermo-nuclear-code-quality-review",
+        "installed_hash": "c609b8fab7a583c41cf12eb34217048045a2cd5bbd2ec017577d6630e4a0b931"
+      },
+      "unslop": {
+        "tracking": "local",
+        "installed_hash": "43bdeaf30f1bdf686dbddc8c2d13a11a54d55e473616fc0cfd5bfb0f8927a228"
+      },
+      "vercel-react-best-practices": {
+        "tracking": "overlay",
+        "repository": "vercel-agent-skills",
+        "path": "skills/react-best-practices",
+        "overlay": "overlays/common/vercel-react-best-practices.md",
+        "installed_hash": "220642b1f81cfc06bbddc25d1984017bb863ff00001c7dd6a06ca31b303a8ea7"
+      },
+      "fetch-eutp": {
+        "tracking": "local",
+        "installed_hash": "54a89200e99468d52a9cbcc2724972a8d00ab1e968663e8aaf636987f4f10cda"
+      },
+      "update-skills": {
+        "tracking": "local",
+        "installed_hash": "f500165bc1c5a6347c7e04acc69fd1bc4a351dd7298bfc7de274b8862d783fc8"
+      }
+    },
+    "pi": {
+      "analyze-eutp": {
+        "tracking": "local",
+        "installed_hash": "8a126f1300cfc6037fe89861c67b8830624e80c9e3175186fb9f26c740777cd6"
+      },
+      "blast-radius": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/blast-radius",
+        "overlay": "overlays/pi/blast-radius.md",
+        "installed_hash": "ce5d83bc9cade388bd86b3bed849d903ba17652f9c357c91a85db60f14dd55a2"
+      },
+      "code-review": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/code-review",
+        "overlay": "overlays/pi/code-review.md",
+        "installed_hash": "20a1ee7ac18fd7261bfad303ae8ba90e3ff21c017cecf3b72ecafc9ca4b6c967"
+      },
+      "coding-discipline": {
+        "tracking": "local",
+        "installed_hash": "34c4a3e289b9e25a476e92a9c93b238e688c55443b3b9a43253b8540af7b8d4c"
+      },
+      "diagnosing-bugs": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/diagnosing-bugs",
+        "overlay": "overlays/pi/diagnosing-bugs.md",
+        "installed_hash": "f725d0a33da226f5d8d1513527378db8dd1b0d05da02ae959ee9b2c343a8d1eb"
+      },
+      "fix-gitlab-mr-conflicts": {
+        "tracking": "local",
+        "installed_hash": "c3f63c9f488a04be4705271bd1a354b704d12f1c121395824ee929c59350d47c"
+      },
+      "fix-gitlab-mr-review": {
+        "tracking": "local",
+        "installed_hash": "9450386f9470b3ad92f3f7df9864752ffd9b64c55a13111943ded7d440f443a1"
+      },
+      "how": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/how",
+        "overlay": "overlays/pi/how.md",
+        "installed_hash": "fab97899feca9999ec1030b9bee61cd405ffef18403c55cea61a644b2c25eaaf"
+      },
+      "improve-codebase-architecture": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/improve-codebase-architecture",
+        "overlay": "overlays/pi/improve-codebase-architecture.md",
+        "installed_hash": "a72b886750bf87eb7b4eb4cdeb989b386b68d228965d847f030d1f23ad11522f"
+      },
+      "librarian": {
+        "tracking": "local",
+        "installed_hash": "c19923438ae5f1f6ba8007c5431c85b7e0ac8854f3c572b8f6ebb95985e96954"
+      },
+      "mr-review": {
+        "tracking": "local",
+        "installed_hash": "cafd025681ba9ec4ef67421a8bcf791c67c993cda68786e78ddb2f460cf77a08"
+      },
+      "prove-it-works": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/principle-prove-it-works",
+        "overlay": "overlays/pi/prove-it-works.md",
+        "installed_hash": "d6acfec559d46c96c7cad1b28d1f4fbd2a778c785ea42970d85e7e20a152ae86"
+      },
+      "retro": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/in-progress/retro",
+        "overlay": "overlays/pi/retro.md",
+        "installed_hash": "09f573cdc8ca49667a7c44fe5bdcfbf196da9e410f5a142e445f2a8df84dbd83"
+      },
+      "review-deepseek": {
+        "tracking": "local",
+        "installed_hash": "f8c3e4031a5e627a34afa106d4f19cd7ed8be338709f87f9ea60c7767459863d"
+      },
+      "show-me-your-work": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/show-me-your-work",
+        "overlay": "overlays/pi/show-me-your-work.md",
+        "installed_hash": "cde0a054858373187b72b67279a22cff3192ec2a1bc9425a5970d1b3dba9162f"
+      },
+      "subagents": {
+        "tracking": "local",
+        "installed_hash": "ef6cfea337a41729170b5a8d7b54f082e14366894f428d84893f4d35710ceb25"
+      },
+      "tdd": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/tdd",
+        "overlay": "overlays/pi/tdd.md",
+        "installed_hash": "3949f94d379444d5f03176629224cfc7ff17c2a14bb2785a20beb64e75757aa1"
+      },
+      "typescript-best-practices": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/typescript-best-practices",
+        "overlay": "overlays/pi/typescript-best-practices.md",
+        "installed_hash": "e0de0b6657ad89248a3ce90b5694d69a60c58359730600e80890cdd22a14b292"
+      },
+      "why": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/why",
+        "overlay": "overlays/pi/why.md",
+        "installed_hash": "536629eda73bfad4798e6e384dd3c347b3d9491e504c9b1e9b9c24d9d8ef02e6"
+      },
+      "writing-for-agents": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/writing-for-agents",
+        "overlay": "overlays/pi/writing-for-agents.md",
+        "installed_hash": "2235f3f0bcf43eb15e1f62c6a253d489f1dc7862faba23b43ea495f354e51caf"
+      },
+      "frontend-design": {
+        "tracking": "local",
+        "installed_hash": "5a1d50e2469b014f1ddf5f203e82fe9546cbfa0f8ea50579c39e06d1b7764ebc"
+      },
+      "review-gpt": {
+        "tracking": "local",
+        "installed_hash": "c7a12668ec6670b1a5808a09b646268ef8a64c8ee8da41fc5c1abc6604b55e86"
+      },
+      "review-plan-gpt": {
+        "tracking": "local",
+        "installed_hash": "45aafb5ca721a5aa6e47491ed21f00d13c100e7e0d94c7e34fafe5790eb4080f"
+      }
+    },
+    "claude": {
+      "analyze-eutp": {
+        "tracking": "local",
+        "installed_hash": "41cf27897fa7140230b66d72911c4cdfb80b021b9c080ce8d9096cbc1bea8cce"
+      },
+      "blast-radius": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/blast-radius",
+        "overlay": "overlays/claude/blast-radius.md",
+        "installed_hash": "92773edc245b043e634a2345e08c10dac094b3928653b5a1ecee090407076cbc"
+      },
+      "code-review": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/code-review",
+        "overlay": "overlays/claude/code-review.md",
+        "installed_hash": "e1e9b0883bfbfacdb2748ff499eea88a1fdc95a0354c96c0dc89b9338b7a37d5"
+      },
+      "coding-discipline": {
+        "tracking": "local",
+        "installed_hash": "a8426f7624b4157f56dd14814afa96f7681136a6dc54b2db942268c262dff734"
+      },
+      "diagnosing-bugs": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/diagnosing-bugs",
+        "overlay": "overlays/claude/diagnosing-bugs.md",
+        "installed_hash": "2dfd233eaeb330343009a4b4f0e61e784faec2b8bc91178a278e791b056bc2fe"
+      },
+      "fix-gitlab-mr-conflicts": {
+        "tracking": "local",
+        "installed_hash": "f86583536dda86cb0874cbca2a933258e94872836caa791e10eb034f10638e81"
+      },
+      "fix-gitlab-mr-review": {
+        "tracking": "local",
+        "installed_hash": "02dc763c506e198827eda907ac73abda926eb8dac3b64ea51c33a9e8c95038c9"
+      },
+      "how": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/how",
+        "overlay": "overlays/claude/how.md",
+        "installed_hash": "eaad4337bc3ec88a687f3a624cc1ad185398709f89a9d528e7ee37a6cec91f13"
+      },
+      "improve-codebase-architecture": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/improve-codebase-architecture",
+        "overlay": "overlays/claude/improve-codebase-architecture.md",
+        "installed_hash": "6ef6fe571cf3983364eedbaff7d4d58bb850e5b3c09d749832ebc3429feb5d78"
+      },
+      "librarian": {
+        "tracking": "local",
+        "installed_hash": "d50c540e40b36a805c9af045225c19b1a819ae1e93052e2a62f4ab255411cd85"
+      },
+      "mr-review": {
+        "tracking": "local",
+        "installed_hash": "b627cbd2405faeab9934fc7740bf752eb16047d4462904bd70ab88344319fa4e"
+      },
+      "mr-echat": {
+        "tracking": "local",
+        "installed_hash": "dbe6e2a72a713791d57f50b6bdb0b5aaaa5d94190e0890fd768637d5a2da70b2"
+      },
+      "prove-it-works": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/principle-prove-it-works",
+        "overlay": "overlays/claude/prove-it-works.md",
+        "installed_hash": "50d0cf607ff23c4b398951ddae941612e83f790b266f6128261dbfc0b67c0168"
+      },
+      "retro": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/in-progress/retro",
+        "overlay": "overlays/claude/retro.md",
+        "installed_hash": "09f573cdc8ca49667a7c44fe5bdcfbf196da9e410f5a142e445f2a8df84dbd83"
+      },
+      "review-gpt": {
+        "tracking": "local",
+        "installed_hash": "8b40d0cf8eddc2b2e076603fb7d0f2b5b7dde6566c0bf71976abd7030cff99a5"
+      },
+      "review-plan-gpt": {
+        "tracking": "local",
+        "installed_hash": "5dc651484c157d7c0036a239f3b3652cb2d43fa606a8a6b4ebf05880f022c660"
+      },
+      "show-me-your-work": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/show-me-your-work",
+        "overlay": "overlays/claude/show-me-your-work.md",
+        "installed_hash": "3af1b79e0c4844128d64f1bab5497cdb78af3bdd08fc9f062208f45ee82a155d"
+      },
+      "tdd": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/engineering/tdd",
+        "overlay": "overlays/claude/tdd.md",
+        "installed_hash": "b581ef78fbddb629bd5989b191e5aad81d303bf37d4da73f33d4a40c60a38174"
+      },
+      "typescript-best-practices": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/typescript-best-practices",
+        "overlay": "overlays/claude/typescript-best-practices.md",
+        "installed_hash": "f2c48cc14eace750450c44bd0739a6340ca529ba5364b725bf6a64815b378e5c"
+      },
+      "update-proxies": {
+        "tracking": "local",
+        "installed_hash": "8d4799a3669b82bfeac1aafce26bc757ac1c8c284e26729a51359bc864a4c8b4"
+      },
+      "why": {
+        "tracking": "overlay",
+        "repository": "cursor-plugins",
+        "path": "pstack/skills/why",
+        "overlay": "overlays/claude/why.md",
+        "installed_hash": "15eee1ca41bf3bf3e7aea2d3d94fa4044021c5a13cd181f315872a9a3b932184"
+      },
+      "writing-for-agents": {
+        "tracking": "overlay",
+        "repository": "mattpocock-skills",
+        "path": "skills/productivity/writing-for-agents",
+        "overlay": "overlays/claude/writing-for-agents.md",
+        "installed_hash": "c6d20f20d10a8bf4b33950a256be30b1315f682b58a95c0fabc03b2839b1d391"
+      },
+      "yeet": {
+        "tracking": "local",
+        "installed_hash": "fca57c45f1618179a61b0ae237722fdd2d71000937e8421736fc1d9d9daa8b95"
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Registers /effort-next, which sets the next effort level through the built-in /effort",
+  "modules": ["./register.ts"]
+}
