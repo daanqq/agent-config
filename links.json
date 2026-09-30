@@ -442,10 +442,6 @@
       "target": ".pi/agent/extensions/firecrawl-search/tsconfig.json"
     },
     {
-      "source": "pi/agent/extensions/fullscreen-scroll-speed.ts",
-      "target": ".pi/agent/extensions/fullscreen-scroll-speed.ts"
-    },
-    {
       "source": "pi/agent/extensions/herdr-agent-state.ts",
       "target": ".pi/agent/extensions/herdr-agent-state.ts"
     },

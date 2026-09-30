@@ -21,7 +21,6 @@ Personal configuration for the `pi` coding agent.
 | `balance.ts` | Shows DeepSeek and OpenRouter balances. | `/deepseek:balance`, `/openrouter:balance` |
 | `cliproxy-quota/` | Shows combined and per-account Codex quotas through CLIProxyAPI. | `/cliproxy:quota`, `/statuses` |
 | `context-limit-warning.ts` | Warns when context exceeds 128k tokens. | — |
-| `fullscreen-scroll-speed.ts` | Makes fullscreen wheel scrolling five times faster; Alt keeps Pi's additional five-times multiplier. | — |
 | `herdr-agent-state.ts` | Reports Pi session and agent state to Herdr. | — |
 | `mr-echat.ts` | Commits, pushes, and creates EChat merge requests. | `/mr-echat [--name=<ветка>]` |
 | `pi-paste.ts` | Restores long pasted text after a repeated paste. | — |

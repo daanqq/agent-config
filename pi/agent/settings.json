@@ -67,5 +67,6 @@
     "-extensions/web-access.ts",
     "-extensions/00-ui-header.ts"
   ],
-  "cacheWarming": "idle"
+  "cacheWarming": "idle",
+  "fullscreenWheelScrollLines": "auto"
 }
