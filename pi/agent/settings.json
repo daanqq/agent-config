@@ -62,6 +62,7 @@
   },
   "fullscreenCopyOnSelect": true,
   "extensions": [
+    "-extensions/apply-patch/index.ts",
     "-extensions/00-ui-editor.ts",
     "-extensions/video-analysis/index.ts",
     "-extensions/web-access.ts",
