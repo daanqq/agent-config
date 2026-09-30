@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { realpath } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -164,7 +165,7 @@ export default function (pi: ExtensionAPI) {
 			const patchText = parseApplyPatchParams(params);
 
 			try {
-				const result = await withPatchMutationQueues(ctx.cwd, patchText, () => executePatchWithBinary({ cwd: ctx.cwd, patchText, signal }));
+				const result = await withPatchMutationQueues(ctx.cwd, patchText, () => executePatchWithBinary({ cwd: ctx.cwd, patchText, signal }), signal);
 				return {
 					content: [{ type: "text", text: buildSuccessSummary(result) }],
 					details: { status: "success", result } satisfies ApplyPatchSuccessDetails,
@@ -490,19 +491,49 @@ function parseSingleJsonLine<T>(stdout: string, label: string): T {
 	return JSON.parse(jsonLine) as T;
 }
 
-async function withPatchMutationQueues<T>(cwd: string, patchText: string, fn: () => Promise<T>): Promise<T> {
+async function withPatchMutationQueues<T>(cwd: string, patchText: string, fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
 	let paths: string[] = [];
 	try {
 		paths = parsePatchActions(patchText).flatMap((action) => [action.path, action.movePath].filter((path): path is string => Boolean(path)));
 	} catch {
 		return fn();
 	}
-	const absolutePaths = Array.from(new Set(paths.map((path) => resolvePatchPath(cwd, path)))).sort();
+	const queuePaths = await Promise.all(paths.map(async (path) => {
+		const absolutePath = resolvePatchPath(cwd, path);
+		try {
+			return await realpath(absolutePath);
+		} catch (error) {
+			if (typeof error === "object" && error !== null && "code" in error && (error.code === "ENOENT" || error.code === "ENOTDIR")) return absolutePath;
+			throw error;
+		}
+	}));
+	// Pi keys its queues by realpath, so aliases must be deduplicated and ordered by that same identity.
+	const absolutePaths = Array.from(new Set(queuePaths)).sort();
 	const run = (index: number): Promise<T> => {
+		if (signal?.aborted) return Promise.reject(new Error("apply_patch aborted"));
 		if (index >= absolutePaths.length) return fn();
-		return withFileMutationQueue(absolutePaths[index]!, () => run(index + 1));
+		return withAbortableFileMutationQueue(absolutePaths[index]!, () => run(index + 1), signal);
 	};
 	return run(0);
+}
+
+function withAbortableFileMutationQueue<T>(path: string, fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+	if (!signal) return withFileMutationQueue(path, fn);
+	if (signal.aborted) return Promise.reject(new Error("apply_patch aborted"));
+	return new Promise((resolveQueue, reject) => {
+		const onAbort = () => reject(new Error("apply_patch aborted"));
+		const cleanup = () => signal.removeEventListener("abort", onAbort);
+		signal.addEventListener("abort", onAbort, { once: true });
+		withFileMutationQueue(path, () => {
+			// Cancellation only races queue acquisition. Once acquired, the callback owns cleanup and cancellation.
+			cleanup();
+			if (signal.aborted) throw new Error("apply_patch aborted");
+			return fn();
+		}).then(
+			(result) => { cleanup(); resolveQueue(result); },
+			(error: unknown) => { cleanup(); reject(error); },
+		);
+	});
 }
 
 function resolvePatchPath(cwd: string, patchPath: string): string {
