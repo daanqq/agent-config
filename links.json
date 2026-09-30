@@ -378,6 +378,86 @@
       "target": ".pi/agent/extensions/auto-session-name/index.ts"
     },
     {
+      "source": "pi/agent/extensions/background-terminals/LICENSE",
+      "target": ".pi/agent/extensions/background-terminals/LICENSE"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/README.md",
+      "target": ".pi/agent/extensions/background-terminals/README.md"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/docs/implementation-guide.md",
+      "target": ".pi/agent/extensions/background-terminals/docs/implementation-guide.md"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/index.ts",
+      "target": ".pi/agent/extensions/background-terminals/index.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/manager.test.ts",
+      "target": ".pi/agent/extensions/background-terminals/manager.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/output.test.ts",
+      "target": ".pi/agent/extensions/background-terminals/output.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/package-lock.json",
+      "target": ".pi/agent/extensions/background-terminals/package-lock.json"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/package.json",
+      "target": ".pi/agent/extensions/background-terminals/package.json"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/prompt.test.ts",
+      "target": ".pi/agent/extensions/background-terminals/prompt.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/ps.test.ts",
+      "target": ".pi/agent/extensions/background-terminals/ps.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/result-delivery.test.ts",
+      "target": ".pi/agent/extensions/background-terminals/result-delivery.test.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/domain.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/domain.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/manager.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/manager.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/output.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/output.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/prompt.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/prompt.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/result-delivery.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/result-delivery.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/runtime.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/runtime.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/ui/output-view.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/ui/output-view.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/src/ui/ps.ts",
+      "target": ".pi/agent/extensions/background-terminals/src/ui/ps.ts"
+    },
+    {
+      "source": "pi/agent/extensions/background-terminals/tsconfig.json",
+      "target": ".pi/agent/extensions/background-terminals/tsconfig.json"
+    },
+    {
       "source": "pi/agent/extensions/balance.ts",
       "target": ".pi/agent/extensions/balance.ts"
     },
@@ -672,6 +752,10 @@
     {
       "source": "pi/agent/skills/analyze-eutp",
       "target": ".pi/agent/skills/analyze-eutp"
+    },
+    {
+      "source": "pi/agent/skills/background-terminals",
+      "target": ".pi/agent/skills/background-terminals"
     },
     {
       "source": "pi/agent/skills/blast-radius",

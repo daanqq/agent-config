@@ -18,6 +18,7 @@ Personal configuration for the `pi` coding agent.
 | `agent-pulse.ts` | Agent activity and elapsed-time indicator. | — |
 | `apply-patch/` | Adds the Codex-style `apply_patch` tool. | — |
 | `auto-session-name/` | Names new sessions in English after the first completed response; uses `New session` if generation fails. | — |
+| `background-terminals/` | Runs session-scoped background shell processes with captured output. | `/ps` |
 | `balance.ts` | Shows DeepSeek and OpenRouter balances. | `/deepseek:balance`, `/openrouter:balance` |
 | `cliproxy-quota/` | Shows combined and per-account Codex quotas through CLIProxyAPI. | `/cliproxy:quota`, `/statuses` |
 | `context-limit-warning.ts` | Warns when context exceeds 128k tokens. | — |
@@ -31,6 +32,12 @@ Personal configuration for the `pi` coding agent.
 | `system-info.ts` | Adds runtime system information to the agent system prompt. | — |
 | `token-efficiency.ts` | Records per-request usage, estimated context sources, active tool loadout, and tool errors outside the model context. | — |
 | `zsh.ts` | Runs user shell commands through zsh. | — |
+
+## Pi-only skills
+
+`background-terminals` guides use of the background process tools. It is linked
+only to `~/.pi/agent/skills/`, so Pi discovers it globally without exposing it
+through the shared `~/.agents/skills/` or Claude skill directories.
 
 ## Local commands
 

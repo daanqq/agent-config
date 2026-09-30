@@ -6,6 +6,7 @@ const agentDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const packageDirectories = [
   resolve(agentDir, "extensions"),
+  resolve(agentDir, "extensions", "background-terminals"),
   resolve(agentDir, "extensions", "firecrawl-search"),
   resolve(agentDir, "extensions", "subagents"),
 ];

@@ -2,7 +2,7 @@
 
 `check.py` validates the schema-2 shared inventory for `common`, `pi`, and
 `claude`. It never fetches or updates a repository. The manifest remains the
-source of truth for the six named repository locks, provenance (`local`,
+source of truth for the named repository locks, provenance (`local`,
 `exact`, or `overlay`), and installed hashes.
 
 The physical inventories are `common/skills`, `pi/agent/skills`, and

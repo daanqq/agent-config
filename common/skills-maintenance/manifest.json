@@ -21,6 +21,11 @@
       "cache": "github.com/mattpocock/skills",
       "revision": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7"
     },
+    "my-pi-setup": {
+      "url": "https://github.com/davis7dotsh/my-pi-setup.git",
+      "cache": "github.com/davis7dotsh/my-pi-setup",
+      "revision": "5a0863f442402aa35cb0830805d67639957c7172"
+    },
     "react-doctor": {
       "url": "https://github.com/aidenybai/react-doctor.git",
       "cache": "github.com/aidenybai/react-doctor",
@@ -152,6 +157,13 @@
       "analyze-eutp": {
         "tracking": "local",
         "installed_hash": "8a126f1300cfc6037fe89861c67b8830624e80c9e3175186fb9f26c740777cd6"
+      },
+      "background-terminals": {
+        "tracking": "overlay",
+        "repository": "my-pi-setup",
+        "path": "skills/background-terminals",
+        "overlay": "overlays/pi/background-terminals.md",
+        "installed_hash": "ed5b5cdbdb6000228f37c897b3d65307b440dbad992c8930fa09876a0e7d7e1d"
       },
       "blast-radius": {
         "tracking": "overlay",
