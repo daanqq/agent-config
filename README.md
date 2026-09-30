@@ -96,6 +96,19 @@ After activation, edit the files in this checkout. A client or third-party
 installer may replace a HOME symlink with a regular file. Re-run the installer
 in dry-run mode to detect it and reconcile those changes before replacing it.
 
+## Claude quota footer
+
+The quota refresher uses `~/.pi/agent/secrets/cliproxy-management.json` when that
+file exists. It must contain `managementUrl` and `managementKey`. If the file is
+absent, it reads `CLIPROXY_MANAGEMENT_URL` and `CLIPROXY_MANAGEMENT_KEY` from the
+environment inherited by Claude Code. An invalid existing file is reported as
+an error; it does not fall back to environment credentials.
+
+The key must be the plaintext CLIProxyAPI management key, not a model API key
+or the bcrypt hash in the proxy configuration. Keep it outside this repository.
+The management endpoint must be reachable and expose an enabled Claude account.
+The scripts require `jq`, `curl`, and `setsid` for background refreshes.
+
 ## Skills
 
 ```bash

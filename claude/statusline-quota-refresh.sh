@@ -34,8 +34,13 @@ fail() {
   exit 1
 }
 
-url=$(jq -r '.managementUrl // empty' "$settings" 2>/dev/null)
-key=$(jq -r '.managementKey // empty' "$settings" 2>/dev/null)
+if [ -e "$settings" ]; then
+  url=$(jq -r '.managementUrl // empty' "$settings" 2>/dev/null)
+  key=$(jq -r '.managementKey // empty' "$settings" 2>/dev/null)
+else
+  url=${CLIPROXY_MANAGEMENT_URL:-}
+  key=${CLIPROXY_MANAGEMENT_KEY:-}
+fi
 [ -n "$url" ] && [ -n "$key" ] || fail "Invalid CLIProxyAPI management settings"
 base=${url%/}
 [[ $base == */v0/management ]] || base="$base/v0/management"
