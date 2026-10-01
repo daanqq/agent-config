@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.99.1",
+  "lastChangelogVersion": "0.99.2",
   "defaultThinkingLevel": "medium",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
@@ -63,7 +63,6 @@
   "fullscreenCopyOnSelect": true,
   "extensions": [
     "-extensions/apply-patch/index.ts",
-    "-extensions/00-ui-editor.ts",
     "-extensions/video-analysis/index.ts",
     "-extensions/web-access.ts",
     "-extensions/00-ui-header.ts"

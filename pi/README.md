@@ -12,7 +12,7 @@ Personal configuration for the `pi` coding agent.
 | Extension | Description | Commands |
 | --- | --- | --- |
 | `00-ui-00-transition.ts` | Buffers terminal output during TUI session transitions until resources are ready. | — |
-| `00-ui-editor.ts` | Custom input editor and skill autocomplete. | — |
+| `00-ui-editor.ts` | Standard input editor with a right-aligned session name in the top border. | — |
 | `00-ui-footer.ts` | Compact two-line status footer. | — |
 | `00-ui-header.ts` | Theme-aware gradient header. | — |
 | `agent-pulse.ts` | Agent activity and elapsed-time indicator. | — |
