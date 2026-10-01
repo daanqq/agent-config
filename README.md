@@ -55,7 +55,13 @@ python3 scripts/install.py --backup-existing --apply
 ```
 
 Dependencies are not copied from the old clients, and `make dep` needs network
-access. Afterwards start new client sessions, or reload Pi's resources.
+access. The installer also links each declared Pi extension package's
+`node_modules` into HOME so the extension loader can resolve dependencies from
+the linked files. These directories stay local and untracked; existing HOME
+dependency directories are backed up and can be restored like configuration.
+Installing links before `make dep` is supported: dependency links remain dangling
+until npm creates the directories. Afterwards start new client sessions, or
+reload Pi's resources.
 
 Existing files and skill directories are moved, not deleted, into a private run
 directory under `~/.local/state/agent-config/backups/`. The installer prints its

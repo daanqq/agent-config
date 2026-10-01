@@ -4,6 +4,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import stat
 import subprocess
 import sys
@@ -99,6 +100,111 @@ class InstallTests(unittest.TestCase):
         installer.restore(self.home, run, apply=True)
         self.assertFalse(installer.exists(self.target))
         self.assertFalse((self.home / ".pi").exists())
+
+    def extension_packages(self):
+        packages = []
+        for suffix in ("", "firecrawl-search"):
+            relative = Path("pi/agent/extensions") / suffix
+            source = self.repo / relative
+            target = self.home / ".pi/agent/extensions" / suffix
+            source.mkdir(parents=True, exist_ok=True)
+            (source / "package.json").write_text('{"private": true}')
+            (source / "index.ts").write_text('export default function () {}')
+            for name in ("package.json", "index.ts"):
+                self.mappings.append({"source": str(relative / name),
+                                      "target": str(target.relative_to(self.home) / name)})
+            packages.append((source / "node_modules", target / "node_modules"))
+        self.write_manifest()
+        return packages
+
+    def test_dependency_links_before_npm_install_are_repeatable_and_restorable(self):
+        packages = self.extension_packages()
+        self.install()
+        self.assertEqual(list(self.home.iterdir()), [])
+        symlink_to = Path.symlink_to
+
+        def check_directory_link(path, destination, target_is_directory=False):
+            if path.name == "node_modules":
+                self.assertTrue(target_is_directory)
+            return symlink_to(path, destination, target_is_directory=target_is_directory)
+
+        with patch.object(Path, "symlink_to", check_directory_link):
+            run = self.install(apply=True)
+        for source, target in packages:
+            self.assertTrue(target.is_symlink())
+            self.assertFalse(target.exists())
+            self.assertEqual(target.resolve(), source)
+        self.assertIsNone(self.install(apply=True))
+        for source, target in packages:
+            source.mkdir()
+            (source / "installed.txt").write_text("installed later")
+            self.assertEqual((target / "installed.txt").read_text(), "installed later")
+        self.assertIsNone(self.install(apply=True))
+        installer.restore(self.home, run, apply=True)
+        for source, target in packages:
+            self.assertFalse(installer.exists(target))
+            self.assertEqual((source / "installed.txt").read_text(), "installed later")
+
+    def test_existing_dependency_directories_are_backed_up_and_restored(self):
+        packages = self.extension_packages()
+        for source, target in packages:
+            source.mkdir()
+            target.mkdir(parents=True)
+            (target / "local.txt").write_text("keep original dependencies")
+        with self.assertRaisesRegex(installer.InstallError, "Occupied target"):
+            self.install(apply=True)
+        self.assertFalse(self.target.exists())
+        run = self.install(apply=True, backup_existing=True)
+        for source, target in packages:
+            self.assertTrue(target.is_symlink())
+            self.assertEqual(target.resolve(), source)
+        installer.restore(self.home, run, apply=True)
+        for _, target in packages:
+            self.assertFalse(target.is_symlink())
+            self.assertEqual((target / "local.txt").read_text(), "keep original dependencies")
+
+    def test_escaping_dependency_directory_is_rejected(self):
+        packages = self.extension_packages()
+        outside = self.base / "outside"
+        outside.mkdir()
+        packages[0][0].symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(installer.InstallError, "Invalid dependency directory"):
+            self.install(apply=True, backup_existing=True)
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_dependency_source_must_be_a_directory(self):
+        packages = self.extension_packages()
+        packages[0][0].write_text("not a directory")
+        with self.assertRaisesRegex(installer.InstallError, "Invalid dependency directory"):
+            self.install(apply=True)
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_explicit_node_modules_source_is_still_forbidden(self):
+        source = self.repo / "node_modules"
+        source.mkdir()
+        self.mappings.append({"source": "node_modules", "target": "dependencies"})
+        self.write_manifest()
+        with self.assertRaisesRegex(installer.InstallError, "forbidden"):
+            self.install(apply=True)
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required for module resolution")
+    def test_dependencies_resolve_from_home_extension_paths(self):
+        packages = self.extension_packages()
+        for index, (source, _) in enumerate(packages):
+            package = source / f"probe-{index}"
+            package.mkdir(parents=True)
+            (package / "index.js").write_text(f'module.exports = "package-{index}";')
+        self.install(apply=True)
+        for index, (_, target) in enumerate(packages):
+            result = subprocess.run([
+                "node", "-e",
+                "const {createRequire} = require('node:module'); "
+                "console.log(createRequire(process.argv[1])(process.argv[2]));",
+                str(target.parent / "index.ts"), f"probe-{index}",
+            ], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), f"package-{index}")
 
     def test_missing_source_preflight(self):
         self.mappings.append({"source": "missing", "target": ".claude/settings.json"})

@@ -92,6 +92,19 @@ def link_identity(path):
     return [*identity(path), path.lstat().st_ctime_ns]
 
 
+def manifest_links(mappings):
+    extensions = Path("pi/agent/extensions")
+    for mapping in mappings:
+        if not isinstance(mapping, dict) or set(mapping) != {"source", "target"}:
+            raise InstallError("Each link must contain source and target")
+        source = relative_path(mapping["source"])
+        target = relative_path(mapping["target"])
+        yield source, target, False
+        if (source.name == "package.json" and source.is_relative_to(extensions)
+                and target == Path(".pi/agent/extensions") / source.relative_to(extensions)):
+            yield source.parent / "node_modules", target.parent / "node_modules", True
+
+
 def preflight(repo, home, manifest, backup_existing=False):
     repo, home = Path(repo).resolve(), Path(home).resolve()
     if not home.is_dir():
@@ -101,12 +114,16 @@ def preflight(repo, home, manifest, backup_existing=False):
             or data["version"] != 1 or not isinstance(data.get("links"), list)):
         raise InstallError("Expected manifest {version: 1, links: [...]}")
     entries, targets = [], []
-    for mapping in data["links"]:
-        if not isinstance(mapping, dict) or set(mapping) != {"source", "target"}:
-            raise InstallError("Each link must contain source and target")
-        source = repo / relative_path(mapping["source"])
-        target = home / relative_path(mapping["target"])
-        safe_source(source, repo)
+    for source_path, target_path, dependency in manifest_links(data["links"]):
+        source = repo / source_path
+        target = home / target_path
+        if dependency:
+            # Link local dependencies without importing their contents as configuration.
+            # A dangling link also supports running make dep after make install.
+            if not within(source.resolve(), repo) or (exists(source) and not source.is_dir()):
+                raise InstallError(f"Invalid dependency directory: {source}")
+        else:
+            safe_source(source, repo)
         safe_parent(target, home)
         effective = target.parent.resolve() / target.name
         if within(effective, repo) or within(repo, effective):
@@ -125,6 +142,7 @@ def preflight(repo, home, manifest, backup_existing=False):
         entries.append({"source": str(source), "target": str(target),
                         "effective": str(effective),
                         "original": identity(target) if occupied else None,
+                        "directory": dependency or source.is_dir(),
                         "skip": correct})
     return entries
 
@@ -283,7 +301,7 @@ def install(repo, home, manifest, apply=False, backup_existing=False):
                 target.rename(entry["backup"])
                 entry["progress"] = "backed_up"
                 save_journal(run, journal)
-            target.symlink_to(entry["source"], target_is_directory=Path(entry["source"]).is_dir())
+            target.symlink_to(entry["source"], target_is_directory=entry["directory"])
             entry["installed"] = link_identity(target)
             entry["progress"] = "installed"
             save_journal(run, journal)
