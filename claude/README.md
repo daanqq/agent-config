@@ -1,6 +1,7 @@
-# .claude
+# Claude Code
 
-My Claude Code configuration: instructions, settings, skills, hooks and statusline.
+Claude Code configuration: instructions, settings, keybindings, skills, hooks,
+statusline, theme, and the local `effort-cycle` plugin source.
 
 ## Dependencies
 
@@ -10,18 +11,13 @@ My Claude Code configuration: instructions, settings, skills, hooks and statusli
 
 ## Install
 
-```sh
-git clone git@github.com:daanqq/.claude.git ~/.claude
-```
+`~/.claude` is not a checkout. `scripts/install.py` links selected files and
+skill directories from this directory into `~/.claude` according to
+`links.json`; see the repository [README](../README.md) for the dry run,
+backups, and restore.
 
-If `~/.claude` already exists, initialize git there and pull instead:
+Runtime state, credentials, and the skills installed by the Plannotator plugin
+stay in `~/.claude` and are not tracked here.
 
-```sh
-cd ~/.claude
-git init
-git remote add origin git@github.com:daanqq/.claude.git
-git fetch origin
-git checkout -f -b main --track origin/main
-```
-
-Machine-specific overrides go to `settings.local.json` (ignored).
+Claude Code has no user-level local settings file: `settings.local.json` is
+read only from a project's `.claude/` directory.
