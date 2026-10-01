@@ -6,10 +6,11 @@
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
     "CLAUDE_CODE_PROMPT_CACHE_TTL": "1h",
     "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "1h",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5-5",
     "CLAUDE_CODE_SCROLL_SPEED": "3",
     "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1",
-    "ENABLE_TOOL_SEARCH": "true"
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_AUTO_CONNECT_IDE": "false"
   },
   "attribution": {
     "commit": "",
@@ -49,8 +50,6 @@
     "claude-in-chrome": "off",
     "debug": "off",
     "design-sync": "off",
-    "doctor": "off",
-    "explain-usage": "off",
     "fewer-permission-prompts": "off",
     "keybindings-help": "off",
     "run": "off",
@@ -79,7 +78,6 @@
     ]
   },
   "disableRemoteControl": true,
-  "disableWorkflows": true,
   "disableArtifact": true,
   "enableWorkflows": false,
   "workflowKeywordTriggerEnabled": false,
@@ -90,7 +88,8 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
-    "plannotator@plannotator": true
+    "plannotator@plannotator": true,
+    "session-report@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "plannotator": {
@@ -103,7 +102,7 @@
   "effortLevel": "high",
   "modelSettings": {
     "claude-opus-5-5": {
-      "effortLevel": "medium"
+      "effortLevel": "high"
     }
   },
   "promptSuggestionEnabled": false,
