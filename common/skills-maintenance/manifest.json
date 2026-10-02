@@ -6,6 +6,11 @@
       "cache": "github.com/atman-33/atman-workspace",
       "revision": "b94e2306f54ccbf7678e9b2b3f90040a1718e84f"
     },
+    "chrome-devtools-mcp": {
+      "url": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "cache": "github.com/ChromeDevTools/chrome-devtools-mcp",
+      "revision": "1cec9cd1a3bbf1895c98fa4b4e0e2da5a36e4075"
+    },
     "cursor-plugins": {
       "url": "https://github.com/cursor/plugins.git",
       "cache": "github.com/cursor/plugins",
@@ -151,6 +156,42 @@
       "update-skills": {
         "tracking": "local",
         "installed_hash": "f500165bc1c5a6347c7e04acc69fd1bc4a351dd7298bfc7de274b8862d783fc8"
+      },
+      "a11y-debugging": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/a11y-debugging",
+        "installed_hash": "8b43b23e8cdf8f099f5c1717938961c40757cd29a925697eb9569abf7db03f73"
+      },
+      "chrome-devtools": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/chrome-devtools",
+        "installed_hash": "d2f1cfd5f5b63512229266c1081540ebeddeec71b50bd78483a85c8afdea2ab0"
+      },
+      "cookie-debugging": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/cookie-debugging",
+        "installed_hash": "112e548ee3c89359167175eb893a53b256ff450ce2fdf32cb2c2ae77196e06ee"
+      },
+      "debug-optimize-lcp": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/debug-optimize-lcp",
+        "installed_hash": "789ebf70d3bb85e7511a3fad0975166fcee3d3c7158e7bcc47960cb640b600e4"
+      },
+      "memory-leak-debugging": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/memory-leak-debugging",
+        "installed_hash": "a71e422ac45329b5a43c398b773dd14a9beee4a0504cbad239583e430f779c1d"
+      },
+      "troubleshooting": {
+        "tracking": "exact",
+        "repository": "chrome-devtools-mcp",
+        "path": "skills/troubleshooting",
+        "installed_hash": "416b9fb093a4d0a8c1b491ef5f5d2a0cf32a0eac0367af4e5f58ab114ad906c8"
       }
     },
     "pi": {

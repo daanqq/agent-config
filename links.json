@@ -2,12 +2,28 @@
   "version": 1,
   "links": [
     {
+      "source": "common/skills/a11y-debugging",
+      "target": ".agents/skills/a11y-debugging"
+    },
+    {
       "source": "common/skills/bro",
       "target": ".agents/skills/bro"
     },
     {
+      "source": "common/skills/chrome-devtools",
+      "target": ".agents/skills/chrome-devtools"
+    },
+    {
       "source": "common/skills/codebase-design",
       "target": ".agents/skills/codebase-design"
+    },
+    {
+      "source": "common/skills/cookie-debugging",
+      "target": ".agents/skills/cookie-debugging"
+    },
+    {
+      "source": "common/skills/debug-optimize-lcp",
+      "target": ".agents/skills/debug-optimize-lcp"
     },
     {
       "source": "common/skills/dnd-kit-implementation",
@@ -50,6 +66,10 @@
       "target": ".agents/skills/improve-react"
     },
     {
+      "source": "common/skills/memory-leak-debugging",
+      "target": ".agents/skills/memory-leak-debugging"
+    },
+    {
       "source": "common/skills/optimize-images",
       "target": ".agents/skills/optimize-images"
     },
@@ -68,6 +88,10 @@
     {
       "source": "common/skills/thermo-nuclear-code-quality-review",
       "target": ".agents/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "common/skills/troubleshooting",
+      "target": ".agents/skills/troubleshooting"
     },
     {
       "source": "common/skills/unslop",
@@ -102,6 +126,10 @@
       "target": ".claude/skills-maintenance"
     },
     {
+      "source": "claude/skills/a11y-debugging",
+      "target": ".claude/skills/a11y-debugging"
+    },
+    {
       "source": "claude/skills/analyze-eutp",
       "target": ".claude/skills/analyze-eutp"
     },
@@ -114,6 +142,10 @@
       "target": ".claude/skills/bro"
     },
     {
+      "source": "claude/skills/chrome-devtools",
+      "target": ".claude/skills/chrome-devtools"
+    },
+    {
       "source": "claude/skills/code-review",
       "target": ".claude/skills/code-review"
     },
@@ -124,6 +156,14 @@
     {
       "source": "claude/skills/coding-discipline",
       "target": ".claude/skills/coding-discipline"
+    },
+    {
+      "source": "claude/skills/cookie-debugging",
+      "target": ".claude/skills/cookie-debugging"
+    },
+    {
+      "source": "claude/skills/debug-optimize-lcp",
+      "target": ".claude/skills/debug-optimize-lcp"
     },
     {
       "source": "claude/skills/diagnosing-bugs",
@@ -194,6 +234,10 @@
       "target": ".claude/skills/librarian"
     },
     {
+      "source": "claude/skills/memory-leak-debugging",
+      "target": ".claude/skills/memory-leak-debugging"
+    },
+    {
       "source": "claude/skills/mr-echat",
       "target": ".claude/skills/mr-echat"
     },
@@ -244,6 +288,10 @@
     {
       "source": "claude/skills/thermo-nuclear-code-quality-review",
       "target": ".claude/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "claude/skills/troubleshooting",
+      "target": ".claude/skills/troubleshooting"
     },
     {
       "source": "claude/skills/typescript-best-practices",
@@ -746,6 +794,10 @@
       "target": ".pi/agent/skills-maintenance"
     },
     {
+      "source": "pi/agent/skills/a11y-debugging",
+      "target": ".pi/agent/skills/a11y-debugging"
+    },
+    {
       "source": "pi/agent/skills/analyze-eutp",
       "target": ".pi/agent/skills/analyze-eutp"
     },
@@ -762,6 +814,10 @@
       "target": ".pi/agent/skills/bro"
     },
     {
+      "source": "pi/agent/skills/chrome-devtools",
+      "target": ".pi/agent/skills/chrome-devtools"
+    },
+    {
       "source": "pi/agent/skills/code-review",
       "target": ".pi/agent/skills/code-review"
     },
@@ -772,6 +828,14 @@
     {
       "source": "pi/agent/skills/coding-discipline",
       "target": ".pi/agent/skills/coding-discipline"
+    },
+    {
+      "source": "pi/agent/skills/cookie-debugging",
+      "target": ".pi/agent/skills/cookie-debugging"
+    },
+    {
+      "source": "pi/agent/skills/debug-optimize-lcp",
+      "target": ".pi/agent/skills/debug-optimize-lcp"
     },
     {
       "source": "pi/agent/skills/diagnosing-bugs",
@@ -842,6 +906,10 @@
       "target": ".pi/agent/skills/librarian"
     },
     {
+      "source": "pi/agent/skills/memory-leak-debugging",
+      "target": ".pi/agent/skills/memory-leak-debugging"
+    },
+    {
       "source": "pi/agent/skills/mr-review",
       "target": ".pi/agent/skills/mr-review"
     },
@@ -896,6 +964,10 @@
     {
       "source": "pi/agent/skills/thermo-nuclear-code-quality-review",
       "target": ".pi/agent/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "pi/agent/skills/troubleshooting",
+      "target": ".pi/agent/skills/troubleshooting"
     },
     {
       "source": "pi/agent/skills/typescript-best-practices",
