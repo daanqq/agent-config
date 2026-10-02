@@ -324,11 +324,11 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "c7a12668ec6670b1a5808a09b646268ef8a64c8ee8da41fc5c1abc6604b55e86"
+        "installed_hash": "44fa1e52071a3074080a79d5d05697a36386d6cdcae87d141771529ca546c9b9"
       },
       "review-plan-gpt": {
         "tracking": "local",
-        "installed_hash": "45aafb5ca721a5aa6e47491ed21f00d13c100e7e0d94c7e34fafe5790eb4080f"
+        "installed_hash": "7a90e59c49fcb06b9e8f986edfba44c7682320ef3d8b88bdf25d4aac0fb68735"
       }
     },
     "claude": {
@@ -411,11 +411,11 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "8b40d0cf8eddc2b2e076603fb7d0f2b5b7dde6566c0bf71976abd7030cff99a5"
+        "installed_hash": "9b6b7c1d003147e4bf012536afd63502b6360c8a8fc472abba68cdd5ca7e33c6"
       },
       "review-plan-gpt": {
         "tracking": "local",
-        "installed_hash": "5dc651484c157d7c0036a239f3b3652cb2d43fa606a8a6b4ebf05880f022c660"
+        "installed_hash": "c8646fd5cc96e74eebf4fb15fc978eddd175b784dca941ada5008b03ad821893"
       },
       "show-me-your-work": {
         "tracking": "overlay",

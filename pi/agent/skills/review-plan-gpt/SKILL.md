@@ -10,8 +10,8 @@ Invoke with `/skill:review-plan-gpt [model=<id>] [thinking=<level>] [extra focus
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6-astra`. Check unknown ids with `pi --list-models <search>`.
-- `thinking=<level>`: default `medium` (`off|minimal|low|medium|high|xhigh|max`).
+- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `pi --list-models <search>`.
+- `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
 - Any remaining text is an extra review focus.
 
 Read `../subagents/SKILL.md` before spawning. This skill's explicit model and thinking defaults override the general model-selection defaults; user-provided options override this skill's defaults.

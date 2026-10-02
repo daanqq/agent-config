@@ -20,7 +20,6 @@
   },
   "enabledModels": [
     "openai-codex/gpt-6.1-sol",
-    "openai-codex/gpt-6-astra",
     "openai-codex/gpt-5.6-luna",
     "openrouter/xiaomi/mimo-v2.6-pro"
   ],
@@ -52,7 +51,6 @@
   "showCacheMissNotices": true,
   "fullscreenExitOutput": "resume-hint",
   "modelThinkingLevels": {
-    "openai-codex/gpt-6-astra": "low",
     "openai-codex/gpt-5.6-sol": "medium",
     "openai-codex/gpt-5.6-luna": "high",
     "openrouter/z-ai/glm-5.3-flash": "high"

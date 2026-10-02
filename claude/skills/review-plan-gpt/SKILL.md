@@ -2,15 +2,15 @@
 name: review-plan-gpt
 description: Get an independent second-opinion review of the current implementation plan from a GPT model via the pi agent CLI. Use when the user invokes /review-plan-gpt.
 disable-model-invocation: true
-argument-hint: "[model=openai-codex/gpt-6-astra] [thinking=medium] [extra focus]"
+argument-hint: "[model=openai-codex/gpt-6.1-sol] [thinking=high] [extra focus]"
 ---
 
 Run a read-only plan review through `pi`, then triage its remarks for the user. Never revise the plan from the review yourself: the output of this skill is a proposal.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6-astra`. Check unknown ids with `pi --list-models <search>`.
-- `thinking=<level>`: default `medium` (`off|minimal|low|medium|high|xhigh|max`).
+- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `pi --list-models <search>`.
+- `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
 - Any remaining text is an extra review focus.
 
 ## 2. Write the brief
