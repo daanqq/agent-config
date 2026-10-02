@@ -94,10 +94,6 @@
       "target": ".claude/keybindings.json"
     },
     {
-      "source": "claude/plugins/known_marketplaces.json",
-      "target": ".claude/plugins/known_marketplaces.json"
-    },
-    {
       "source": "claude/settings.json",
       "target": ".claude/settings.json"
     },
