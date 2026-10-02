@@ -6,7 +6,7 @@
         "-y",
         "chrome-devtools-mcp@latest",
         "--headless",
-        "--userDataDir=/home/user/.cache/chrome-devtools-mcp/chrome-profile",
+        "--userDataDir=/home/user/.cache/chrome-devtools-mcp/pi-profile",
         "--chromeArg=--window-size=1920,1080"
       ],
       "directTools": false
