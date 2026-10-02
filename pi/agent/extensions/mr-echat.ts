@@ -18,7 +18,8 @@
  *   или имя новой ветки. Новая ветка создаётся от локальной master.
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { MrEchatPanel } from "./shared/mr-echat-panel.ts";
 import {
   complete,
   type Api,
@@ -202,8 +203,32 @@ function assistantMessageText(message: any): string {
   return message?.role === "assistant" ? textContent(message.content) : "";
 }
 
-/** Показывать ход длительной операции, циклически меняя количество точек. */
-async function withAnimatedDots<T>(ctx: any, message: string, operation: () => Promise<T>): Promise<T> {
+class WorkflowCancelled extends Error {}
+
+type WorkflowContext = ExtensionCommandContext & {
+  panel?: MrEchatPanel;
+  runSignal: AbortSignal;
+};
+
+/** В TUI прогресс остаётся внутри панели; в других режимах используется widget. */
+async function withProgress<T>(
+  ctx: WorkflowContext,
+  message: string,
+  operation: (signal?: AbortSignal) => Promise<T>,
+  cancellable = false,
+): Promise<T> {
+  if (ctx.panel) {
+    const progressSignal = ctx.panel.progress(message, cancellable);
+    const signal = progressSignal ? AbortSignal.any([ctx.runSignal, progressSignal]) : ctx.runSignal;
+    try {
+      const result = await operation(signal);
+      if (progressSignal?.aborted) ctx.ui.notify("Генерация отменена", "info");
+      return result;
+    } finally {
+      ctx.panel.progress(undefined);
+    }
+  }
+
   let dotCount = 1;
   const render = () => ctx.ui.setWidget(PROGRESS_WIDGET_KEY, [`${message}${".".repeat(dotCount)}`], { placement: "aboveEditor" });
   render();
@@ -215,7 +240,7 @@ async function withAnimatedDots<T>(ctx: any, message: string, operation: () => P
   timer.unref?.();
 
   try {
-    return await operation();
+    return await operation(ctx.runSignal);
   } finally {
     clearInterval(timer);
     ctx.ui.setWidget(PROGRESS_WIDGET_KEY, undefined);
@@ -346,10 +371,12 @@ async function completeWithFallback(
   event: string,
   log: LogFn,
   request: (model: Model<Api>, auth: GenerationAuth) => Promise<AssistantMessage>,
+  signal?: AbortSignal,
 ): Promise<AssistantMessage | null> {
   const failures: string[] = [];
 
   for (let index = 0; index < GENERATION_MODELS.length; index++) {
+    if (signal?.aborted) return null;
     const candidate = GENERATION_MODELS[index];
     const label = `${candidate.provider}/${candidate.id}`;
     const model = ctx.modelRegistry.find(candidate.provider, candidate.id);
@@ -363,16 +390,18 @@ async function completeWithFallback(
           failures.push(`${label}: нет авторизации`);
         } else {
           const response = await withTiming(log, event, { model: label }, () => request(model, auth));
-          if (response.stopReason === "aborted") return null;
+          if (signal?.aborted || response.stopReason === "aborted") return null;
           if (response.stopReason !== "error") return response;
 
           failures.push(`${label}: ${response.errorMessage || "ошибка запроса"}`);
         }
       } catch (error: any) {
+        if (signal?.aborted) return null;
         failures.push(`${label}: ${error?.message ?? String(error)}`);
       }
     }
 
+    if (signal?.aborted) return null;
     const fallback = GENERATION_MODELS[index + 1];
     if (fallback) {
       const fallbackLabel = `${fallback.provider}/${fallback.id}`;
@@ -594,7 +623,7 @@ function getLastAgentResponse(ctx: any): string | null {
 /** Проверить выбранную директорию. Без явного пути при необходимости найти дочерний репозиторий. */
 async function ensureGitRepo(
   pi: ExtensionAPI,
-  ctx: any,
+  ctx: WorkflowContext,
   requestedCwd?: string,
 ): Promise<string | null> {
   const sessionCwd = ctx.cwd || process.cwd();
@@ -611,7 +640,7 @@ async function ensureGitRepo(
   }
 
   // Проверяем, является ли текущая папка git-репозиторием
-  const check = await pi.exec("git", ["rev-parse", "--show-toplevel"], { cwd });
+  const check = await pi.exec("git", ["rev-parse", "--show-toplevel"], { cwd, signal: ctx.runSignal });
   if (check.code === 0) {
     return check.stdout.trim() || cwd;
   }
@@ -622,8 +651,8 @@ async function ensureGitRepo(
   }
 
   // Не репозиторий — ищем дочерние папки с .git
-  const lsResult = await withAnimatedDots(ctx, "Текущая папка не git-репозиторий. Ищу дочерние", () =>
-    pi.exec("bash", ["-c", 'for d in */; do [ -d "$d/.git" ] && echo "${d%/}"; done'], { cwd }),
+  const lsResult = await withProgress(ctx, "Текущая папка не git-репозиторий. Ищу дочерние", () =>
+    pi.exec("bash", ["-c", 'for d in */; do [ -d "$d/.git" ] && echo "${d%/}"; done'], { cwd, signal: ctx.runSignal }),
   );
   const dirs = lsResult.stdout.trim().split("\n").filter(Boolean);
 
@@ -669,14 +698,16 @@ async function generateTitle(
     timestamp: Date.now(),
   };
 
-  const response = await withAnimatedDots(ctx, progressMessage, () =>
+  const response = await withProgress(ctx, progressMessage, (signal) =>
     completeWithFallback(ctx, "llm:title", log, (model, auth) =>
       complete(
         model,
         { systemPrompt: TITLE_SYSTEM_PROMPT, messages: [userMessage] },
-        { apiKey: auth.apiKey, headers: auth.headers, reasoningEffort: GENERATION_THINKING },
+        { apiKey: auth.apiKey, headers: auth.headers, reasoningEffort: GENERATION_THINKING, signal },
       ),
+      signal,
     ),
+    true,
   );
   if (!response) return null;
 
@@ -702,6 +733,7 @@ async function generateDescriptionWithModel(
   generationState: SessionGenerationState,
   event: string,
   log: LogFn,
+  signal?: AbortSignal,
 ): Promise<string | null> {
   if (generationState.active) {
     ctx.ui.notify("Генерация описания MR уже выполняется", "error");
@@ -732,8 +764,10 @@ async function generateDescriptionWithModel(
           reasoning: GENERATION_THINKING,
           sessionId: sessionSnapshot.sessionId,
           cacheRetention: "short",
+          signal,
         },
       ).result(),
+      signal,
     );
     if (!response) return null;
 
@@ -775,8 +809,9 @@ async function generateDescription(
     diff,
   ].join("\n\n");
 
-  const text = await withAnimatedDots(ctx, "Генерирую описание MR", () =>
-    generateDescriptionWithModel(ctx, prompt, sessionSnapshot, generationState, "llm:description", log),
+  const text = await withProgress(ctx, "Генерирую описание MR", (signal) =>
+    generateDescriptionWithModel(ctx, prompt, sessionSnapshot, generationState, "llm:description", log, signal),
+    true,
   );
   if (!text) return null;
 
@@ -809,8 +844,9 @@ async function generateUpdatedDescription(
     diff,
   ].join("\n\n");
 
-  const text = await withAnimatedDots(ctx, "Обновляю описание существующего MR", () =>
-    generateDescriptionWithModel(ctx, prompt, sessionSnapshot, generationState, "llm:description-update", log),
+  const text = await withProgress(ctx, "Обновляю описание существующего MR", (signal) =>
+    generateDescriptionWithModel(ctx, prompt, sessionSnapshot, generationState, "llm:description-update", log, signal),
+    true,
   );
   if (!text) return null;
 
@@ -884,6 +920,74 @@ async function confirmTitle(
 
 export default function (pi: ExtensionAPI) {
   const generationState: SessionGenerationState = { active: false };
+  type RunState = { controller: AbortController; panel?: MrEchatPanel };
+  let activeRun: RunState | undefined;
+
+  pi.on("session_shutdown", () => {
+    activeRun?.controller.abort();
+    activeRun?.panel?.dispose();
+  });
+
+  const runWithPanel = async (
+    commandCtx: ExtensionCommandContext,
+    execute: (ctx: WorkflowContext) => Promise<void>,
+  ) => {
+    if (activeRun) {
+      commandCtx.ui.notify("Предыдущая команда mr-echat ещё выполняется", "warning");
+      return;
+    }
+    const run: RunState = { controller: new AbortController() };
+    activeRun = run;
+    try {
+      await commandCtx.waitForIdle();
+      run.controller.signal.throwIfAborted();
+      if (commandCtx.mode !== "tui") {
+        await execute({ ...commandCtx, runSignal: run.controller.signal });
+        return;
+      }
+      await commandCtx.ui.custom<void>((tui, theme, keybindings, done) => {
+        const panel = new MrEchatPanel(tui, theme, keybindings);
+        run.panel = panel;
+        let lastNotification: { message: string; type?: "info" | "warning" | "error" } | undefined;
+        const ui = {
+          ...commandCtx.ui,
+          select: (title: string, options: string[]) => panel.select(title, options),
+          input: (title: string, placeholder?: string) => panel.input(title, placeholder),
+          confirm: async (title: string, message: string) => {
+            const choice = await panel.select(`${title}. ${message}`, ["Да", "Нет"]);
+            if (choice === undefined) throw new WorkflowCancelled();
+            return choice === "Да";
+          },
+          notify: (message: string, type?: "info" | "warning" | "error") => {
+            lastNotification = { message, type };
+            panel.notify(message, type);
+          },
+        };
+        // Дать Pi установить панель и фокус до начала асинхронного сценария.
+        setImmediate(() => {
+          void execute({ ...commandCtx, ui, panel, runSignal: run.controller.signal })
+            .then(() => panel.finish())
+            .then(() => {
+              done();
+              if (lastNotification && !run.controller.signal.aborted) {
+                commandCtx.ui.notify(lastNotification.message, lastNotification.type);
+              }
+            })
+            .catch((error: unknown) => {
+              commandCtx.ui.notify(`Ошибка mr-echat: ${error instanceof Error ? error.message : String(error)}`, "error");
+              done();
+            });
+        });
+        return panel;
+      });
+    } catch (error: unknown) {
+      if (!run.controller.signal.aborted) {
+        commandCtx.ui.notify(`Ошибка mr-echat: ${error instanceof Error ? error.message : String(error)}`, "error");
+      }
+    } finally {
+      activeRun = undefined;
+    }
+  };
 
   pi.on("tool_call", () => {
     if (!generationState.active) return;
@@ -898,7 +1002,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerCommand("mr-echat", {
     description: "Commit + push + создать MR через glab; [ветка] [--name=ветка] [--cwd путь]",
-    handler: async (args, ctx) => {
+    handler: (args, commandCtx) => runWithPanel(commandCtx, async (ctx) => {
       const log: LogFn = () => {};
       log("run:start", { cwd: ctx.cwd || process.cwd(), args: args.trim() });
       try {
@@ -906,8 +1010,6 @@ export default function (pi: ExtensionAPI) {
           ctx.ui.notify("Предыдущая генерация описания MR ещё выполняется", "warning");
           return;
         }
-        await ctx.waitForIdle();
-
         const { taskBranch, name, cwd: requestedCwd } = parseCommandArgs(args);
         const lastAgentResponse = getLastAgentResponse(ctx);
         const sessionSnapshot = captureSessionSnapshot(ctx);
@@ -916,6 +1018,7 @@ export default function (pi: ExtensionAPI) {
         const repoDir = await ensureGitRepo(pi, ctx, requestedCwd);
         if (!repoDir) return;
         log("repo:selected", { repoDir, explicit: Boolean(requestedCwd) });
+        ctx.panel?.setContext(path.basename(repoDir));
 
         // Обёртка pi.exec с фиксированным cwd
         const exec: ExecFn = async (cmd, args, opts) => {
@@ -923,7 +1026,8 @@ export default function (pi: ExtensionAPI) {
           const safeArgs = sanitizeExecArgs(args);
           log("exec:start", { cmd, args: safeArgs });
           try {
-            const result = await pi.exec(cmd, args, { ...opts, cwd: repoDir });
+            ctx.runSignal.throwIfAborted();
+            const result = await pi.exec(cmd, args, { ...opts, cwd: repoDir, signal: ctx.runSignal });
             log("exec:end", {
               cmd,
               args: safeArgs,
@@ -1006,6 +1110,8 @@ export default function (pi: ExtensionAPI) {
           ctx.ui.notify(`Создана ветка ${branch}`, "info");
         }
 
+        ctx.panel?.setContext(path.basename(repoDir), branch);
+
         // 2. Извлечь EUTP-ID из ветки
         const taskId = extractTaskId(branch);
         if (!taskId) {
@@ -1036,6 +1142,7 @@ export default function (pi: ExtensionAPI) {
             return;
           }
 
+          ctx.panel?.setSteps(["Обновление описания MR"]);
           const updatedDescription = await generateUpdatedDescription(
             ctx,
             taskId,
@@ -1046,7 +1153,9 @@ export default function (pi: ExtensionAPI) {
             log,
           );
           if (!updatedDescription) return;
-          const updateResult = await exec("glab", ["mr", "update", existingMr.ref, "--description", updatedDescription]);
+          const updateResult = await withProgress(ctx, "Сохраняю описание MR", () =>
+            exec("glab", ["mr", "update", existingMr.ref, "--description", updatedDescription]),
+          );
           if (updateResult.code !== 0) {
             ctx.ui.notify(`Ошибка glab mr update: ${updateResult.stderr}`, "error");
             return;
@@ -1076,7 +1185,10 @@ export default function (pi: ExtensionAPI) {
           ? [`Использовать существующее сообщение: ${previousTitle}`, "Сгенерировать название коммита", "Ввести своё"]
           : ["Сгенерировать название коммита", "Ввести своё"];
         const titleAction = await ctx.ui.select("Заголовок коммита", titleChoices);
-        if (!titleAction) return;
+        if (!titleAction) {
+          ctx.ui.notify("Команда mr-echat отменена", "info");
+          return;
+        }
 
         if (titleAction.startsWith("Использовать существующее")) {
           commitTitle = previousTitle!;
@@ -1100,6 +1212,9 @@ export default function (pi: ExtensionAPI) {
           commitTitle = confirmed;
         }
 
+        ctx.panel?.setResult(commitTitle);
+        const steps = ["· Описание MR", "· Commit", "· Push", "· MR"];
+        ctx.panel?.setSteps(steps);
         if (existingMr) {
           updateExistingMrDescription = await ctx.ui.confirm("MR уже существует", "Дополнить описание MR новыми изменениями?");
         } else {
@@ -1116,6 +1231,12 @@ export default function (pi: ExtensionAPI) {
           fs.writeFileSync(MR_DESC_TMP, description, "utf-8");
         }
 
+        steps[0] = existingMr
+          ? updateExistingMrDescription ? "· Описание MR после push" : "✓ Описание MR без изменений"
+          : "✓ Описание MR подготовлено";
+        steps[1] = "⠋ Commit";
+        ctx.panel?.setSteps(steps);
+
         // 7. Commit + push
         const cachedCheck = await exec("git", ["diff", "--cached", "--name-only"]);
         const hasCached = cachedCheck.stdout.trim().length > 0;
@@ -1124,7 +1245,7 @@ export default function (pi: ExtensionAPI) {
 
         if (!hasCached && hasUnstaged) {
           // Добавляем всё unstaged
-          const addResult = await withAnimatedDots(ctx, "Добавляю все изменения", () => exec("git", ["add", "-A"]));
+          const addResult = await withProgress(ctx, "Добавляю все изменения", () => exec("git", ["add", "-A"]));
           if (addResult.code !== 0) {
             ctx.ui.notify(`Ошибка git add: ${addResult.stderr}`, "error");
             return;
@@ -1134,16 +1255,23 @@ export default function (pi: ExtensionAPI) {
           return;
         }
 
-        const commitResult = hasCached
-          ? await withAnimatedDots(ctx, "Коммичу staged изменения", () => exec("git", ["commit", "-m", commitTitle]))
-          : await exec("git", ["commit", "-m", commitTitle]);
+        const commitResult = await withProgress(ctx, "Создаю коммит", () =>
+          exec("git", ["commit", "-m", commitTitle]),
+        );
         if (commitResult.code !== 0) {
           ctx.ui.notify(`Ошибка git commit: ${commitResult.stderr}`, "error");
           return;
         }
 
-        let pushResult = await exec("git", ["push", "-u", "origin", "HEAD"]);
-        if (pushResult.code !== 0 && await remoteHasCommitsMissingLocally(exec, branch)) {
+        steps[1] = "✓ Коммит создан";
+        steps[2] = "⠋ Push";
+        ctx.panel?.setSteps(steps);
+        let pushResult = await withProgress(ctx, "Отправляю изменения", () =>
+          exec("git", ["push", "-u", "origin", "HEAD"]),
+        );
+        if (pushResult.code !== 0 && await withProgress(ctx, "Проверяю удалённую ветку", () =>
+          remoteHasCommitsMissingLocally(exec, branch),
+        )) {
           const forceAction = await ctx.ui.select(
             "Удалённая ветка содержит коммиты, которых нет локально. Выполнить push with lease?",
             ["Нет", "Да — push --force-with-lease"],
@@ -1153,12 +1281,18 @@ export default function (pi: ExtensionAPI) {
             return;
           }
 
-          pushResult = await exec("git", ["push", "--force-with-lease", "-u", "origin", "HEAD"]);
+          ctx.panel?.setSteps(steps);
+          pushResult = await withProgress(ctx, "Отправляю изменения с force-with-lease", () =>
+            exec("git", ["push", "--force-with-lease", "-u", "origin", "HEAD"]),
+          );
         }
         if (pushResult.code !== 0) {
           ctx.ui.notify(`Ошибка git push: ${pushResult.stderr || pushResult.stdout}`, "error");
           return;
         }
+        steps[2] = "✓ Изменения отправлены";
+        steps[3] = existingMr ? "✓ MR существует" : "⠋ Создание MR";
+        ctx.panel?.setSteps(steps);
         ctx.ui.notify("Запушено ✓", "info");
         if (!existingMr) {
           log("mr-creation:prepare:start");
@@ -1167,6 +1301,8 @@ export default function (pi: ExtensionAPI) {
         // 8. Если MR уже был — при необходимости обновить описание и выйти
         if (existingMr) {
           if (updateExistingMrDescription) {
+            steps[0] = "⠋ Обновление описания MR";
+            ctx.panel?.setSteps(steps);
             const currentDescription = await getMrDescription(exec, existingMr.ref);
             if (currentDescription === null) {
               ctx.ui.notify("Не удалось прочитать текущее описание MR", "error");
@@ -1187,11 +1323,15 @@ export default function (pi: ExtensionAPI) {
               log,
             );
             if (!updatedDescription) return;
-            const updateResult = await exec("glab", ["mr", "update", existingMr.ref, "--description", updatedDescription]);
+            const updateResult = await withProgress(ctx, "Сохраняю описание MR", () =>
+              exec("glab", ["mr", "update", existingMr.ref, "--description", updatedDescription]),
+            );
             if (updateResult.code !== 0) {
               ctx.ui.notify(`Ошибка glab mr update: ${updateResult.stderr}`, "error");
               return;
             }
+            steps[0] = "✓ Описание MR обновлено";
+            ctx.panel?.setSteps(steps);
             ctx.ui.notify("Описание MR обновлено ✓", "info");
           }
           ctx.ui.notify(`MR уже существует: ${existingMr.url}`, "info");
@@ -1201,7 +1341,7 @@ export default function (pi: ExtensionAPI) {
         // 9. Создать MR
         log("mr-creation:user:start");
         const descContent = description ?? fs.readFileSync(MR_DESC_TMP, "utf-8");
-        const { username, targetBranch } = await withAnimatedDots(ctx, "Готовлю создание MR", async () => {
+        const { username, targetBranch } = await withProgress(ctx, "Готовлю создание MR", async () => {
           const username = await getGlabUser(exec);
           log("mr-creation:user:end", { usernameFound: Boolean(username) });
           log("mr-creation:parent-branch:start");
@@ -1224,7 +1364,7 @@ export default function (pi: ExtensionAPI) {
         }
 
         log("mr-creation:glab-create:start", { targetBranch, hasAssignee: Boolean(username) });
-        const createResult = await withAnimatedDots(
+        const createResult = await withProgress(
           ctx,
           targetBranch ? `Создаю MR в ${targetBranch}` : "Создаю MR",
           () => exec("glab", mrArgs),
@@ -1236,6 +1376,9 @@ export default function (pi: ExtensionAPI) {
           return;
         }
 
+        steps[3] = "✓ MR создан";
+        ctx.panel?.setSteps(steps);
+
         // 10. Вывести результат
         const webUrlMatch = createResult.stdout.match(/https:\/\/gitlab\.[^\s]+/);
         if (webUrlMatch) {
@@ -1245,10 +1388,14 @@ export default function (pi: ExtensionAPI) {
         }
       } catch (err: any) {
         log("run:error", { error: err?.message ?? String(err) });
-        ctx.ui.notify(`Ошибка mr-echat: ${err.message}`, "error");
+        if (err instanceof WorkflowCancelled) {
+          ctx.ui.notify("Команда mr-echat отменена", "info");
+        } else if (!ctx.runSignal.aborted) {
+          ctx.ui.notify(`Ошибка mr-echat: ${err.message}`, "error");
+        }
       } finally {
         log("run:end");
       }
-    },
+    }),
   });
 }

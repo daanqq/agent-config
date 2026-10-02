@@ -598,6 +598,10 @@
       "target": ".pi/agent/extensions/shake.ts"
     },
     {
+      "source": "pi/agent/extensions/shared/mr-echat-panel.ts",
+      "target": ".pi/agent/extensions/shared/mr-echat-panel.ts"
+    },
+    {
       "source": "pi/agent/extensions/shared/text-stream-metrics.test.ts",
       "target": ".pi/agent/extensions/shared/text-stream-metrics.test.ts"
     },
