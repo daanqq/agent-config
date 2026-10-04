@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "apiKeyHelper": "cat \"$HOME\"/.claude/secrets/cliproxy-api-key",
   "env": {
-    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8317",
+    "ANTHROPIC_BASE_URL": "https://new.tail354056.ts.net",
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
     "CLAUDE_CODE_PROMPT_CACHE_TTL": "1h",
     "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "1h",

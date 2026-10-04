@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseCodexWindows, resetText } from "./windows.ts";
 
-const MANAGEMENT_URL = process.env.CLIPROXY_MANAGEMENT_URL ?? "http://127.0.0.1:8317";
+const MANAGEMENT_URL = process.env.CLIPROXY_MANAGEMENT_URL ?? "https://new.tail354056.ts.net";
 const MANAGEMENT_KEY = process.env.CLIPROXY_MANAGEMENT_KEY ?? "";
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const FETCH_TIMEOUT_MS = 15_000;

@@ -5,7 +5,7 @@ Personal configuration for the `pi` coding agent.
 
 ## Usage requirements
 
-- Running CLIProxy at http://127.0.0.1:8317
+- Tailscale connected with MagicDNS enabled and access to CLIProxyAPI at https://new.tail354056.ts.net
 
 ## Extensions
 

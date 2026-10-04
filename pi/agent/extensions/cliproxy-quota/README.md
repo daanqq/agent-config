@@ -38,7 +38,7 @@ the reset and equal subscription capacity.
 Configuration:
 
 ```sh
-export CLIPROXY_MANAGEMENT_URL="http://127.0.0.1:8317"
+export CLIPROXY_MANAGEMENT_URL="https://new.tail354056.ts.net"
 export CLIPROXY_MANAGEMENT_KEY=""
 ```
 
@@ -49,5 +49,7 @@ Persistent management settings are read from `~/.pi/agent/secrets/cliproxy-manag
 with string fields `managementUrl` and `managementKey`. Keep this file mode `0600`.
 When present, this file takes precedence over the environment. Without the file,
 the extension uses `CLIPROXY_MANAGEMENT_URL` and `CLIPROXY_MANAGEMENT_KEY`.
-Both a local CLIProxyAPI service and an SSH tunnel to a remote service must
-expose the API on `127.0.0.1:8317`. Enable only one of them on a machine.
+The default management URL is `https://new.tail354056.ts.net`. Connect Tailscale
+with MagicDNS enabled before starting Pi. Management uses the API endpoint on
+HTTPS port 443, not the separate CPA Manager Plus panel on port 18443.
+For local or SSH access, override the URL with `http://127.0.0.1:8317`.

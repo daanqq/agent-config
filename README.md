@@ -94,6 +94,13 @@ linked or copied into this repository. `pi/agent/models.example.json` uses
 to work; on another machine, copy the example there and configure the variable
 privately. The installer does not perform that copy.
 
+Claude and the Pi example use CLIProxyAPI through Tailscale at
+`https://new.tail354056.ts.net`; Pi's Codex provider retains the `/backend-api`
+suffix. Connect Tailscale with MagicDNS enabled before starting the clients.
+Existing private `~/.pi/agent/models.json` files must be updated separately;
+changing the example does not change them. API keys stay unchanged. The SSH
+tunnel remains available as a fallback, with URLs changed back to localhost.
+
 Claude's installed-plugin state and Pi's old checkout-specific `.pi/settings.json`
 are also excluded. Package/plugin declarations are retained in client settings;
 their installers own runtime installation state.
@@ -112,6 +119,8 @@ an error; it does not fall back to environment credentials.
 
 The key must be the plaintext CLIProxyAPI management key, not a model API key
 or the bcrypt hash in the proxy configuration. Keep it outside this repository.
+Use `https://new.tail354056.ts.net` for `managementUrl` or
+`CLIPROXY_MANAGEMENT_URL`, not the separate panel's HTTPS port 18443.
 The management endpoint must be reachable and expose an enabled Claude account.
 The scripts require `jq`, `curl`, and `setsid` for background refreshes.
 
