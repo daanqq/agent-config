@@ -1,7 +1,7 @@
 # Claude Code
 
 Claude Code configuration: instructions, settings, keybindings, skills, hooks,
-statusline, theme, and the local `effort-cycle` plugin source.
+statusline, theme, and the local `effort-cycle` and `task-link` plugin sources.
 
 ## Dependencies
 

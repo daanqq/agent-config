@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "task-link",
+  "version": "0.1.0",
+  "description": "Shows the session's SpaceHub task as a link above the prompt; /taskurl sets or replaces it",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Danila Andreev",
+    "email": "daanqq@proton.me"
+  }
+}

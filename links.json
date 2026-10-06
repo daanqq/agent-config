@@ -178,6 +178,10 @@
       "target": ".claude/skills/effort-cycle"
     },
     {
+      "source": "claude/skills/task-link",
+      "target": ".claude/skills/task-link"
+    },
+    {
       "source": "claude/skills/task-worktree",
       "target": ".claude/skills/task-worktree"
     },

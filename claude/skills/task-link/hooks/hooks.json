@@ -1,0 +1,4 @@
+{
+  "description": "Remembers the first SpaceHub task URL typed in a session and draws it above the prompt",
+  "modules": ["./register.tsx"]
+}
