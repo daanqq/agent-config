@@ -5,7 +5,6 @@ const MODEL_PROVIDER = "openai-codex";
 const MODEL_ID = "gpt-5.6-luna";
 const MAX_CONTEXT_CHARS = 4_000;
 const MAX_TITLE_CHARS = 60;
-const GENERATED_NAME_PREFIX = "gen: ";
 const REQUEST_TIMEOUT_MS = 15_000;
 
 const SYSTEM_PROMPT = `Create a concise name for this coding-agent session, in English.
@@ -187,12 +186,6 @@ function buildPrompt(firstPrompt: string, assistantResponse: string): string {
   ].join("\n");
 }
 
-function formatGeneratedSessionName(title: string): string {
-  const unprefixedTitle = title.replace(/^gen:\s*/i, "");
-  return GENERATED_NAME_PREFIX
-    + truncateAtWordBoundary(unprefixedTitle, MAX_TITLE_CHARS - GENERATED_NAME_PREFIX.length);
-}
-
 async function generateSessionName(ctx: ExtensionContext, firstPrompt: string, assistantResponse: string, controller: AbortController): Promise<string> {
   const model = ctx.modelRegistry.find(MODEL_PROVIDER, MODEL_ID);
   if (!model) throw new Error("model unavailable");
@@ -302,12 +295,9 @@ export default function autoSessionNameExtension(pi: ExtensionAPI) {
         || (options.allowExistingName && currentName !== initialName)
       ) return;
 
-      const sessionName = usedFallback && options.preserveNameOnFailure && initialName
-        ? initialName
-        : formatGeneratedSessionName(title);
-      pi.setSessionName(sessionName);
+      pi.setSessionName(title);
       if (usedFallback) ctx.ui.notify("Session naming failed; using fallback.", "warning");
-      ctx.ui.notify(`Session name: ${sessionName}`, "info");
+      ctx.ui.notify(`Session name: ${title}`, "info");
     })().finally(() => {
       if (state.pending === pending) {
         state.pending = undefined;

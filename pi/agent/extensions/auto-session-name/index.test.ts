@@ -130,7 +130,7 @@ test("requests an English name for a Russian conversation once after the first s
   harness.completion.resolve({ content: [{ type: "text", text: "Authentication token refresh" }] });
   await setImmediate();
 
-  assert.equal(harness.getName(), "gen: Authentication token refresh");
+  assert.equal(harness.getName(), "Authentication token refresh");
   assert.equal(harness.getCompletionCalls(), 1);
   const [model, context, options] = harness.getCompletionRequest();
   assert.deepEqual(model, { provider: "openai-codex", id: "gpt-5.6-luna" });
@@ -146,7 +146,7 @@ test("requests an English name for a Russian conversation once after the first s
   assert.ok(options.signal instanceof AbortSignal);
   assert.deepEqual(harness.notifications, [
     { message: "Generating session name...", type: "info" },
-    { message: "Session name: gen: Authentication token refresh", type: "info" },
+    { message: "Session name: Authentication token refresh", type: "info" },
   ]);
 
   harness.emit("agent_settled");
@@ -160,11 +160,11 @@ test("uses an English fallback for a Russian request when generation fails", asy
   harness.completion.reject(new Error("provider unavailable"));
   await setImmediate();
 
-  assert.equal(harness.getName(), "gen: New session");
+  assert.equal(harness.getName(), "New session");
   assert.deepEqual(harness.notifications, [
     { message: "Generating session name...", type: "info" },
     { message: "Session naming failed; using fallback.", type: "warning" },
-    { message: "Session name: gen: New session", type: "info" },
+    { message: "Session name: New session", type: "info" },
   ]);
 });
 
@@ -174,7 +174,7 @@ test("regenerates a fallback name with /namegen", async () => {
 
   harness.completion.reject(new Error("provider unavailable"));
   await setImmediate();
-  assert.equal(harness.getName(), "gen: New session");
+  assert.equal(harness.getName(), "New session");
 
   const retry = deferred<any>();
   harness.queueCompletion(retry.promise);
@@ -186,10 +186,10 @@ test("regenerates a fallback name with /namegen", async () => {
   retry.resolve({ content: [{ type: "text", text: "Authentication Token Refresh" }] });
   await command;
 
-  assert.equal(harness.getName(), "gen: Authentication Token Refresh");
+  assert.equal(harness.getName(), "Authentication Token Refresh");
   assert.deepEqual(harness.notifications.slice(-2), [
     { message: "Generating session name...", type: "info" },
-    { message: "Session name: gen: Authentication Token Refresh", type: "info" },
+    { message: "Session name: Authentication Token Refresh", type: "info" },
   ]);
 });
 
@@ -267,7 +267,7 @@ test("a naming deadline still uses fallback while the session stays open", async
   signal.addEventListener("abort", () => harness.completion.reject(new Error("timeout")), { once: true });
   t.mock.timers.tick(15_000);
   await setImmediate();
-  assert.equal(harness.getName(), "gen: New session");
+  assert.equal(harness.getName(), "New session");
   assert.equal(harness.notifications.length, 3);
 });
 
