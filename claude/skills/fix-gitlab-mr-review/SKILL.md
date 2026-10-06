@@ -116,8 +116,33 @@ When the user explicitly asks to publish:
 
 Treat reactions, replies, and resolving discussions as separate permissions. A request to acknowledge addressed comments does not authorize resolving threads. For a reaction/reply-only request, inspect the current MR and relevant code without creating a worktree or repeating the repair workflow.
 
+### Choose the response for each discussion
+
+Every unresolved discussion gets a response: a reaction, a reply, or both. Report any discussion left without one and the reason. A request for a minimal response shortens the replies; it does not drop them.
+
+- **Reaction only** when the fix is exactly the reviewer's concrete proposal, sits on the commented line, and needs no explanation (for example, adding the requested `fields: ['id']`).
+- **Reply** when any of these holds; a thumbs-up may accompany it:
+  - the reviewer asked a question, even a rhetorical one such as "оно надо?";
+  - the reviewer described a problem and the fix was chosen among options;
+  - the fix is partial or deviates from the request or the task spec;
+  - the fix adds decisions the reviewer did not state, such as fallbacks, TTLs, or failure behavior;
+  - the fix lands away from the commented line: another line, another file, or a removed block.
+- Thumbs-up acknowledges only requests fully addressed by current code and verification evidence. Leave partial or unverified requests without a reaction and explain them in a reply.
+
+### Link the diff when the fix is elsewhere
+
+When the fix is not on the line the reviewer commented, link each relevant changed line in the pushed commit, so the reviewer lands on the change instead of searching for it. The anchor is GitLab's `line_code`, `<sha1(file path)>_<old line>_<new line>`; generate it instead of computing it by hand:
+
+```bash
+git -C <worktree> show <sha> -U3 --format= \
+  | python3 <skill-dir>/scripts/diff_line_anchors.py
+```
+
+Each output row is `line_code`, path, `+new` or `-old` line number, and text. Link the first line that shows the change (the first added line of a block, or the first removed line of a deletion) as `https://<host>/<project-path>/-/merge_requests/<iid>/diffs?commit_id=<full-sha>#<line_code>`, so it opens inside the MR, with the link on a short phrase inside the sentence, for example `[убрал](...)`. GitLab's "changed this line in version N of the diff" system notes use the same `line_code`; when one exists for that line, it must match the script's output.
+
+### Write and publish
+
 - Confirm the acting account with `glab api user --hostname <host>`. Writes use that account, not a separate agent identity.
-- For thumbs-up on addressed comments, acknowledge only fully addressed requests supported by current code and verification evidence. Leave partial or unverified requests unmarked; report which ones remain.
 - Reactions belong to a note within a discussion. Use its note ID, not the discussion ID. With `<project>` set to the numeric project ID or URL-encoded project path, list existing reactions at `projects/<project>/merge_requests/<iid>/notes/<note-id>/award_emoji`. If this account already has `thumbsup`, skip the write; otherwise run:
 
   ```bash
@@ -125,7 +150,10 @@ Treat reactions, replies, and resolving discussions as separate permissions. A r
     --hostname <host> --method POST -f name=thumbsup
   ```
 
-- Before posting a reply, read and apply [unslop](../unslop/SKILL.md) to the draft. Write in the discussion's language, as a developer answering a colleague. Usually one short paragraph of 1-3 sentences is enough: what changed and, when needed, the evidence or remaining limitation. Add detail only when needed to answer the comment; skip report headings, method-call chains, and a recap of the reviewer's own explanation. Preserve material caveats and distinguish local changes from pushed changes; do not claim reviewer approval.
+- Before posting a reply, read and apply [unslop](../unslop/SKILL.md) to the draft. Write in the discussion's language, as a developer answering a colleague. Usually one short paragraph of 1-3 sentences is enough: what changed and, when needed, the evidence or remaining limitation. Add detail only when needed to answer the comment; skip report headings, method-call chains, and a recap of the reviewer's own explanation. Preserve material caveats and distinguish local changes from pushed changes; do not claim reviewer approval. End a reply about pushed changes with the short commit SHA; GitLab links it.
 - Show the exact draft to the user before posting, with a link to the discussion. Wait for approval so the user can suggest edits; a request to reply authorizes drafting, not immediate publication. If revised, show the updated draft and wait for approval again.
-- To reply inside the existing thread, use `POST projects/<project>/merge_requests/<iid>/discussions/<discussion-id>/notes` with `-f 'body=<reply>'`. Read existing replies before posting to avoid duplicates, and publish only the approved text.
+- To reply inside the existing thread, use `POST projects/<project>/merge_requests/<iid>/discussions/<discussion-id>/notes` with `-f 'body=<reply>'`. Read existing replies before posting to avoid duplicates, and publish only the approved text. System notes such as "changed this line in version N of the diff" come from pushes, not from the reviewer.
+- To amend an already posted reply, for example to add diff links, use `PUT projects/<project>/merge_requests/<iid>/discussions/<discussion-id>/notes/<note-id>` with `-f 'body=<reply>'`. The amended text needs the same draft approval.
 - Read back reactions or discussion notes after writing. If a request times out, check whether it succeeded before retrying. Report only confirmed writes and any failures.
+
+**Completion criterion:** every unresolved discussion has a confirmed reaction or reply, and every reply about a fix away from the commented line links that line in the commit diff.
