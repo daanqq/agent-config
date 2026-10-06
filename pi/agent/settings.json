@@ -6,8 +6,7 @@
   "packages": [
     "npm:@ff-labs/pi-fff",
     "npm:@plannotator/pi-extension",
-    "npm:pi-context-view",
-    "npm:@ogulcancelik/pi-codex-compaction"
+    "npm:pi-context-view"
   ],
   "skills": [
     "-skills/plannotator/SKILL.md"

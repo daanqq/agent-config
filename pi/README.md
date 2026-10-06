@@ -21,6 +21,7 @@ Personal configuration for the `pi` coding agent.
 | `background-terminals/` | Runs session-scoped background shell processes with captured output. | `/ps` |
 | `balance.ts` | Shows DeepSeek and OpenRouter balances. | `/deepseek:balance`, `/openrouter:balance` |
 | `cliproxy-quota/` | Shows combined and per-account Codex quotas through CLIProxyAPI. | `/cliproxy:quota`, `/statuses` |
+| `codex-native-compaction.ts` | Compacts OpenAI Codex sessions with the native encrypted server checkpoint instead of a text summary. | — |
 | `context-limit-warning.ts` | Warns when context exceeds 128k tokens. | — |
 | `herdr-agent-state.ts` | Reports Pi session and agent state to Herdr. | — |
 | `mr-echat.ts` | Commits, pushes, and creates EChat merge requests. | `/mr-echat [--name=<ветка>]` |

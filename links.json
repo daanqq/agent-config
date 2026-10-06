@@ -526,6 +526,10 @@
       "target": ".pi/agent/extensions/cliproxy-quota/windows.ts"
     },
     {
+      "source": "pi/agent/extensions/codex-native-compaction.ts",
+      "target": ".pi/agent/extensions/codex-native-compaction.ts"
+    },
+    {
       "source": "pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts",
       "target": ".pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts"
     },
