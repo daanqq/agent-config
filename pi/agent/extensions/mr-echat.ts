@@ -12,10 +12,12 @@
  *   /mr-echat [task-branch] [--name=<task-branch>] [--cwd <repo-path>]
  *
  *   task-branch — опционально: название ветки задачи. Если команда запущена
- *   на базовой ветке, перед началом работы будет создана ветка с этим названием.
+ *   новая feature-ветка создаётся от базовой, task-ветка от текущей feature/T-ветки.
+ *   Поддерживаются только feature/T-123 и task/T-124.
  *   --cwd — опционально: git-репозиторий, относительно cwd сессии, абсолютный или через ~/.
  *   --name — опционально: существующая ветка, на которую нужно переключиться,
- *   или имя новой ветки. Новая ветка создаётся от локальной master.
+ *   или имя новой ветки. Новая feature-ветка создаётся от локальной master/main,
+ *   новая task-ветка только от текущей родительской feature/T-ветки.
  */
 
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
@@ -36,7 +38,10 @@ import * as path from "node:path";
 // Constants
 // ---------------------------------------------------------------------------
 
-const EUTP_ID_RE = /EUTP-\d+/i;
+const TASK_BRANCH_RE = /^(feature|task)\/(T-\d+)$/i;
+const FEATURE_BRANCH_RE = /^feature\/T-\d+$/i;
+const TASK_TEMPLATE_URL_RE = /https?:\/\/(?:spacehub\.esoft\.tech\/entity\/T-|(?:youtrack|urs)\.esoft\.tech\/issue\/EUTP-)(<[^>]+>|[^\s)<>"']*)/gi;
+const TASK_PLACEHOLDER_SUFFIX_RE = /^(?:…|\.\.\.|XXX|<[^>]+>|\{\{[^}]+\}\})?$/i;
 const TITLE_MAX_ATTEMPTS = 3;
 const MR_DESC_TMP = "/tmp/mr_description.md";
 const GENERATION_MODELS = [
@@ -72,12 +77,12 @@ Given a git diff, output exactly one commit title.
 Commit title rules:
 - English, lowercase, imperative mood: add/fix/make/update/remove
 - Briefly describes the essence of changes
-- Ends with " #EUTP-NNNNNN"
+- Ends with " #T-123"
 - Examples from the repo:
-  add cross-app text formatting copy-paste #EUTP-145771
-  fix chat closing animation on mobile #EUTP-146265
-  add invitation links #EUTP-115210
-  fix formatting toolbar on Android #EUTP-144804
+  add cross-app text formatting copy-paste #T-145771
+  fix chat closing animation on mobile #T-146265
+  add invitation links #T-115210
+  fix formatting toolbar on Android #T-144804
 
 Output format (strict):
 TITLE: <commit title>`;
@@ -422,10 +427,14 @@ async function completeWithFallback(
   return null;
 }
 
-/** Вытащить EUTP-ID из названия ветки. */
+/** Вытащить ровно один T-ID из канонического имени ветки. */
 function extractTaskId(branch: string): string | null {
-  const m = branch.match(EUTP_ID_RE);
-  return m ? m[0] : null;
+  return TASK_BRANCH_RE.exec(branch)?.[2]?.toUpperCase() ?? null;
+}
+
+function branchKind(branch: string): "feature" | "task" | null {
+  const kind = TASK_BRANCH_RE.exec(branch)?.[1]?.toLowerCase();
+  return kind === "feature" || kind === "task" ? kind : null;
 }
 
 /** Найти последнее сообщение коммита по этой задаче в текущей ветке. */
@@ -435,16 +444,15 @@ async function getPreviousCommitTitle(exec: ExecFn, taskId: string): Promise<str
   return result.code === 0 && title ? title : null;
 }
 
-/** Получить MR-шаблон с подставленной ссылкой. */
+/** Получить MR-шаблон с подставленной SpaceHub-ссылкой. */
 function readTemplate(cwd: string, taskId: string): string {
   const tmplPath = `${cwd}/.gitlab/merge_request_templates/Default.md`;
-  let text = fs.readFileSync(tmplPath, "utf-8");
-  // Замена http → https и плейсхолдера на реальный номер
-  text = text.replace(
-    /http:\/\/youtrack\.esoft\.tech\/issue\/EUTP-[…\.]+/g,
-    `https://youtrack.esoft.tech/issue/${taskId}`,
-  );
-  return text;
+  const text = fs.readFileSync(tmplPath, "utf-8");
+  return text.replace(TASK_TEMPLATE_URL_RE, (url: string, suffix: string) => {
+    if (/^\d+(?:[?#].*)?$/.test(suffix)) return url;
+    if (TASK_PLACEHOLDER_SUFFIX_RE.test(suffix)) return `https://spacehub.esoft.tech/entity/${taskId}`;
+    throw new Error(`Не удалось разрешить плейсхолдер задачи в MR-шаблоне: ${url}`);
+  });
 }
 
 /** Аргументы git diff с исключением generated-файлов из текста для LLM. */
@@ -477,16 +485,15 @@ function normalizeRemoteBranch(ref: string): string {
   return ref.replace(/^origin\//, "");
 }
 
-/** Найти родительскую EUTP-ветку, если текущая ветка ответвлена от неё, а не от main/master. */
+/** Найти родительскую feature/T-ветку по истории Git. */
 async function getParentTaskBranch(exec: ExecFn, branch: string, log: LogFn): Promise<string | null> {
   const refsResult = await exec("git", ["for-each-ref", "--format=%(refname:short)", "refs/remotes/origin"]);
   if (refsResult.code !== 0) return null;
 
-  const currentHead = (await exec("git", ["rev-parse", "HEAD"])).stdout.trim();
   const refs = [...new Set(refsResult.stdout.trim().split("\n").filter(Boolean))];
   const candidates = refs.filter((ref) => {
     const normalized = normalizeRemoteBranch(ref);
-    return ref !== "origin/HEAD" && normalized !== branch && EUTP_ID_RE.test(normalized);
+    return ref !== "origin/HEAD" && normalized !== branch && FEATURE_BRANCH_RE.test(normalized);
   });
   log("parent-branch:candidates", { totalRemoteRefs: refs.length, candidateCount: candidates.length });
   if (candidates.length === 0) return null;
@@ -508,7 +515,7 @@ async function getParentTaskBranch(exec: ExecFn, branch: string, log: LogFn): Pr
   for (const ref of candidates) {
     const base = await exec("git", ["merge-base", "HEAD", ref]);
     const mergeBase = base.stdout.trim();
-    if (base.code !== 0 || !mergeBase || mergeBase === currentHead || mergeBase === defaultMergeBase) continue;
+    if (base.code !== 0 || !mergeBase || mergeBase === defaultMergeBase) continue;
 
     if (defaultMergeBase) {
       const isAfterDefault = await exec("git", ["merge-base", "--is-ancestor", defaultMergeBase, mergeBase]);
@@ -522,8 +529,10 @@ async function getParentTaskBranch(exec: ExecFn, branch: string, log: LogFn): Pr
   }
 
   matches.sort((a, b) => a.distance - b.distance || a.branch.localeCompare(b.branch));
-  const selected = matches[0]?.branch ?? null;
-  log("parent-branch:selected", { selected, matchCount: matches.length });
+  const nearest = matches[0];
+  const tied = nearest && matches.some((candidate) => candidate.distance === nearest.distance && candidate.branch !== nearest.branch);
+  const selected = tied ? null : nearest?.branch ?? null;
+  log("parent-branch:selected", { selected, matchCount: matches.length, tied: Boolean(tied) });
   return selected;
 }
 
@@ -882,7 +891,7 @@ async function confirmTitle(
       if (action.startsWith("Использовать сгенерированный")) return title;
       if (action.startsWith("Использовать существующий")) return previousTitle;
       if (action === "Ввести вручную") {
-        const manual = await ctx.ui.input("Введи название коммита (без #EUTP-XXX):");
+        const manual = await ctx.ui.input("Введи название коммита (без #T-123):");
         if (manual) return `${manual.trim()} #${taskId}`;
         return null;
       }
@@ -895,14 +904,14 @@ async function confirmTitle(
       if (!action) return null;
       if (action.startsWith("Использовать сгенерированный")) return title;
       if (action === "Ввести вручную") {
-        const manual = await ctx.ui.input("Введи название коммита (без #EUTP-XXX):");
+        const manual = await ctx.ui.input("Введи название коммита (без #T-123):");
         if (manual) return `${manual.trim()} #${taskId}`;
         return null;
       }
     }
 
     if (attempts >= TITLE_MAX_ATTEMPTS) {
-      const manual = await ctx.ui.input("Введи название коммита (без #EUTP-XXX):");
+      const manual = await ctx.ui.input("Введи название коммита (без #T-123):");
       if (manual) return `${manual.trim()} #${taskId}`;
       return null;
     }
@@ -1048,79 +1057,89 @@ export default function (pi: ExtensionAPI) {
           }
         };
 
-        // 1. Обработать выбранную ветку. --name умеет переключиться на локальную
-        // или удалённую ветку, а если её нет — создать новую от master.
+        // 1. Проверить выбранную ветку до переключения или создания.
         let branchResult = await exec("git", ["branch", "--show-current"]);
         if (branchResult.code !== 0 || !branchResult.stdout.trim()) {
           ctx.ui.notify("Не удалось определить текущую ветку", "error");
           return;
         }
         let branch = branchResult.stdout.trim();
-        if (name) {
-          const validBranch = await exec("git", ["check-ref-format", "--branch", name]);
+        let createdTaskParent: string | null = null;
+        const requestedBranch = name ?? taskBranch;
+        if (requestedBranch && !TASK_BRANCH_RE.test(requestedBranch)) {
+          ctx.ui.notify(`Ожидалось точное имя feature/T-123 или task/T-123: ${requestedBranch}`, "error");
+          return;
+        }
+        if (requestedBranch && requestedBranch !== branch) {
+          const validBranch = await exec("git", ["check-ref-format", "--branch", requestedBranch]);
           if (validBranch.code !== 0) {
-            ctx.ui.notify(`Некорректное название ветки: ${name}`, "error");
+            ctx.ui.notify(`Некорректное название ветки: ${requestedBranch}`, "error");
             return;
           }
 
-          const localBranch = await exec("git", ["show-ref", "--verify", "--quiet", `refs/heads/${name}`]);
+          const localBranch = await exec("git", ["show-ref", "--verify", "--quiet", `refs/heads/${requestedBranch}`]);
           const remoteBranch = localBranch.code === 0
             ? null
-            : await exec("git", ["show-ref", "--verify", "--quiet", `refs/remotes/origin/${name}`]);
+            : await exec("git", ["show-ref", "--verify", "--quiet", `refs/remotes/origin/${requestedBranch}`]);
 
           let switchArgs: string[];
+          let base = branch;
           if (localBranch.code === 0) {
-            switchArgs = ["switch", name];
+            switchArgs = ["switch", requestedBranch];
           } else if (remoteBranch?.code === 0) {
-            switchArgs = ["switch", "--track", "-c", name, `origin/${name}`];
+            switchArgs = ["switch", "--track", "-c", requestedBranch, `origin/${requestedBranch}`];
           } else {
-            const master = await exec("git", ["show-ref", "--verify", "--quiet", "refs/heads/master"]);
-            if (master.code !== 0) {
-              ctx.ui.notify("Не найдена локальная ветка master — не могу создать новую ветку", "error");
+            if (branchKind(requestedBranch) === "task") {
+              if (!FEATURE_BRANCH_RE.test(branch)) {
+                ctx.ui.notify("Новая task/T-ветка создаётся только от текущей родительской feature/T-ветки", "error");
+                return;
+              }
+              createdTaskParent = branch;
+            } else if (name) {
+              const master = await exec("git", ["show-ref", "--verify", "--quiet", "refs/heads/master"]);
+              const main = master.code === 0 ? null : await exec("git", ["show-ref", "--verify", "--quiet", "refs/heads/main"]);
+              if (master.code !== 0 && main?.code !== 0) {
+                ctx.ui.notify("Не найдена локальная master/main — не могу создать новую feature-ветку", "error");
+                return;
+              }
+              base = master.code === 0 ? "master" : "main";
+            } else if (!BASE_BRANCHES.has(branch)) {
+              ctx.ui.notify("Новую feature/T-ветку нужно создавать от базовой ветки", "error");
               return;
             }
-            switchArgs = ["switch", "-c", name, "master"];
+            switchArgs = ["switch", "-c", requestedBranch, base];
           }
 
           const switchResult = await exec("git", switchArgs);
           if (switchResult.code !== 0) {
-            ctx.ui.notify(`Не удалось выбрать ветку ${name}: ${switchResult.stderr || switchResult.stdout}`, "error");
+            ctx.ui.notify(`Не удалось выбрать ветку ${requestedBranch}: ${switchResult.stderr || switchResult.stdout}`, "error");
             return;
           }
-          branch = name;
+          branch = requestedBranch;
           ctx.ui.notify(
             localBranch.code === 0 || remoteBranch?.code === 0
               ? `Выбрана ветка ${branch}`
-              : `Создана ветка ${branch} от master`,
+              : `Создана ветка ${branch} от ${base}`,
             "info",
           );
-        } else if (taskBranch && BASE_BRANCHES.has(branch)) {
-          const validBranch = await exec("git", ["check-ref-format", "--branch", taskBranch]);
-          if (validBranch.code !== 0) {
-            ctx.ui.notify(`Некорректное название ветки: ${taskBranch}`, "error");
-            return;
-          }
-
-          const switchResult = await exec("git", ["switch", "-c", taskBranch]);
-          if (switchResult.code !== 0) {
-            ctx.ui.notify(`Не удалось создать ветку ${taskBranch}: ${switchResult.stderr}`, "error");
-            return;
-          }
-          branch = taskBranch;
-          ctx.ui.notify(`Создана ветка ${branch}`, "info");
         }
 
         ctx.panel?.setContext(path.basename(repoDir), branch);
 
-        // 2. Извлечь EUTP-ID из ветки
+        // 2. Проверить каноническое имя ветки и извлечь T-ID.
         const taskId = extractTaskId(branch);
-        if (!taskId) {
-          ctx.ui.notify(`Не найден EUTP-ID в названии ветки: ${branch}`, "error");
+        const kind = branchKind(branch);
+        if (!taskId || !kind) {
+          ctx.ui.notify(`Ожидалось точное имя feature/T-123 или task/T-123: ${branch}`, "error");
           return;
         }
 
         // 3. Проверить существующий MR до генерации описания
         const existingMr = await getExistingMr(exec, branch);
+        if (kind === "task" && existingMr && !FEATURE_BRANCH_RE.test(existingMr.targetBranch ?? "")) {
+          ctx.ui.notify("MR задачи должен быть направлен в родительскую feature/T-ветку; текущий target не изменён", "error");
+          return;
+        }
 
         // 4. Получить diff
         const diff = await getDiff(exec);
@@ -1169,12 +1188,20 @@ export default function (pi: ExtensionAPI) {
         let template: string | null = null;
         let updateExistingMrDescription = false;
         const previousTitle = await getPreviousCommitTitle(exec, taskId);
+        let targetBranch: string | null = null;
+        if (!existingMr && kind === "task") {
+          targetBranch = createdTaskParent ?? await getParentTaskBranch(exec, branch, log);
+          if (!targetBranch) {
+            ctx.ui.notify("Не удалось однозначно определить родительскую feature/T-ветку; MR не создан", "error");
+            return;
+          }
+        }
 
         if (!existingMr) {
           try {
             template = readTemplate(repoDir, taskId);
-          } catch {
-            ctx.ui.notify("Не найден .gitlab/merge_request_templates/Default.md", "error");
+          } catch (error: unknown) {
+            ctx.ui.notify(`Ошибка MR-шаблона: ${error instanceof Error ? error.message : String(error)}`, "error");
             return;
           }
         }
@@ -1193,7 +1220,7 @@ export default function (pi: ExtensionAPI) {
         if (titleAction.startsWith("Использовать существующее")) {
           commitTitle = previousTitle!;
         } else if (titleAction === "Ввести своё") {
-          const manual = await ctx.ui.input("Введи название коммита (без #EUTP-XXX):");
+          const manual = await ctx.ui.input("Введи название коммита (без #T-123):");
           if (!manual) {
             ctx.ui.notify("Заголовок коммита не задан — отмена", "warning");
             return;
@@ -1212,6 +1239,12 @@ export default function (pi: ExtensionAPI) {
           commitTitle = confirmed;
         }
 
+        const titleText = commitTitle.replace(/(?<![A-Z0-9_-])#?(?:T-\d+|EUTP-\d+)(?![A-Z0-9_])/gi, " ").trim().replace(/\s+/g, " ");
+        if (!titleText) {
+          ctx.ui.notify("Название коммита содержит только ID задачи — отмена", "error");
+          return;
+        }
+        commitTitle = `${titleText} #${taskId}`;
         ctx.panel?.setResult(commitTitle);
         const steps = ["· Описание MR", "· Commit", "· Push", "· MR"];
         ctx.panel?.setSteps(steps);
@@ -1341,14 +1374,12 @@ export default function (pi: ExtensionAPI) {
         // 9. Создать MR
         log("mr-creation:user:start");
         const descContent = description ?? fs.readFileSync(MR_DESC_TMP, "utf-8");
-        const { username, targetBranch } = await withProgress(ctx, "Готовлю создание MR", async () => {
+        const username = await withProgress(ctx, "Готовлю создание MR", async () => {
           const username = await getGlabUser(exec);
           log("mr-creation:user:end", { usernameFound: Boolean(username) });
-          log("mr-creation:parent-branch:start");
-          const targetBranch = await getParentTaskBranch(exec, branch, log);
-          return { username, targetBranch };
+          return username;
         });
-        log("mr-creation:parent-branch:end", { targetBranch });
+        log("mr-creation:parent-branch:end", { targetBranch, branchKind: kind });
 
         const mrArgs = [
           "mr", "create",

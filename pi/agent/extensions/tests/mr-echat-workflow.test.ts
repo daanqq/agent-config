@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import type { ExtensionAPI, ExtensionCommandContext, Theme, KeybindingsManager } from "@earendil-works/pi-coding-agent";
 import { ProcessTerminal, TuiMainScreen, stripTerminalSequences } from "@earendil-works/pi-tui";
 import mrEchat from "../mr-echat.ts";
@@ -15,7 +18,7 @@ async function until(predicate: () => boolean) {
   assert.fail("Workflow did not reach the expected UI state");
 }
 
-function setup({ commitFails = false, holdPush = false, noLocalDiff = false } = {}) {
+function setup({ commitFails = false, holdPush = false, noLocalDiff = false, branch = "feature/T-183060", existingMr = true, targetBranch = "master", repoDir = "/tmp/echat", previousTitle = "fix request title button #T-183060", gitReplies = {} as Record<string, { stdout: string; code: number }> } = {}) {
   let command: Command | undefined;
   let panel: MrEchatPanel | undefined;
   let opens = 0;
@@ -39,16 +42,20 @@ function setup({ commitFails = false, holdPush = false, noLocalDiff = false } = 
     async exec(cmd: string, args: string[]) {
       const invocation = `${cmd} ${args.join(" ")}`;
       calls.push(invocation);
+      const reply = gitReplies[invocation];
+      if (reply) return { ...reply, stderr: "", killed: false };
       if (args[0] === "push" && holdPush) {
         await new Promise<void>((resolve) => { releasePush = resolve; });
       }
       let stdout = "";
-      if (args.join(" ") === "rev-parse --show-toplevel") stdout = "/tmp/echat";
-      else if (args.join(" ") === "branch --show-current") stdout = "feature/EUTP-183060";
+      if (args.join(" ") === "rev-parse --show-toplevel") stdout = repoDir;
+      else if (args.join(" ") === "branch --show-current") stdout = branch;
       else if (cmd === "glab" && args[1] === "list") {
-        stdout = JSON.stringify([{ iid: 1, web_url: "https://gitlab.example/echat/-/merge_requests/1", target_branch: "master" }]);
+        stdout = existingMr
+          ? JSON.stringify([{ iid: 1, web_url: "https://gitlab.example/echat/-/merge_requests/1", target_branch: targetBranch }])
+          : "[]";
       } else if (cmd === "glab" && args[1] === "view") stdout = "Existing description";
-      else if (args[0] === "log") stdout = "fix request title button #EUTP-183060";
+      else if (args[0] === "log") stdout = previousTitle;
       else if (args[0] === "diff") {
         stdout = noLocalDiff && !args.some((arg) => arg.includes("...HEAD"))
           ? "" : args.includes("--name-only") ? "file.ts" : "+changed";
@@ -101,7 +108,7 @@ function setup({ commitFails = false, holdPush = false, noLocalDiff = false } = 
     get opens() { return opens; }, get closes() { return closes; },
     get panel() { return panel!; },
     view: () => panel?.render(80).map(stripTerminalSequences).join("\n") ?? "",
-    start: () => command!.handler("", ctx),
+    start: (args = "") => command!.handler(args, ctx),
     shutdown: () => handlers.get("session_shutdown")?.(),
     releasePush: () => releasePush?.(),
   };
@@ -181,6 +188,102 @@ test("Escape aborts description generation without fallback, MR update or closin
   fixture.panel.handleInput("\r");
   await running;
   assert.equal(fixture.closes, 1);
+});
+
+test("branch IDs are matched exactly and legacy identifiers are rejected", async () => {
+  const fixture = setup({ branch: "feature/J-183060" });
+  const running = fixture.start();
+  await until(() => fixture.view().includes("Ожидалось точное имя"));
+  assert.equal(fixture.calls.some((call) => call.startsWith("git commit")), false);
+  fixture.panel.handleInput("\r");
+  await running;
+});
+
+test("task branch without an unambiguous feature parent stops before commit", async () => {
+  const fixture = setup({ branch: "task/T-183061", existingMr: false });
+  const running = fixture.start();
+  await until(() => fixture.view().includes("однозначно определить"));
+  assert.equal(fixture.calls.some((call) => call.startsWith("git commit")), false);
+  assert.equal(fixture.calls.some((call) => call.startsWith("glab mr create")), false);
+  fixture.panel.handleInput("\r");
+  await running;
+});
+
+test("commit title gets its current T-ID exactly once without legacy suffix", async () => {
+  const fixture = setup({ previousTitle: "fix rendering #T-183060 #EUTP-456" });
+  const running = fixture.start();
+  await choosePrevious(fixture);
+  fixture.panel.handleInput("\x1b[B");
+  fixture.panel.handleInput("\r");
+  await until(() => fixture.view().includes("MR уже существует:"));
+  assert.ok(fixture.calls.includes("git commit -m fix rendering #T-183060"));
+  fixture.panel.handleInput("\r");
+  await running;
+});
+
+test("requested invalid branch is rejected before switching", async () => {
+  const fixture = setup({ branch: "master" });
+  const running = fixture.start("--name=feature/J-123");
+  await until(() => fixture.view().includes("Ожидалось точное имя"));
+  assert.equal(fixture.calls.some((call) => call.startsWith("git switch")), false);
+  fixture.panel.handleInput("\r");
+  await running;
+});
+
+test("new task branch is never created from integration", async () => {
+  for (const args of ["--name=task/T-124", "task/T-124"]) {
+    const fixture = setup({ branch: "master", gitReplies: {
+      "git show-ref --verify --quiet refs/heads/task/T-124": { stdout: "", code: 1 },
+      "git show-ref --verify --quiet refs/remotes/origin/task/T-124": { stdout: "", code: 1 },
+    } });
+    const running = fixture.start(args);
+    await until(() => fixture.view().includes("только от текущей родительской"));
+    assert.equal(fixture.calls.some((call) => call.startsWith("git switch")), false);
+    assert.equal(fixture.calls.some((call) => call.startsWith("git commit")), false);
+    fixture.panel.handleInput("\r");
+    await running;
+  }
+});
+
+test("existing task MR to integration is blocked without changing its target", async () => {
+  const fixture = setup({ branch: "task/T-124" });
+  const running = fixture.start();
+  await until(() => fixture.view().includes("MR задачи должен"));
+  assert.equal(fixture.calls.some((call) => call.startsWith("glab mr update") || call.startsWith("git commit")), false);
+  fixture.panel.handleInput("\r");
+  await running;
+});
+
+test("new task starts from its feature parent and resolves only template placeholders", async () => {
+  const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "spacehub-mr-template-"));
+  try {
+    const dir = path.join(repoDir, ".gitlab/merge_request_templates");
+    fs.mkdirSync(dir, { recursive: true });
+    const templatePath = path.join(dir, "Default.md");
+    fs.writeFileSync(templatePath, "https://spacehub.esoft.tech/entity/T-…\nhttps://urs.esoft.tech/issue/EUTP-\nhttps://spacehub.esoft.tech/entity/T-999\n");
+    const fixture = setup({ branch: "feature/T-123", existingMr: false, repoDir, gitReplies: {
+      "git show-ref --verify --quiet refs/heads/task/T-124": { stdout: "", code: 1 },
+      "git show-ref --verify --quiet refs/remotes/origin/task/T-124": { stdout: "", code: 1 },
+    } });
+    const running = fixture.start("task/T-124");
+    await until(() => fixture.view().includes("Использовать существующее"));
+    assert.ok(fixture.calls.includes("git switch -c task/T-124 feature/T-123"));
+    assert.equal(fixture.calls.some((call) => call.includes("symbolic-ref")), false);
+    fixture.panel.handleInput("\x1b");
+    await until(() => fixture.view().includes("Команда mr-echat отменена"));
+    fixture.panel.handleInput("\r");
+    await running;
+
+    fs.writeFileSync(templatePath, "https://spacehub.esoft.tech/entity/T-UNKNOWN\n");
+    const invalid = setup({ existingMr: false, repoDir });
+    const invalidRun = invalid.start();
+    await until(() => invalid.view().includes("Не удалось разрешить плейсхолдер"));
+    assert.equal(invalid.calls.some((call) => call.startsWith("git commit")), false);
+    invalid.panel.handleInput("\r");
+    await invalidRun;
+  } finally {
+    fs.rmSync(repoDir, { recursive: true, force: true });
+  }
 });
 
 test("session shutdown settles a pending dialog and releases the panel", async () => {

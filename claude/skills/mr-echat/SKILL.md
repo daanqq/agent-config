@@ -22,6 +22,12 @@ Complete the requested commit, push, and GitLab MR workflow. Interpret `$ARGUMEN
 
 ## Prepare
 
+Before requesting a new branch, follow the branch contract and decomposition
+gate in [`task-worktree`](../task-worktree/SKILL.md). For a confirmed child
+`task/T-<id>`, pass `--target-branch feature/T-<parent-id>` so it starts from and
+merges into that feature. This publishing helper requires a native feature/task
+T-branch; do not rename historical branches just to invoke it.
+
 Resolve this skill directory as `SKILL_ROOT`, then run:
 
 ```bash
@@ -39,7 +45,9 @@ The helper chooses the commit scope deterministically:
 - otherwise all tracked and untracked working-tree changes belong to the commit;
 - generated artifacts excluded from the model diff still remain in the commit scope.
 
-Stop if the branch has no `EUTP-<number>`, the repository or template is invalid, `glab` cannot inspect GitLab, or the requested operation conflicts with the prepared state.
+Stop if the branch has no unambiguous T-ID, a task branch has no parent feature
+target, the repository/template is invalid, `glab` cannot inspect GitLab, or the
+requested operation conflicts with the prepared state.
 
 When `included_paths` is empty, an existing MR is updated without a commit: no title is generated, and `ship` pushes once only to verify that the source branch is synchronized.
 
@@ -60,7 +68,7 @@ python3 "$SKILL_ROOT/scripts/mr_echat.py" generate \
   [--title "<user-supplied title>"]
 ```
 
-Pass `--title` only when the user supplied a title; the helper appends ` #EUTP-<number>` once. Stop and report the error if generation fails; do not compose the texts yourself.
+Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. Stop and report the error if generation fails; do not compose the texts yourself.
 
 ## Confirm once before writes
 
@@ -73,7 +81,7 @@ Before commit, push, or GitLab modification, show the user:
 - target branch when known;
 - the generated MR description.
 
-Ask for one explicit confirmation covering commit, push, and MR create/update. The `/mr-echat` invocation authorizes preparation, but not these writes without this confirmation. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #EUTP-<number>` title suffix, and show the result again.
+Ask for one explicit confirmation covering commit, push, and MR create/update. The `/mr-echat` invocation authorizes preparation, but not these writes without this confirmation. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #T-<id>` title suffix, and show the result again.
 
 ## Ship
 

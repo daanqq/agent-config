@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any, Sequence
 
 
-EUTP_RE = re.compile(r"EUTP-\d+", re.IGNORECASE)
-TITLE_RE = re.compile(r"^.+ #(?P<task>EUTP-\d+)$", re.IGNORECASE)
-TASK_TAG_RE = re.compile(r"#?EUTP-\d+", re.IGNORECASE)
+TASK_BRANCH_RE = re.compile(r"(?P<kind>feature|task)/(?P<task>T-\d+)", re.IGNORECASE)
+TITLE_RE = re.compile(r"^.+ #(?P<task>T-\d+)$", re.IGNORECASE)
+TASK_TAG_RE = re.compile(r"(?<![A-Z0-9_-])#?(?:T-\d+|EUTP-\d+)(?![A-Z0-9_])", re.IGNORECASE)
 RELATED_START = "<!-- mr-echat:related -->"
 RELATED_END = "<!-- /mr-echat:related -->"
 RELATED_RE = re.compile(rf"\n*{re.escape(RELATED_START)}.*?{re.escape(RELATED_END)}\n*", re.DOTALL)
@@ -100,8 +100,10 @@ def current_branch(repo: Path) -> str:
     return branch
 
 
-def select_branch(repo: Path, requested: str | None) -> str:
+def select_branch(repo: Path, requested: str | None, target_branch: str | None) -> str:
     branch = current_branch(repo)
+    if requested:
+        task_id_for(requested)
     if not requested or requested == branch:
         return branch
     if git(repo, "check-ref-format", "--branch", requested, check=False).returncode:
@@ -111,25 +113,33 @@ def select_branch(repo: Path, requested: str | None) -> str:
     elif not git(repo, "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{requested}", check=False).returncode:
         git(repo, "switch", "--track", "-c", requested, f"origin/{requested}")
     else:
+        if requested.lower().startswith("task/"):
+            parent = TASK_BRANCH_RE.fullmatch(str(target_branch or ""))
+            if not parent or parent.group("kind").lower() != "feature":
+                raise WorkflowError("creating a task branch requires --target-branch feature/T-<parent-id>")
+            task_id_for(str(target_branch))
+            candidates = (str(target_branch), f"origin/{target_branch}")
+        else:
+            candidates = (target_branch, f"origin/{target_branch}") if target_branch else ("master", "main")
         base = next(
             (
                 candidate
-                for candidate in ("master", "main")
-                if not git(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}", check=False).returncode
+                for candidate in candidates
+                if candidate and not git(repo, "rev-parse", "--verify", "--quiet", f"{candidate}^{{commit}}", check=False).returncode
             ),
             None,
         )
         if not base:
-            raise WorkflowError("cannot create requested branch: no local master or main branch")
+            raise WorkflowError("cannot create requested branch: its integration or parent feature base is unavailable")
         git(repo, "switch", "-c", requested, base)
     return requested
 
 
 def task_id_for(branch: str) -> str:
-    match = EUTP_RE.search(branch)
+    match = TASK_BRANCH_RE.fullmatch(branch)
     if not match:
-        raise WorkflowError(f"branch does not contain an EUTP id: {branch}")
-    return match.group(0).upper()
+        raise WorkflowError(f"expected feature/T-<id> or decomposed task/T-<id> branch: {branch}")
+    return match.group("task").upper()
 
 
 def nul_paths(payload: bytes) -> list[str]:
@@ -200,14 +210,20 @@ def read_template(repo: Path, task_id: str) -> str:
     if not path.is_file():
         raise WorkflowError(f"merge request template not found: {path}")
     text = path.read_text(encoding="utf-8")
-    text = re.sub(
-        r"https?://youtrack\.esoft\.tech/issue/EUTP-(?:[…\.]+|\d+)",
-        f"https://youtrack.esoft.tech/issue/{task_id}",
+    def replace_placeholder(match: re.Match[str]) -> str:
+        suffix = match.group(1)
+        if re.fullmatch(r"\d+(?:[?#].*)?", suffix):
+            return match.group(0)
+        if re.fullmatch(r"(?:…|\.\.\.|XXX|<[^>]+>|\{\{[^}]+\}\})?", suffix, re.IGNORECASE):
+            return f"https://spacehub.esoft.tech/entity/{task_id}"
+        raise WorkflowError(f"unresolved task placeholder in MR template: {match.group(0)}")
+
+    return re.sub(
+        r"https?://(?:spacehub\.esoft\.tech/entity/T-|(?:youtrack|urs)\.esoft\.tech/issue/EUTP-)(<[^>]+>|[^\s)<>\"']*)",
+        replace_placeholder,
         text,
+        flags=re.IGNORECASE,
     )
-    if re.search(r"https?://youtrack\.esoft\.tech/issue/EUTP-[…\.]+", text):
-        raise WorkflowError("the EUTP placeholder in the MR template was not replaced")
-    return text
 
 
 def existing_mr(repo: Path, branch: str) -> dict[str, Any] | None:
@@ -258,7 +274,8 @@ def remote_refs(repo: Path) -> list[str]:
 
 
 def select_parent_task_branch(repo: Path, branch: str) -> str | None:
-    head = git(repo, "rev-parse", "HEAD").stdout.strip()
+    if not branch.lower().startswith("task/"):
+        return None
     default_base: str | None = None
     origin_head = git(repo, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD", check=False).stdout.strip()
     for ref in (origin_head, *(f"origin/{name}" for name in BASE_BRANCHES), *BASE_BRANCHES):
@@ -272,11 +289,12 @@ def select_parent_task_branch(repo: Path, branch: str) -> str | None:
     matches: list[tuple[int, str]] = []
     for ref in remote_refs(repo):
         normalized = ref.removeprefix("origin/")
-        if normalized == branch or not EUTP_RE.search(normalized):
+        candidate = TASK_BRANCH_RE.fullmatch(normalized)
+        if normalized == branch or not candidate or candidate.group("kind").lower() != "feature":
             continue
         base_result = git(repo, "merge-base", "HEAD", ref, check=False)
         base = base_result.stdout.strip()
-        if base_result.returncode or not base or base in (head, default_base):
+        if base_result.returncode or not base or base == default_base:
             continue
         if default_base and git(repo, "merge-base", "--is-ancestor", default_base, base, check=False).returncode:
             continue
@@ -284,6 +302,8 @@ def select_parent_task_branch(repo: Path, branch: str) -> str | None:
         if not distance_result.returncode and distance_result.stdout.strip().isdigit():
             matches.append((int(distance_result.stdout.strip()), normalized))
     matches.sort()
+    if len(matches) > 1 and matches[0][0] == matches[1][0]:
+        raise WorkflowError("ambiguous parent feature branch; pass --target-branch feature/T-<parent-id>")
     return matches[0][1] if matches else None
 
 
@@ -344,7 +364,7 @@ def load_state(path: str) -> tuple[Path, dict[str, Any]]:
 
 def prepare(args: argparse.Namespace) -> dict[str, Any]:
     repo = resolve_repo(args.repo)
-    branch = select_branch(repo, args.branch)
+    branch = select_branch(repo, args.branch, args.target_branch)
     task_id = task_id_for(branch)
     staged = changed_paths(repo, "diff", "--cached", "--name-only")
     unstaged = changed_paths(repo, "diff", "--name-only")
@@ -354,6 +374,23 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     mr = existing_mr(repo, branch)
     if not included and not mr:
         raise WorkflowError("no changes to commit and no existing MR to update")
+
+    if args.target_branch and git(repo, "check-ref-format", "--branch", args.target_branch, check=False).returncode:
+        raise WorkflowError(f"invalid target branch name: {args.target_branch}")
+    if mr and args.target_branch and args.target_branch != mr.get("target_branch"):
+        raise WorkflowError(
+            f"existing MR targets {mr.get('target_branch')!r}, not requested target {args.target_branch!r}"
+        )
+    target = args.target_branch or (mr.get("target_branch") if mr else select_parent_task_branch(repo, branch))
+    if branch.lower().startswith("task/"):
+        parent = TASK_BRANCH_RE.fullmatch(str(target or ""))
+        if not parent or parent.group("kind").lower() != "feature":
+            raise WorkflowError("a decomposed task MR must target its parent feature/T-<id>; pass --target-branch")
+        task_id_for(str(target))
+    elif not target:
+        target = default_target_branch(repo)
+    if target:
+        ensure_target_exists(repo, str(target))
 
     workspace = Path(tempfile.mkdtemp(prefix=f"claude-mr-echat-{task_id.lower()}-", dir="/tmp"))
     workspace.chmod(0o700)
@@ -366,17 +403,6 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
 
     template_path: Path | None = None
     current_description_path: Path | None = None
-    if args.target_branch and git(repo, "check-ref-format", "--branch", args.target_branch, check=False).returncode:
-        raise WorkflowError(f"invalid target branch name: {args.target_branch}")
-    if mr and args.target_branch and args.target_branch != mr.get("target_branch"):
-        raise WorkflowError(
-            f"existing MR targets {mr.get('target_branch')!r}, not requested target {args.target_branch!r}"
-        )
-    target = args.target_branch or (
-        mr.get("target_branch") if mr else select_parent_task_branch(repo, branch) or default_target_branch(repo)
-    )
-    if target:
-        ensure_target_exists(repo, str(target))
     branch_diff_path: Path | None = None
     if target:
         branch_diff_path = workspace / "branch.diff"

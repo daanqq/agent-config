@@ -17,34 +17,112 @@ SPEC.loader.exec_module(mr_echat)
 
 class MrEchatTests(unittest.TestCase):
     def test_extracts_normalized_task_id(self) -> None:
-        self.assertEqual(mr_echat.task_id_for("feature/eutp-123-test"), "EUTP-123")
+        self.assertEqual(mr_echat.task_id_for("feature/t-123"), "T-123")
 
     def test_rejects_branch_without_task(self) -> None:
-        with self.assertRaises(mr_echat.WorkflowError):
-            mr_echat.task_id_for("feature/no-task")
+        for branch in (
+            "feature/no-task", "feature/J-123", "feature/J-T-123",
+            "feature/T-123-T-124", "feature/T-12abc", "fix/T-123",
+        ):
+            with self.subTest(branch=branch), self.assertRaises(mr_echat.WorkflowError):
+                mr_echat.task_id_for(branch)
+
+    def test_task_title_normalization_replaces_old_suffix_once(self) -> None:
+        self.assertEqual(
+            mr_echat.normalized_title("fix rendering #EUTP-456 #T-999", "T-123"),
+            "fix rendering #T-123",
+        )
 
     def test_validates_exact_title_suffix(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             title = Path(directory) / "title.txt"
-            title.write_text("fix message rendering #EUTP-123\n", encoding="utf-8")
+            title.write_text("fix message rendering #T-123\n", encoding="utf-8")
             self.assertEqual(
-                mr_echat.validated_title(str(title), "EUTP-123"),
-                "fix message rendering #EUTP-123",
+                mr_echat.validated_title(str(title), "T-123"),
+                "fix message rendering #T-123",
             )
-            title.write_text("fix message rendering #EUTP-999\n", encoding="utf-8")
+            title.write_text("fix message rendering #T-999\n", encoding="utf-8")
             with self.assertRaises(mr_echat.WorkflowError):
-                mr_echat.validated_title(str(title), "EUTP-123")
+                mr_echat.validated_title(str(title), "T-123")
 
     def test_template_replaces_https_placeholder(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
             template = repo / ".gitlab" / "merge_request_templates" / "Default.md"
             template.parent.mkdir(parents=True)
-            template.write_text("https://youtrack.esoft.tech/issue/EUTP-…\n", encoding="utf-8")
-            self.assertEqual(
-                mr_echat.read_template(repo, "EUTP-123"),
-                "https://youtrack.esoft.tech/issue/EUTP-123\n",
-            )
+            for placeholder in (
+                "https://spacehub.esoft.tech/entity/T-…",
+                "https://spacehub.esoft.tech/entity/T-",
+                "https://spacehub.esoft.tech/entity/T-<ID>",
+                "https://urs.esoft.tech/issue/EUTP-...",
+                "https://youtrack.esoft.tech/issue/EUTP-",
+            ):
+                with self.subTest(placeholder=placeholder):
+                    template.write_text(placeholder + "\nhttps://spacehub.esoft.tech/entity/T-999\n", encoding="utf-8")
+                    self.assertEqual(
+                        mr_echat.read_template(repo, "T-123"),
+                        "https://spacehub.esoft.tech/entity/T-123\nhttps://spacehub.esoft.tech/entity/T-999\n",
+                    )
+            template.write_text("https://spacehub.esoft.tech/entity/T-UNKNOWN\n", encoding="utf-8")
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "unresolved task placeholder"):
+                mr_echat.read_template(repo, "T-123")
+
+    def test_decomposed_parent_selection_and_branch_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+
+            def git(*args: str) -> str:
+                return subprocess.run(
+                    ["git", *args], cwd=repo, check=True, text=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                ).stdout.strip()
+
+            git("init", "-b", "master")
+            git("config", "user.name", "Test User")
+            git("config", "user.email", "test@example.com")
+            (repo / "file.txt").write_text("base\n", encoding="utf-8")
+            git("add", ".")
+            git("commit", "-m", "base")
+            git("update-ref", "refs/remotes/origin/master", "HEAD")
+            git("switch", "-c", "feature/T-10")
+            (repo / "file.txt").write_text("feature\n", encoding="utf-8")
+            git("commit", "-am", "feature")
+            parent_head = git("rev-parse", "HEAD")
+            git("update-ref", "refs/remotes/origin/feature/T-10", "HEAD")
+            git("switch", "master")
+
+            with self.assertRaises(mr_echat.WorkflowError):
+                mr_echat.select_branch(repo, "task/T-11", None)
+            self.assertEqual(git("branch", "--show-current"), "master")
+            self.assertEqual(mr_echat.select_branch(repo, "task/T-11", "feature/T-10"), "task/T-11")
+            self.assertEqual(git("rev-parse", "HEAD"), parent_head)
+            self.assertEqual(mr_echat.select_parent_task_branch(repo, "task/T-11"), "feature/T-10")
+            self.assertIsNone(mr_echat.select_parent_task_branch(repo, "feature/T-11"))
+
+            git("update-ref", "refs/remotes/origin/task/T-12", "HEAD")
+            self.assertEqual(mr_echat.select_parent_task_branch(repo, "task/T-11"), "feature/T-10")
+            git("update-ref", "refs/remotes/origin/feature/T-20", "HEAD")
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "ambiguous"):
+                mr_echat.select_parent_task_branch(repo, "task/T-11")
+
+    def test_prepare_task_does_not_fall_back_to_integration_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            workspace = repo / "workspace"
+            workspace.mkdir()
+            with (
+                patch.object(mr_echat, "resolve_repo", return_value=repo),
+                patch.object(mr_echat, "select_branch", return_value="task/T-11"),
+                patch.object(mr_echat, "changed_paths", return_value=["file.txt"]),
+                patch.object(mr_echat, "git", return_value=SimpleNamespace(stdout=b"")),
+                patch.object(mr_echat, "existing_mr", return_value=None),
+                patch.object(mr_echat, "select_parent_task_branch", return_value=None),
+                patch.object(mr_echat.tempfile, "mkdtemp", return_value=str(workspace)),
+                patch.object(mr_echat, "default_target_branch", return_value="master") as default_target,
+            ):
+                with self.assertRaisesRegex(mr_echat.WorkflowError, "parent feature"):
+                    mr_echat.prepare(SimpleNamespace(repo=str(repo), branch=None, target_branch=None))
+                default_target.assert_not_called()
 
     def test_excludes_generated_paths_only_from_model_diff(self) -> None:
         self.assertTrue(mr_echat.is_model_excluded("frontend/package-lock.json"))
@@ -79,10 +157,10 @@ class MrEchatTests(unittest.TestCase):
             (repo / "tracked.txt").write_text("before\n", encoding="utf-8")
             template = repo / ".gitlab" / "merge_request_templates" / "Default.md"
             template.parent.mkdir(parents=True)
-            template.write_text("http://youtrack.esoft.tech/issue/EUTP-…\n", encoding="utf-8")
+            template.write_text("http://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
             git("add", ".")
             git("commit", "-m", "initial")
-            git("switch", "-c", "feature/EUTP-123-test")
+            git("switch", "-c", "feature/T-123")
             (repo / "tracked.txt").write_text("after\n", encoding="utf-8")
             (repo / "new.txt").write_text("new\n", encoding="utf-8")
 
@@ -108,23 +186,23 @@ class MrEchatTests(unittest.TestCase):
             subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
             template = repo / ".gitlab" / "merge_request_templates" / "Default.md"
             template.parent.mkdir(parents=True)
-            template.write_text("https://youtrack.esoft.tech/issue/EUTP-…\n", encoding="utf-8")
+            template.write_text("https://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
             (repo / "file.txt").write_text("before\n", encoding="utf-8")
             subprocess.run(["git", "add", "."], cwd=repo, check=True)
             subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
             subprocess.run(["git", "push", "-u", "origin", "master"], cwd=repo, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["git", "switch", "-c", "feature/EUTP-123-test"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
+            subprocess.run(["git", "switch", "-c", "feature/T-123"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
             (repo / "file.txt").write_text("after\n", encoding="utf-8")
 
             with patch.object(mr_echat, "existing_mr", return_value=None):
                 prepared = mr_echat.prepare(SimpleNamespace(repo=str(repo), branch=None, target_branch=None))
             try:
                 title = Path(prepared["workspace"]) / "title.txt"
-                title.write_text("fix test workflow #EUTP-123\n", encoding="utf-8")
+                title.write_text("fix test workflow #T-123\n", encoding="utf-8")
                 committed = mr_echat.commit(SimpleNamespace(state=prepared["state_path"], title_file=str(title)))
                 pushed = mr_echat.push(SimpleNamespace(state=prepared["state_path"], force_with_lease=False))
                 remote_sha = subprocess.run(
-                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/feature/EUTP-123-test"],
+                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/feature/T-123"],
                     check=True,
                     text=True,
                     stdout=subprocess.PIPE,
@@ -151,15 +229,15 @@ class MrEchatTests(unittest.TestCase):
             git("config", "user.email", "test@example.com")
             template = repo / ".gitlab" / "merge_request_templates" / "Default.md"
             template.parent.mkdir(parents=True)
-            template.write_text("https://youtrack.esoft.tech/issue/EUTP-…\n", encoding="utf-8")
+            template.write_text("https://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
             (repo / "file.txt").write_text("before\n", encoding="utf-8")
             git("add", ".")
             git("commit", "-m", "initial")
             git("push", "-u", "origin", "master")
-            git("switch", "-c", "feature/EUTP-123-test")
+            git("switch", "-c", "feature/T-123")
             (repo / "committed.txt").write_text("committed change\n", encoding="utf-8")
             git("add", ".")
-            git("commit", "-m", "add committed file #EUTP-123")
+            git("commit", "-m", "add committed file #T-123")
             (repo / "file.txt").write_text("pending change\n", encoding="utf-8")
 
             with patch.object(mr_echat, "existing_mr", return_value=None):
@@ -168,7 +246,7 @@ class MrEchatTests(unittest.TestCase):
             try:
                 notes = workspace / "notes.md"
                 notes.write_text("Ran unit tests: passed.\n", encoding="utf-8")
-                answer = "<title>fix pending file #EUTP-123</title>\n<description>\n### Описание\n\nТекст.\n</description>\n"
+                answer = "<title>fix pending file #T-123</title>\n<description>\n### Описание\n\nТекст.\n</description>\n"
                 with patch.object(mr_echat, "ask_model", return_value=answer) as ask_model:
                     generated = mr_echat.generate(
                         SimpleNamespace(state=prepared["state_path"], notes_file=str(notes), title=None)
@@ -176,9 +254,9 @@ class MrEchatTests(unittest.TestCase):
                 prompt = ask_model.call_args.args[0]
                 self.assertIn("committed change", prompt)
                 self.assertIn("pending change", prompt)
-                self.assertIn("https://youtrack.esoft.tech/issue/EUTP-123", prompt)
+                self.assertIn("https://spacehub.esoft.tech/entity/T-123", prompt)
                 self.assertIn("Ran unit tests: passed.", prompt)
-                self.assertEqual(generated["title"], "fix pending file #EUTP-123")
+                self.assertEqual(generated["title"], "fix pending file #T-123")
 
                 glab_calls: list[tuple[str, ...]] = []
 
@@ -189,16 +267,16 @@ class MrEchatTests(unittest.TestCase):
                 with patch.object(mr_echat, "existing_mr", return_value=None), patch.object(mr_echat, "glab", fake_glab):
                     shipped = mr_echat.ship(SimpleNamespace(state=prepared["state_path"], force_with_lease=False))
                 remote_sha = subprocess.run(
-                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/feature/EUTP-123-test"],
+                    ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/feature/T-123"],
                     check=True,
                     text=True,
                     stdout=subprocess.PIPE,
                 ).stdout.strip()
                 self.assertEqual(shipped["status"], "created")
                 self.assertEqual(shipped["commit"], remote_sha)
-                self.assertEqual(git("log", "-1", "--format=%s"), "fix pending file #EUTP-123")
+                self.assertEqual(git("log", "-1", "--format=%s"), "fix pending file #T-123")
                 create = next(call for call in glab_calls if call[:2] == ("mr", "create"))
-                self.assertEqual(create[create.index("--title") + 1], "fix pending file #EUTP-123")
+                self.assertEqual(create[create.index("--title") + 1], "fix pending file #T-123")
                 self.assertEqual(create[create.index("--description") + 1], "### Описание\n\nТекст.")
                 self.assertFalse(workspace.exists())
             finally:
@@ -221,7 +299,7 @@ class MrEchatTests(unittest.TestCase):
 
         with (
             patch.object(mr_echat, "resolve_repo", side_effect=Path),
-            patch.object(mr_echat, "current_branch", return_value="feature/EUTP-1"),
+            patch.object(mr_echat, "current_branch", return_value="feature/T-1"),
             patch.object(mr_echat, "existing_mr", side_effect=lambda repo, _: mrs[repo.name]),
             patch.object(mr_echat, "mr_description", side_effect=lambda _, ref: descriptions[ref]),
             patch.object(mr_echat, "glab", fake_glab),
@@ -246,7 +324,7 @@ class MrEchatTests(unittest.TestCase):
             workspace = Path(directory)
             (workspace / "current-description.md").write_text(f"Старое.\n\n{block}\n", encoding="utf-8")
             state_path = workspace / "state.json"
-            state = {"workspace": str(workspace), "task_id": "EUTP-1", "included_paths": [], "existing_mr": {"ref": "1"}}
+            state = {"workspace": str(workspace), "task_id": "T-1", "included_paths": [], "existing_mr": {"ref": "1"}}
             with (
                 patch.object(mr_echat, "load_state", return_value=(workspace, state)),
                 patch.object(mr_echat, "ask_model", return_value="<description>Новое.</description>") as ask_model,
