@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from pathlib import Path
 from typing import Sequence
 import json
@@ -11,6 +11,7 @@ import sys
 from .core import (
     ReviewError,
     cleanup_workspace,
+    extract_task_id,
     prepare_local,
     prepare_mr,
     resolve_repo_override,
@@ -25,7 +26,6 @@ DEFAULT_OUTPUT_ROOT = Path(
 DEFAULT_LOCK_ROOT = Path(
     os.environ.get("MR_REVIEW_LOCK_ROOT", str(Path.home() / ".cache" / "echat-mr-review" / "locks"))
 )
-DEFAULT_YOUTRACK_URL = "https://urs.esoft.tech/api/user/youtrack/v1/issues"
 
 
 def build_parser() -> ArgumentParser:
@@ -63,21 +63,22 @@ def build_parser() -> ArgumentParser:
     return parser
 
 
+def task_id_argument(value: str) -> str:
+    task_id = extract_task_id(value)
+    if not task_id:
+        raise ArgumentTypeError("provide exactly one task T-ID, not a work J-ID")
+    return task_id
+
+
 def _add_common_prepare_options(parser: ArgumentParser) -> None:
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT, help="parent directory for generated workspaces")
     parser.add_argument("--lock-root", type=Path, default=DEFAULT_LOCK_ROOT, help="directory for cross-process repository locks")
-    parser.add_argument("--related-task", action="append", default=[], help="related EUTP task ID; repeatable")
+    parser.add_argument("--related-task", type=task_id_argument, action="append", default=[], help="explicitly requested related task T-ID; repeatable")
     extra = parser.add_mutually_exclusive_group()
     extra.add_argument("--extra-info", default="", help="additional review/task context")
     extra.add_argument("--extra-info-file", type=Path, help="read additional context from a UTF-8 file")
-    pora = parser.add_mutually_exclusive_group()
-    pora.add_argument("--pora-session", help="PORA session; prefer env/file because argv may be visible")
-    pora.add_argument("--pora-session-file", type=Path, help="read PORA session from a file")
-    parser.add_argument("--pora-session-env", default="PORA_SESSION", help="session environment variable (default: PORA_SESSION)")
-    parser.add_argument("--youtrack-base-url", default=DEFAULT_YOUTRACK_URL)
-    parser.add_argument("--network-timeout", type=float, default=15, help="HTTP/glab timeout in seconds")
-    parser.add_argument("--offline", action="store_true", help="disable GitLab API, glab, and YouTrack HTTP requests")
-
+    parser.add_argument("--network-timeout", type=float, default=15, help="GitLab HTTP/glab timeout in seconds")
+    parser.add_argument("--offline", action="store_true", help="skip GitLab API/glab metadata requests; Git refs are still fetched")
 
 def _read_optional_file(path: Path | None, label: str) -> str | None:
     if path is None:
@@ -109,12 +110,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "cleanup":
             result = cleanup_workspace(args.workspace, dry_run=args.dry_run)
         else:
-            pora_session = _secret(args.pora_session, args.pora_session_file, args.pora_session_env)
             common = {
                 "output_root": args.output_root,
                 "lock_root": args.lock_root,
-                "pora_session": pora_session,
-                "youtrack_base_url": args.youtrack_base_url,
                 "related_task_ids": args.related_task,
                 "additional_information": _extra_info(args),
                 "network_timeout": args.network_timeout,

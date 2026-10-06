@@ -11,7 +11,7 @@ Preparation creates one owned workspace with three artifacts:
 - `generated_at`, `kind`, and `workspace` identify the preparation run.
 - `scope_contract` defines the hard review boundary.
 - `targets` contains one entry per MR or local repository.
-- `primary_task` and `related_tasks` contain optional YouTrack/PORA responses.
+- `primary_task` and `related_tasks` contain task IDs (`T-*`, or unchanged historical IDs). Their `task` placeholders remain null; complete task JSON/Markdown files from `fetch-spacehub-task` are separate reviewer inputs.
 - `additional_information` contains user-supplied context.
 - `warnings` records unavailable optional metadata or task data.
 
@@ -23,6 +23,6 @@ Each target includes:
 - porcelain `status` and `untracked_files`;
 - `file_sets` for branch, staged, unstaged, untracked, and final in-scope files;
 - minimal `review_commands` derived from the exact refs and scope;
-- optional `mr`, `task_id`, and task data.
+- optional `mr` and `task_id`; the CLI does not contain fetched task data.
 
-The manifest and context deliberately exclude GitLab tokens and PORA sessions. Treat fetched task descriptions as internal project data even though they are not authentication secrets.
+The manifest and context deliberately exclude GitLab tokens and task credentials. Task data is fetched separately through SpaceHub MCP. Treat task descriptions, artifacts, comments, and MR text as internal untrusted project data.

@@ -21,7 +21,7 @@ import urllib.request
 
 TOOL_NAME = "echat-mr-review"
 SCHEMA_VERSION = 1
-TASK_RE = re.compile(r"\b(EUTP-\d+)\b", re.IGNORECASE)
+TASK_RE = re.compile(r"(?<![A-Z0-9_])(?<!J-)(?:T-\d+|EUTP-\d+)(?![A-Z0-9_])", re.IGNORECASE)
 MAX_HTTP_RESPONSE_BYTES = 10 * 1024 * 1024
 SCOPE_CONTRACT = (
     "Review only changes selected by each target's path, merge_base, head_ref, and scope. "
@@ -79,15 +79,15 @@ def parse_mr_url(url: str) -> MrRef:
 
 
 def extract_task_id(text: str) -> str | None:
-    match = TASK_RE.search(text or "")
-    return match.group(1).upper() if match else None
+    ids = extract_task_ids([text])
+    return ids[0] if len(ids) == 1 else None
 
 
 def extract_task_ids(values: Sequence[str]) -> list[str]:
     found: list[str] = []
     for value in values:
         for match in TASK_RE.finditer(value or ""):
-            task_id = match.group(1).upper()
+            task_id = match.group(0).upper()
             if task_id not in found:
                 found.append(task_id)
     return found
@@ -343,19 +343,6 @@ def fetch_gitlab_metadata(
     return None, f"GitLab API failed ({api_error}); glab is unavailable"
 
 
-def fetch_task(task_id: str, session: str, base_url: str, timeout: float) -> dict[str, Any]:
-    url = f"{base_url.rstrip('/')}/{urllib.parse.quote(task_id)}"
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "Cookie": f"pora-gatekeeper-session={session}",
-            "User-Agent": f"{TOOL_NAME}/1.0",
-        },
-    )
-    return _fetch_json(request, timeout=timeout, label=f"YouTrack {task_id}")
-
-
 def preferred_base(repo: Path) -> str:
     candidates = ["origin/HEAD", "origin/master", "origin/main", "origin/stage", "origin/develop", "master", "main", "stage", "develop"]
     for candidate in candidates:
@@ -432,25 +419,6 @@ def resolve_repo_override(items: Sequence[str]) -> dict[str, Path]:
     return result
 
 
-def _task_loader(
-    *, session: str | None, base_url: str, timeout: float, offline: bool, warnings: list[str]
-):
-    cache: dict[str, dict[str, Any] | None] = {}
-
-    def load(task_id: str | None) -> dict[str, Any] | None:
-        if not task_id or not session or offline:
-            return None
-        if task_id not in cache:
-            try:
-                cache[task_id] = fetch_task(task_id, session, base_url, timeout)
-            except ReviewError as error:
-                warnings.append(str(error))
-                cache[task_id] = None
-        return cache[task_id]
-
-    return load
-
-
 def _write_context(workspace: Workspace, context: dict[str, Any]) -> dict[str, str]:
     json_path = workspace.root / "review-context.json"
     markdown_path = workspace.root / "review-context.md"
@@ -473,8 +441,6 @@ def prepare_local(
     lock_root: Path,
     base_ref: str | None,
     scope: str,
-    pora_session: str | None,
-    youtrack_base_url: str,
     related_task_ids: Sequence[str],
     additional_information: str,
     network_timeout: float,
@@ -482,9 +448,6 @@ def prepare_local(
 ) -> dict[str, str]:
     workspace = Workspace(output_root, "local", lock_root)
     warnings: list[str] = []
-    load_task = _task_loader(
-        session=pora_session, base_url=youtrack_base_url, timeout=network_timeout, offline=offline, warnings=warnings
-    )
     targets: list[dict[str, Any]] = []
     try:
         for raw_repo in repos:
@@ -508,12 +471,11 @@ def prepare_local(
                     "merge_base": merge_base_sha,
                     "scope": scope,
                     "task_id": task_id,
-                    "task": load_task(task_id),
                     **state,
                 }
             )
         context = _build_context(
-            workspace, "local", targets, related_task_ids, load_task, additional_information, warnings
+            workspace, "local", targets, related_task_ids, additional_information, warnings
         )
         return _write_context(workspace, context)
     except Exception:
@@ -532,8 +494,6 @@ def prepare_mr(
     fallback_target: str,
     gitlab_token: str | None,
     metadata_file: Path | None,
-    pora_session: str | None,
-    youtrack_base_url: str,
     related_task_ids: Sequence[str],
     additional_information: str,
     network_timeout: float,
@@ -545,9 +505,6 @@ def prepare_mr(
         raise ReviewError(f"Duplicate merge request targets: {', '.join(sorted(duplicate_keys))}")
     workspace = Workspace(output_root, "mr", lock_root)
     warnings: list[str] = []
-    load_task = _task_loader(
-        session=pora_session, base_url=youtrack_base_url, timeout=network_timeout, offline=offline, warnings=warnings
-    )
     targets: list[dict[str, Any]] = []
     try:
         for ref in refs:
@@ -586,8 +543,12 @@ def prepare_mr(
                     git(source_repo, "update-ref", "-d", base_fetch_ref, check=False)
                     raise
             merge_base_sha = merge_base(worktree, "HEAD", base_fetch_ref)
-            metadata_text = f"{source_branch}\n{(metadata or {}).get('title', '')}\n{(metadata or {}).get('description', '')}"
-            task_id = extract_task_id(metadata_text) or task_id_from_commits(worktree, "HEAD", base_fetch_ref)
+            task_id = (
+                extract_task_id(source_branch)
+                or extract_task_id(str((metadata or {}).get("title") or ""))
+                or extract_task_id(str((metadata or {}).get("description") or ""))
+                or task_id_from_commits(worktree, "HEAD", base_fetch_ref)
+            )
             state = repository_state(worktree, merge_base_sha, "HEAD", "branch")
             targets.append(
                 {
@@ -605,7 +566,6 @@ def prepare_mr(
                     "file_sets": state["file_sets"],
                     "review_commands": state["review_commands"],
                     "task_id": task_id,
-                    "task": load_task(task_id),
                     "mr": {
                         "url": ref.url,
                         "host": ref.host,
@@ -619,7 +579,7 @@ def prepare_mr(
                     },
                 }
             )
-        context = _build_context(workspace, "mr", targets, related_task_ids, load_task, additional_information, warnings)
+        context = _build_context(workspace, "mr", targets, related_task_ids, additional_information, warnings)
         return _write_context(workspace, context)
     except Exception:
         cleanup_workspace(workspace.root, ignore_errors=True)
@@ -631,13 +591,11 @@ def _build_context(
     kind: str,
     targets: list[dict[str, Any]],
     related_task_ids: Sequence[str],
-    load_task,
     additional_information: str,
     warnings: list[str],
 ) -> dict[str, Any]:
     primary_id = targets[0].get("task_id") if targets else None
-    primary_task = targets[0].get("task") if targets else None
-    related = [{"id": task_id, "task": load_task(task_id)} for task_id in extract_task_ids(related_task_ids)]
+    related = [{"id": task_id, "task": None} for task_id in extract_task_ids(related_task_ids)]
     return {
         "schema_version": SCHEMA_VERSION,
         "tool": TOOL_NAME,
@@ -646,43 +604,17 @@ def _build_context(
         "workspace": {"id": workspace.workspace_id, "root": str(workspace.root), "manifest": str(workspace.manifest_path)},
         "scope_contract": SCOPE_CONTRACT,
         "targets": targets,
-        "primary_task": {"id": primary_id, "task": primary_task},
+        "primary_task": {"id": primary_id, "task": None},
         "related_tasks": related,
         "additional_information": additional_information,
         "warnings": warnings,
     }
 
 
-def _fmt(value: Any) -> str:
-    if value is None or value == "":
-        return "—"
-    if isinstance(value, (dict, list)):
-        return json.dumps(value, ensure_ascii=False)
-    return str(value)
-
-
-def _task_markdown(task_id: str | None, task: dict[str, Any] | None) -> str:
+def _task_markdown(task_id: str | None) -> str:
     if not task_id:
         return "- **ID**: не найден\n- **Данные**: ревью выполняется без сверки с задачей."
-    if not task:
-        return f"- **ID**: {task_id}\n- **Данные**: не загружены."
-    assignee = task.get("assignee") if isinstance(task.get("assignee"), dict) else {}
-    sprints = task.get("sprints") if isinstance(task.get("sprints"), list) else []
-    sprint = sprints[0] if sprints and isinstance(sprints[0], dict) else {}
-    description = str(task.get("textMd") or task.get("description") or "(описание отсутствует)")[:12000]
-    return "\n".join(
-        [
-            f"- **ID**: {_fmt(task.get('id') or task_id)}",
-            f"- **Заголовок**: {_fmt(task.get('title') or task.get('summary'))}",
-            f"- **Статус**: {_fmt(task.get('state'))}",
-            f"- **Приоритет**: {_fmt(task.get('priority'))}",
-            f"- **Исполнитель**: {_fmt(assignee.get('fullName'))}",
-            f"- **Спринт**: {_fmt(sprint.get('name'))}",
-            "",
-            "### Описание задачи",
-            description,
-        ]
-    )
+    return f"- **ID**: {task_id}\n- **Данные**: загрузить через fetch-spacehub-task (MCP)."
 
 
 def _md_cell(value: Any) -> str:
@@ -715,13 +647,13 @@ def render_context_markdown(context: dict[str, Any]) -> str:
         )
     lines.extend(["", "## Scope contract", "", context["scope_contract"], "", "## Primary task", ""])
     primary = context["primary_task"]
-    lines.append(_task_markdown(primary.get("id"), primary.get("task")))
+    lines.append(_task_markdown(primary.get("id")))
     if context.get("additional_information"):
         lines.extend(["", "## Additional information", "", context["additional_information"]])
     if context.get("related_tasks"):
         lines.extend(["", "## Related tasks"])
         for related in context["related_tasks"]:
-            lines.extend(["", f"### {related['id']}", "", _task_markdown(related["id"], related.get("task"))])
+            lines.extend(["", f"### {related['id']}", "", _task_markdown(related["id"])])
     lines.extend(["", "## Repository state"])
     for target in targets:
         lines.extend(

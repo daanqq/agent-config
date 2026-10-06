@@ -259,7 +259,7 @@
       },
       "mr-review": {
         "tracking": "local",
-        "installed_hash": "cafd025681ba9ec4ef67421a8bcf791c67c993cda68786e78ddb2f460cf77a08"
+        "installed_hash": "dbe014291988b9a2b429e3b8e22ca8b27364458490fb34583e3ceff3fd165e65"
       },
       "prove-it-works": {
         "tracking": "overlay",
@@ -389,7 +389,7 @@
       },
       "mr-review": {
         "tracking": "local",
-        "installed_hash": "b627cbd2405faeab9934fc7740bf752eb16047d4462904bd70ab88344319fa4e"
+        "installed_hash": "4d55c46d3ecb17d351435d21b8df4f46b0f66b8024af34b7669097f1b0246b3f"
       },
       "mr-echat": {
         "tracking": "local",

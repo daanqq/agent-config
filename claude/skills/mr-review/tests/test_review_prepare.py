@@ -21,6 +21,7 @@ from echat_mr_review.core import (  # noqa: E402
     ReviewError,
     _NoRedirect,
     _fetch_json,
+    extract_task_id,
     extract_task_ids,
     parse_mr_url,
 )
@@ -47,7 +48,15 @@ class PureLogicTests(unittest.TestCase):
         self.assertEqual(ref.iid, 42)
 
     def test_extract_task_ids_is_ordered_and_unique(self) -> None:
-        self.assertEqual(extract_task_ids(["eutp-12 EUTP-9", "EUTP-12"]), ["EUTP-12", "EUTP-9"])
+        self.assertEqual(extract_task_ids(["t-12 T-9", "T-12"]), ["T-12", "T-9"])
+
+    def test_task_ids_do_not_match_work_ids_or_partial_identifiers(self) -> None:
+        self.assertEqual(extract_task_id("feature/T-123"), "T-123")
+        self.assertEqual(extract_task_id("task/T-124"), "T-124")
+        self.assertIsNone(extract_task_id("J-123 J-EUTP-456 J-T-789 T-12abc"))
+        self.assertIsNone(extract_task_id("T-123 T-124"))
+        self.assertIsNone(extract_task_id("feature/T-123-T-124"))
+        self.assertEqual(extract_task_id("EUTP-456"), "EUTP-456")
 
     def test_fetch_json_disables_redirects(self) -> None:
         class Response:
@@ -110,33 +119,29 @@ class CliIntegrationTests(unittest.TestCase):
             (repo / "tracked.txt").write_text("base\n", encoding="utf-8")
             run("git", "-C", str(repo), "add", "tracked.txt")
             run("git", "-C", str(repo), "commit", "-m", "base")
-            run("git", "-C", str(repo), "checkout", "-b", "EUTP-123-feature")
+            run("git", "-C", str(repo), "checkout", "-b", "feature/T-123")
             (repo / "tracked.txt").write_text("branch\n", encoding="utf-8")
-            run("git", "-C", str(repo), "commit", "-am", "EUTP-123 branch change")
+            run("git", "-C", str(repo), "commit", "-am", "T-123 branch change")
             (repo / "tracked.txt").write_text("working tree\n", encoding="utf-8")
             (repo / "new.txt").write_text("untracked\n", encoding="utf-8")
 
-            secret = "test-pora-secret-must-not-be-written"
-            with patch.dict("os.environ", {"PORA_SESSION": secret}):
-                code, stdout, stderr = self.invoke(
-                    [
-                        "prepare", "local", str(repo), "--base", "master", "--scope", "all",
-                        "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"), "--offline",
-                    ]
-                )
+            code, stdout, stderr = self.invoke(
+                [
+                    "prepare", "local", str(repo), "--base", "master", "--scope", "all",
+                    "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"), "--offline",
+                ]
+            )
             self.assertEqual((code, stderr), (0, ""))
             result = json.loads(stdout)
             self.assertIn(str(SCRIPTS / "review_prepare.py"), result["cleanup_command"])
             context = json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))
             target = context["targets"][0]
-            self.assertEqual(target["task_id"], "EUTP-123")
+            self.assertEqual(target["task_id"], "T-123")
+            self.assertIsNone(context["primary_task"]["task"])
             self.assertEqual(target["scope"], "all")
             self.assertIn("tracked.txt", target["file_sets"]["branch"])
             self.assertIn("tracked.txt", target["file_sets"]["unstaged"])
             self.assertEqual(target["untracked_files"], ["new.txt"])
-            for artifact in (result["review_context_json"], result["review_context_markdown"], result["manifest"]):
-                self.assertNotIn(secret, Path(artifact).read_text(encoding="utf-8"))
-
             cleanup_code, _, cleanup_stderr = self.invoke(["cleanup", result["workspace"]])
             self.assertEqual((cleanup_code, cleanup_stderr), (0, ""))
             self.assertFalse(Path(result["workspace"]).exists())
@@ -156,15 +161,15 @@ class CliIntegrationTests(unittest.TestCase):
             run("git", "-C", str(seed), "commit", "-m", "base")
             run("git", "-C", str(seed), "remote", "add", "origin", str(origin))
             run("git", "-C", str(seed), "push", "origin", "master")
-            run("git", "-C", str(seed), "checkout", "-b", "EUTP-77-feature")
+            run("git", "-C", str(seed), "checkout", "-b", "feature/T-77")
             (seed / "app.txt").write_text("mr\n", encoding="utf-8")
-            run("git", "-C", str(seed), "commit", "-am", "EUTP-77 MR")
+            run("git", "-C", str(seed), "commit", "-am", "T-77 MR")
             run("git", "-C", str(seed), "push", "origin", "HEAD:refs/merge-requests/7/head")
             clones.mkdir()
             run("git", "clone", str(origin), str(source))
             metadata = root / "metadata.json"
             metadata.write_text(
-                json.dumps({"title": "EUTP-77 change", "source_branch": "EUTP-77-feature", "target_branch": "master"}),
+                json.dumps({"title": "T-77 change", "source_branch": "feature/T-77", "target_branch": "master"}),
                 encoding="utf-8",
             )
             url = "https://git.example.test/group/project/-/merge_requests/7"
@@ -179,7 +184,7 @@ class CliIntegrationTests(unittest.TestCase):
             result = json.loads(stdout)
             context = json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))
             target = context["targets"][0]
-            self.assertEqual(target["task_id"], "EUTP-77")
+            self.assertEqual(target["task_id"], "T-77")
             self.assertEqual(target["mr"]["target_branch"], "master")
             self.assertEqual(target["file_sets"]["in_scope"], ["app.txt"])
             self.assertTrue(Path(target["path"]).is_dir())
