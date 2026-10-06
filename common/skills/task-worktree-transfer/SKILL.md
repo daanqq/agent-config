@@ -1,13 +1,13 @@
 ---
-name: eutp-worktree-transfer
-description: Transfer completed EUTP worktree branches and uncommitted changes back to their original repository checkouts for local builds. Use after EUTP implementation in one or more worktrees when the user asks to move the work to the original repositories.
+name: task-worktree-transfer
+description: Transfer completed task worktrees and uncommitted changes back to original repository checkouts for local builds, preserving task identity and user data.
 ---
 
-# EUTP worktree transfer
+# Task Worktree Transfer
 
 For every affected repository:
 
-1. Identify the task worktree, original checkout, and original task branch. For an MR, use its `source_branch`; otherwise use the established task branch, usually `feature/*` or `task/*`. Do not use a temporary `mr-review-*` branch as the destination. Verify the repository and ticket match; ask if the original branch cannot be established.
+1. Identify the task worktree, original checkout, and established source branch. For an MR, use its `source_branch`. New work follows the [`task-worktree` branch contract](../task-worktree/SKILL.md): normally `feature/T-*`, or an explicitly decomposed `task/T-*` targeting its parent feature. Preserve existing historical names. Do not use a temporary `mr-review-*` branch as the destination. Verify repository, task, and parent target; ask if the original branch cannot be established.
 2. Require the original checkout to have no user changes that could be overwritten. Stop and ask if it is not clean.
 3. Back up `git diff --binary HEAD` and all non-ignored untracked files to a task-specific temporary directory. Verify the backup before removing anything.
 4. Ensure the original task branch can reach the task worktree's HEAD by fast-forward, or already contains it. Create the branch at that HEAD only if absent. If histories diverge, stop without resetting or force-updating. If another checkout occupies the branch, verify its task identity and clean state before freeing it by detaching at its current commit. Stop and ask if it has changes or belongs to another task.

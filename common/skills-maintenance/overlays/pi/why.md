@@ -5,6 +5,7 @@
 - Keep automatic invocation for historical rationale, regressions, postmortems, legacy removal, rejected alternatives, and product or operational constraints.
 - Separate direct evidence, strong inference, and unknowns. Code proves mechanics, not intent.
 - Search local history and available records first; report unavailable external sources rather than inventing rationale.
+- Read task evidence through the installed `fetch-spacehub-task` MCP workflow, not YouTrack/PORA.
 - Respect read-only mode, privacy boundaries, database permissions, and the active `AGENTS.md` delegation budget.
 - Retain the compact local `references/epistemics.md`, bundled license, and Pi metadata.
 

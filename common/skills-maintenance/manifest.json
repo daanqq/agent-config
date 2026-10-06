@@ -62,13 +62,13 @@
         "path": "skills/dnd-kit-implementation",
         "installed_hash": "a4aa410fae08d4f325b8d033b03686bd2c8432a6f250b2ba562a3d377717237d"
       },
-      "eutp-worktree": {
+      "task-worktree": {
         "tracking": "local",
-        "installed_hash": "900258b78c7c1f13197f9a63fa3f56cb18261dffda62161d29372aed9b8e7076"
+        "installed_hash": "b6ac9fbaafdcd19b80a7a1eb9cc7702865be14fdfdd72f0f8b66a9168d69fc3a"
       },
-      "eutp-worktree-transfer": {
+      "task-worktree-transfer": {
         "tracking": "local",
-        "installed_hash": "814941149959ea23485b926301f5527411b9073a5a3c5f1a1604ad8206f60dc8"
+        "installed_hash": "92ff71b834c156b90b3e17556c66a12915457bb6f60addc7df4bb6e4ca27904f"
       },
       "fix-merge-conflicts": {
         "tracking": "overlay",
@@ -149,9 +149,9 @@
         "overlay": "overlays/common/vercel-react-best-practices.md",
         "installed_hash": "220642b1f81cfc06bbddc25d1984017bb863ff00001c7dd6a06ca31b303a8ea7"
       },
-      "fetch-eutp": {
+      "fetch-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "54a89200e99468d52a9cbcc2724972a8d00ab1e968663e8aaf636987f4f10cda"
+        "installed_hash": "63eafeaf88915f9534105ac3cfb649edb00fdab475ac244c5acc4c09d385bbfc"
       },
       "update-skills": {
         "tracking": "local",
@@ -195,9 +195,9 @@
       }
     },
     "pi": {
-      "analyze-eutp": {
+      "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "8a126f1300cfc6037fe89861c67b8830624e80c9e3175186fb9f26c740777cd6"
+        "installed_hash": "1dc4d981ce23f39ccc0b155465050dccb8e58dee3c48969d8c8f62778a530cba"
       },
       "background-terminals": {
         "tracking": "overlay",
@@ -309,7 +309,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/why",
         "overlay": "overlays/pi/why.md",
-        "installed_hash": "536629eda73bfad4798e6e384dd3c347b3d9491e504c9b1e9b9c24d9d8ef02e6"
+        "installed_hash": "8c0a8d17ba0b39b584cbbd3bd7857f5fe745b7cd3c2d6e7e3929b8a93dfedaac"
       },
       "writing-for-agents": {
         "tracking": "overlay",
@@ -332,9 +332,9 @@
       }
     },
     "claude": {
-      "analyze-eutp": {
+      "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "41cf27897fa7140230b66d72911c4cdfb80b021b9c080ce8d9096cbc1bea8cce"
+        "installed_hash": "1dc4d981ce23f39ccc0b155465050dccb8e58dee3c48969d8c8f62778a530cba"
       },
       "blast-radius": {
         "tracking": "overlay",
@@ -447,7 +447,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/why",
         "overlay": "overlays/claude/why.md",
-        "installed_hash": "15eee1ca41bf3bf3e7aea2d3d94fa4044021c5a13cd181f315872a9a3b932184"
+        "installed_hash": "a24895694573ec70fdd0d78ab29d948798bf762ce05f1dac3dc60eaccb2d39b5"
       },
       "writing-for-agents": {
         "tracking": "overlay",

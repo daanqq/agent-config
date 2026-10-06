@@ -30,16 +30,16 @@
       "target": ".agents/skills/dnd-kit-implementation"
     },
     {
-      "source": "common/skills/eutp-worktree",
-      "target": ".agents/skills/eutp-worktree"
+      "source": "common/skills/task-worktree",
+      "target": ".agents/skills/task-worktree"
     },
     {
-      "source": "common/skills/eutp-worktree-transfer",
-      "target": ".agents/skills/eutp-worktree-transfer"
+      "source": "common/skills/task-worktree-transfer",
+      "target": ".agents/skills/task-worktree-transfer"
     },
     {
-      "source": "common/skills/fetch-eutp",
-      "target": ".agents/skills/fetch-eutp"
+      "source": "common/skills/fetch-spacehub-task",
+      "target": ".agents/skills/fetch-spacehub-task"
     },
     {
       "source": "common/skills/fix-merge-conflicts",
@@ -130,8 +130,8 @@
       "target": ".claude/skills/a11y-debugging"
     },
     {
-      "source": "claude/skills/analyze-eutp",
-      "target": ".claude/skills/analyze-eutp"
+      "source": "claude/skills/analyze-spacehub-task",
+      "target": ".claude/skills/analyze-spacehub-task"
     },
     {
       "source": "claude/skills/blast-radius",
@@ -178,16 +178,16 @@
       "target": ".claude/skills/effort-cycle"
     },
     {
-      "source": "claude/skills/eutp-worktree",
-      "target": ".claude/skills/eutp-worktree"
+      "source": "claude/skills/task-worktree",
+      "target": ".claude/skills/task-worktree"
     },
     {
-      "source": "claude/skills/eutp-worktree-transfer",
-      "target": ".claude/skills/eutp-worktree-transfer"
+      "source": "claude/skills/task-worktree-transfer",
+      "target": ".claude/skills/task-worktree-transfer"
     },
     {
-      "source": "claude/skills/fetch-eutp",
-      "target": ".claude/skills/fetch-eutp"
+      "source": "claude/skills/fetch-spacehub-task",
+      "target": ".claude/skills/fetch-spacehub-task"
     },
     {
       "source": "claude/skills/fix-gitlab-mr-conflicts",
@@ -802,8 +802,8 @@
       "target": ".pi/agent/skills/a11y-debugging"
     },
     {
-      "source": "pi/agent/skills/analyze-eutp",
-      "target": ".pi/agent/skills/analyze-eutp"
+      "source": "pi/agent/skills/analyze-spacehub-task",
+      "target": ".pi/agent/skills/analyze-spacehub-task"
     },
     {
       "source": "pi/agent/skills/background-terminals",
@@ -850,16 +850,16 @@
       "target": ".pi/agent/skills/dnd-kit-implementation"
     },
     {
-      "source": "pi/agent/skills/eutp-worktree",
-      "target": ".pi/agent/skills/eutp-worktree"
+      "source": "pi/agent/skills/task-worktree",
+      "target": ".pi/agent/skills/task-worktree"
     },
     {
-      "source": "pi/agent/skills/eutp-worktree-transfer",
-      "target": ".pi/agent/skills/eutp-worktree-transfer"
+      "source": "pi/agent/skills/task-worktree-transfer",
+      "target": ".pi/agent/skills/task-worktree-transfer"
     },
     {
-      "source": "pi/agent/skills/fetch-eutp",
-      "target": ".pi/agent/skills/fetch-eutp"
+      "source": "pi/agent/skills/fetch-spacehub-task",
+      "target": ".pi/agent/skills/fetch-spacehub-task"
     },
     {
       "source": "pi/agent/skills/fix-gitlab-mr-conflicts",

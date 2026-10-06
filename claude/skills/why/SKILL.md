@@ -20,7 +20,7 @@ Read [`references/epistemics.md`](references/epistemics.md) before synthesizing.
 3. **Build the available-source map.** Search only read-only sources that actually exist and can affect the question:
    - git history, code comments, tests, and local ADRs or docs;
    - GitLab MR context through the installed review tooling when the target came from an MR;
-   - YouTrack or PORA through installed EUTP tooling when the target has a task identifier;
+   - SpaceHub through `fetch-spacehub-task` when the target has a task identifier;
    - local Claude transcripts for past sessions when they can contain relevant decisions;
    - other connected MCP sources only after checking their instructions and confirming the calls are read-only.
 4. **Investigate proportionally.** Start with source control and the strongest named source. Add another source when it can distinguish competing explanations or fill a material gap. Use at most one subagent by default for an independent evidence category; the parent owns synthesis and citation checks.
