@@ -12,7 +12,7 @@ Personal configuration for the `pi` coding agent.
 | Extension | Description | Commands |
 | --- | --- | --- |
 | `00-ui-00-transition.ts` | Buffers terminal output during TUI session transitions until resources are ready. | — |
-| `00-ui-editor.ts` | Standard input editor with a right-aligned session name in the top border. | — |
+| `00-ui-editor.ts` | Standard editor with the session name and a clickable SpaceHub task ID in the top border. Remembers the first user-provided task URL across reloads; later links are ignored unless explicitly replaced. | `/taskurl <URL>` |
 | `00-ui-footer.ts` | Compact two-line status footer. | — |
 | `00-ui-header.ts` | Theme-aware gradient header. | — |
 | `agent-pulse.ts` | Agent activity and elapsed-time indicator. | — |
