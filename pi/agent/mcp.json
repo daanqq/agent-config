@@ -6,7 +6,7 @@
         "-y",
         "chrome-devtools-mcp@latest",
         "--headless",
-        "--userDataDir=/home/user/.cache/chrome-devtools-mcp/pi-profile",
+        "--isolated",
         "--chromeArg=--remote-debugging-port=0",
         "--chromeArg=--window-size=1920,1080"
       ],
