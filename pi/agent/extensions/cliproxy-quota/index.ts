@@ -3,7 +3,7 @@ import { fetchSharedPoolQuota, formatPoolDetails, formatPoolFooter, type PoolQuo
 
 const EXTENSION_ID = "cliproxy-quota";
 const CLI_PROXY_PROVIDERS = new Set(["cliproxy", "openai-codex"]);
-const REFRESH_MS = 60_000;
+const REFRESH_MS = 5 * 60_000;
 
 export function isCLIProxyProvider(provider: string | undefined): boolean {
 	return provider !== undefined && CLI_PROXY_PROVIDERS.has(provider);

@@ -11,7 +11,7 @@ const FETCH_TIMEOUT_MS = 15_000;
 const SHARED_CACHE_DIR = join(homedir(), ".cache", "pi", "cliproxy-quota");
 const SHARED_CACHE_FILE = "quota.json";
 const SHARED_LOCK_DIR = "refresh.lock";
-const SHARED_CACHE_TTL_MS = 60_000;
+const SHARED_CACHE_TTL_MS = 5 * 60_000;
 const SHARED_LOCK_TTL_MS = 120_000;
 const SHARED_LOCK_WAIT_MS = 20_000;
 
