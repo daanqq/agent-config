@@ -190,6 +190,10 @@
       "target": ".claude/skills/task-worktree-transfer"
     },
     {
+      "source": "claude/skills/telegram-send",
+      "target": ".claude/skills/telegram-send"
+    },
+    {
       "source": "claude/skills/fetch-spacehub-task",
       "target": ".claude/skills/fetch-spacehub-task"
     },
