@@ -62,8 +62,7 @@
     "-extensions/apply-patch/index.ts",
     "-extensions/video-analysis/index.ts",
     "-extensions/web-access.ts",
-    "-extensions/00-ui-header.ts",
-    "-extensions/cliproxy-quota/index.ts"
+    "-extensions/00-ui-header.ts"
   ],
   "cacheWarming": "idle",
   "fullscreenWheelScrollLines": "auto"
