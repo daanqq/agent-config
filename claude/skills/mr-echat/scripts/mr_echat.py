@@ -733,6 +733,8 @@ def link(args: argparse.Namespace) -> dict[str, Any]:
         mrs.append((repo, mr))
     if len(mrs) < 2:
         raise WorkflowError("linking needs at least two merge requests")
+    if args.dry_run:
+        return {"status": "dry-run", "urls": [mr["url"] for _, mr in mrs]}
 
     for repo, mr in mrs:
         others = ", ".join(f"[{mr_label(other['url'])}]({other['url']})" for _, other in mrs if other is not mr)
@@ -794,6 +796,7 @@ def parser() -> argparse.ArgumentParser:
     cleanup_parser.add_argument("--state", required=True)
     link_parser = sub.add_parser("link")
     link_parser.add_argument("--repo", action="append", required=True)
+    link_parser.add_argument("--dry-run", action="store_true")
     return result
 
 

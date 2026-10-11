@@ -123,3 +123,19 @@ When the request covers several MRs, run each step for every working copy before
    It rewrites only the block between `<!-- mr-echat:related -->` markers, so rerunning it or adding a later MR is safe. `generate` preserves an existing block.
 
 Report every MR with the fields listed in Ship.
+
+## Link existing merge requests only
+
+When the request only asks to link MRs that already exist, for example after a task was published in several repositories, skip `prepare`, `generate`, and `ship`. `link` does not check the branch name, commit, or push; it finds the open MR of each repository's current branch.
+
+1. Resolve every requested repository under Boundaries. Each must be on the source branch of its MR.
+2. List the MRs without writing:
+
+   ```bash
+   python3 "$SKILL_ROOT/scripts/mr_echat.py" link --dry-run \
+     --repo <repository-1> \
+     --repo <repository-2>
+   ```
+
+3. Show the found MR URLs and state that only the related block of each description will be rewritten. Ask for one confirmation.
+4. Run the same command without `--dry-run`, then report the linked MR URLs.

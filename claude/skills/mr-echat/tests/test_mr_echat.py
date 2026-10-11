@@ -305,7 +305,7 @@ class MrEchatTests(unittest.TestCase):
             patch.object(mr_echat, "glab", fake_glab),
         ):
             for _ in range(2):
-                mr_echat.link(SimpleNamespace(repo=["/work/client", "/work/rest"]))
+                mr_echat.link(SimpleNamespace(repo=["/work/client", "/work/rest"], dry_run=False))
 
         self.assertEqual(
             descriptions["2708"],
@@ -317,6 +317,22 @@ class MrEchatTests(unittest.TestCase):
             "Сервер.\n\n<!-- mr-echat:related -->\n"
             f"Связанные MR: [tidy-client!2708]({mrs['client']['url']}).\n<!-- /mr-echat:related -->",
         )
+
+    def test_link_dry_run_lists_merge_requests_without_updating(self) -> None:
+        mrs = {
+            "client": {"ref": "2708", "url": "https://gitlab.example/echat/tidy-client/-/merge_requests/2708"},
+            "rest": {"ref": "1987", "url": "https://gitlab.example/echat/tidy-rest/-/merge_requests/1987"},
+        }
+        with (
+            patch.object(mr_echat, "resolve_repo", side_effect=Path),
+            patch.object(mr_echat, "current_branch", return_value="task/EUTP-1"),
+            patch.object(mr_echat, "existing_mr", side_effect=lambda repo, _: mrs[repo.name]),
+            patch.object(mr_echat, "glab") as glab,
+        ):
+            result = mr_echat.link(SimpleNamespace(repo=["/work/client", "/work/rest"], dry_run=True))
+
+        self.assertEqual(result, {"status": "dry-run", "urls": [mrs["client"]["url"], mrs["rest"]["url"]]})
+        glab.assert_not_called()
 
     def test_generate_keeps_related_block_out_of_the_prompt(self) -> None:
         block = "<!-- mr-echat:related -->\nСвязанные MR: [a!1](u).\n<!-- /mr-echat:related -->"

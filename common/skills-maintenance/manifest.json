@@ -393,7 +393,7 @@
       },
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "9206642f3d6c37e565b699bc7904c9f6a4f20085f61cf9037edf99cfd3b2f3a5"
+        "installed_hash": "be8b652869d51c23ffd66943fad081730483463c50118fc1f6704788e59f4771"
       },
       "prove-it-works": {
         "tracking": "overlay",
