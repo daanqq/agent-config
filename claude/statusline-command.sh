@@ -1,8 +1,7 @@
 #!/bin/bash
 # Mirrors the pi footer (~/.pi/agent/extensions/00-ui-footer.ts): line 1 is
 # project (branch) on the left and model + effort on the right, line 2 is
-# session token/cache/cost/context stats on the left and Claude subscription quota
-# from CLIProxyAPI on the right (see statusline-quota-refresh.sh).
+# session token/cache/cost/context stats.
 
 input=$(cat)
 # Russian locale would print the cost with a decimal comma.
@@ -128,43 +127,4 @@ fi
 awk -v c="$cost" 'BEGIN { exit !(c > 0) }' && stats+=("\$$(printf '%.3f' "$cost")")
 stats+=("$(fmt_tokens "$prompt_tokens")/$(fmt_tokens "$cw_size")")
 
-# Quota is read from a cache; a stale cache triggers a detached refresh so the
-# status line never waits on the network. The cache is shared by all sessions,
-# so at most one refresh per minute; retryAt backs off after HTTP 429.
-quota_cache="$HOME/.cache/claude-statusline/quota.json"
-now_ms=$(( $(date +%s) * 1000 ))
-if jq -e --argjson now "$now_ms" \
-    '($now - .updatedAt) < 60000 or ((.retryAt // 0) > $now)' "$quota_cache" >/dev/null 2>&1; then
-  :
-else
-  setsid bash "$HOME/.claude/statusline-quota-refresh.sh" </dev/null >/dev/null 2>&1 &
-fi
-
-# Same pool format as the pi cliproxy-quota footer: available/total accounts when
-# some failed, then per window the average remaining percent, time to the nearest
-# reset and how much that reset restores to the pool.
-quota=$(jq -r --argjson now "$now_ms" '
-  def reset_text($ms):
-    (($ms - $now) / 60000 | ceil) as $m
-    | if $m <= 0 then "now"
-      elif $m < 60 then "\($m)m"
-      elif $m < 1440 then "\($m / 60 | floor)h" + (if $m % 60 > 0 then "\($m % 60)m" else "" end)
-      else ($m / 60 | floor) as $h | "\($h / 24 | floor)d" + (if $h % 24 > 0 then "\($h % 24)h" else "" end)
-      end;
-  .accounts as $accounts
-  | if ($accounts | length) == 0 then "quota unavailable" else
-      ([$accounts[] | select(.stale | not)] | length) as $fresh
-      | [ (if $fresh != .totalAccounts then "\($fresh)/\(.totalAccounts)" else empty end),
-          ("5h", "7d") as $label
-          | [$accounts[].windows[$label] | select(. != null)] as $windows
-          | select($windows | length > 0)
-          | ($windows | map(.remaining) | add / length | round) as $remaining
-          | ([$windows[].resetsAt | select(. > $now)] | min) as $reset
-          | if $reset == null then "\($remaining)%/unknown" else
-              ([$windows[] | select(.resetsAt == $reset) | 100 - .remaining] | add / ($windows | length) | round) as $inc
-              | "\($remaining)%/\(reset_text($reset))+\($inc)%"
-            end
-        ] | join(" ")
-    end' "$quota_cache" 2>/dev/null)
-
-two_columns "${stats[*]}" "$quota"
+two_columns "${stats[*]}" ""
