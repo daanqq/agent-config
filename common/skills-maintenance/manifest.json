@@ -275,10 +275,6 @@
         "overlay": "overlays/pi/retro.md",
         "installed_hash": "09f573cdc8ca49667a7c44fe5bdcfbf196da9e410f5a142e445f2a8df84dbd83"
       },
-      "review-deepseek": {
-        "tracking": "local",
-        "installed_hash": "f8c3e4031a5e627a34afa106d4f19cd7ed8be338709f87f9ea60c7767459863d"
-      },
       "show-me-your-work": {
         "tracking": "overlay",
         "repository": "cursor-plugins",

@@ -946,10 +946,6 @@
       "target": ".pi/agent/skills/retro"
     },
     {
-      "source": "pi/agent/skills/review-deepseek",
-      "target": ".pi/agent/skills/review-deepseek"
-    },
-    {
       "source": "pi/agent/skills/review-gpt",
       "target": ".pi/agent/skills/review-gpt"
     },
