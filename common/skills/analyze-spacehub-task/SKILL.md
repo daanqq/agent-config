@@ -12,6 +12,17 @@ through the active agent's SpaceHub MCP tools. Follow its rules for exact task
 lookup, artifacts, linked tasks, and attachments. Analyze only the requested
 task's description, artifacts, and metadata.
 
+After the task context is written, resolve this skill's directory as
+`SKILL_ROOT` and label the calling Herdr tab with the task ID and title:
+
+```sh
+python3 "$SKILL_ROOT/scripts/rename-herdr-tab.py" <context_dir>/task.json
+```
+
+Renaming the tab does not change the repository and is allowed in read-only
+work. The script skips outside Herdr and only warns on failure; continue the
+analysis either way.
+
 Completion criterion: the target issue and relevant accessible attachments
 have been analyzed without unrequested related-issue fetches.
 
