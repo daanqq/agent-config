@@ -81,7 +81,7 @@ Before commit, push, or GitLab modification, show the user:
 - target branch when known;
 - the generated MR description.
 
-Ask for one explicit confirmation covering commit, push, and MR create/update. The `/mr-echat` invocation authorizes preparation, but not these writes without this confirmation. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #T-<id>` title suffix, and show the result again.
+Ask for one explicit confirmation covering commit, push, and MR create/update. The `/mr-echat` invocation authorizes preparation, but not these writes without this confirmation. If you find the generated text inaccurate, apply your corrections to `title_path` and `description_path` before showing it, and name what you changed: the confirmation must cover the exact text that ships, because a published commit title can only be fixed with a force push. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #T-<id>` title suffix, and show the result again.
 
 ## Ship
 

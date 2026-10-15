@@ -9,7 +9,7 @@ The final change set is `<branch_diff>` (already committed on the branch against
 Write it only when `<title_required>` is `yes`. It names the pending commit, not the whole branch.
 
 - English, lowercase, imperative mood;
-- start with `add`, `fix`, `make`, `update`, or `remove` when one fits;
+- start with `add`, `fix`, `make`, `update`, `remove`, or `revert` when one fits;
 - describe the net behavior change briefly, consistent with `<last_task_commit_title>` when present;
 - omit the task id: it is appended automatically.
 
@@ -43,6 +43,8 @@ In both cases:
 
 - write natural Russian for a human reviewer;
 - describe the final change set, not intermediate attempts;
+- when `<notes>` describe a revert, open the summary with what is reverted and what is intentionally kept, with the reason;
+- keep the platform and build scope as wide as the diff: a change to shared code is not limited to the build where the bug was reported;
 - take intent, implementation decisions, and executed checks only from `<notes>`;
 - include only facts supported by the diffs or `<notes>`;
 - name checks and their results precisely;
