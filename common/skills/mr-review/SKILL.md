@@ -89,6 +89,20 @@ Completion criterion: every applicable item is checked against the actual diff
 and its immediate callers. Any finding must still be caused by an in-scope
 changed line or listed untracked file.
 
+## Severity calibration
+
+Before reporting a Major or Blocker, state:
+
+- The failure introduced or re-exposed by the change, or the exact new requirement it fails.
+- The user impact, available workaround, and recovery path.
+- Why that impact warrants blocking this MR rather than a follow-up.
+
+A reachable failure proves the mechanism, not its severity. For disputed causality,
+use the same focused check on base and head when practical; a baseline run is not
+mandatory for every finding. An old mechanism may still violate a new requirement:
+resolve that scope question rather than automatically dropping or escalating it.
+If blocking impact is unsubstantiated, do not label the finding Major or Blocker.
+
 Report only actionable, high-confidence correctness, security, data-loss, race, compatibility, regression, task-compliance, or concrete maintainability issues. Use Blocker, Major, or Minor severity. Include repository, `path:line`, mechanism, impact, and a concrete correction. If there are no findings, say so explicitly and still summarize task coverage and checks.
 
 Respond in Russian unless the user requests another language.

@@ -286,7 +286,7 @@
       },
       "mr-review": {
         "tracking": "local",
-        "installed_hash": "4d55c46d3ecb17d351435d21b8df4f46b0f66b8024af34b7669097f1b0246b3f"
+        "installed_hash": "94d3b1ecbe751e81cee8152c9ee61d58175dbab153ece1d2774cb1f633f7a12d"
       },
       "writing-for-agents": {
         "tracking": "overlay",
