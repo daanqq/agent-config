@@ -1,6 +1,11 @@
 {
   "schema_version": 2,
   "repositories": {
+    "addyosmani-agent-skills": {
+      "url": "https://github.com/addyosmani/agent-skills.git",
+      "cache": "github.com/addyosmani/agent-skills",
+      "revision": "aeac41d4d005999432bb7312f7ff06383a91d59d"
+    },
     "atman-workspace": {
       "url": "https://github.com/atman-33/atman-workspace.git",
       "cache": "github.com/atman-33/atman-workspace",
@@ -44,6 +49,13 @@
   },
   "skills": {
     "common": {
+      "code-simplification": {
+        "tracking": "overlay",
+        "repository": "addyosmani-agent-skills",
+        "path": "skills/code-simplification",
+        "overlay": "overlays/common/code-simplification.md",
+        "installed_hash": "d0af919cdf50512fdda0cc37bbde3d08e9bf1ee2a56cb870b7e7b296abf74ca9"
+      },
       "bro": {
         "tracking": "exact",
         "repository": "cursor-plugins",

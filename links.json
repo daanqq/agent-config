@@ -14,6 +14,10 @@
       "target": ".agents/skills/chrome-devtools"
     },
     {
+      "source": "common/skills/code-simplification",
+      "target": ".agents/skills/code-simplification"
+    },
+    {
       "source": "common/skills/codebase-design",
       "target": ".agents/skills/codebase-design"
     },
@@ -148,6 +152,10 @@
     {
       "source": "claude/skills/code-review",
       "target": ".claude/skills/code-review"
+    },
+    {
+      "source": "claude/skills/code-simplification",
+      "target": ".claude/skills/code-simplification"
     },
     {
       "source": "claude/skills/codebase-design",
@@ -840,6 +848,10 @@
     {
       "source": "pi/agent/skills/code-review",
       "target": ".pi/agent/skills/code-review"
+    },
+    {
+      "source": "pi/agent/skills/code-simplification",
+      "target": ".pi/agent/skills/code-simplification"
     },
     {
       "source": "pi/agent/skills/codebase-design",
