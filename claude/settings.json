@@ -6,7 +6,6 @@
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
     "CLAUDE_CODE_PROMPT_CACHE_TTL": "1h",
     "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "1h",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-5-5",
     "CLAUDE_CODE_SCROLL_SPEED": "3",
     "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1",
     "ENABLE_TOOL_SEARCH": "true",
@@ -27,7 +26,6 @@
       "CronList",
       "DesignSync",
       "ScheduleWakeup",
-      "Monitor",
       "EnterPlanMode",
       "ExitPlanMode",
       "AskUserQuestion",
@@ -59,8 +57,9 @@
     "dataviz": "off",
     "simplify": "off",
     "loop": "off",
+    "claude-api": "off",
+    "coding-discipline": "off",
     "init": "user-invocable-only",
-    "team-onboarding": "user-invocable-only",
     "security-review": "user-invocable-only"
   },
   "hooks": {
@@ -88,7 +87,7 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
-    "plannotator@plannotator": true,
+    "plannotator@plannotator": false,
     "session-report@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
