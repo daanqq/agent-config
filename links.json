@@ -62,6 +62,10 @@
       "target": ".agents/skills/handoff"
     },
     {
+      "source": "common/skills/herdr",
+      "target": ".agents/skills/herdr"
+    },
+    {
       "source": "common/skills/herdr-build",
       "target": ".agents/skills/herdr-build"
     },
@@ -232,6 +236,10 @@
     {
       "source": "claude/skills/handoff",
       "target": ".claude/skills/handoff"
+    },
+    {
+      "source": "claude/skills/herdr",
+      "target": ".claude/skills/herdr"
     },
     {
       "source": "claude/skills/herdr-build",
@@ -916,6 +924,10 @@
     {
       "source": "pi/agent/skills/handoff",
       "target": ".pi/agent/skills/handoff"
+    },
+    {
+      "source": "pi/agent/skills/herdr",
+      "target": ".pi/agent/skills/herdr"
     },
     {
       "source": "pi/agent/skills/herdr-build",

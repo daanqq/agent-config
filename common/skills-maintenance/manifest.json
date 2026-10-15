@@ -21,6 +21,11 @@
       "cache": "github.com/cursor/plugins",
       "revision": "57fc467a229cf2853329f19c9e6a9fd83ddc2ea2"
     },
+    "herdr": {
+      "url": "https://github.com/herdrdev/herdr.git",
+      "cache": "github.com/herdrdev/herdr",
+      "revision": "7b116c05bfda646af39d2524c54e70c751f57ee8"
+    },
     "humanlayer-skills": {
       "url": "https://github.com/humanlayer/skills.git",
       "cache": "github.com/humanlayer/skills",
@@ -113,6 +118,12 @@
       "herdr-build": {
         "tracking": "local",
         "installed_hash": "1739c22dac9b578a943d8359cb0528219255c87632c91140cb0fd28c459e7132"
+      },
+      "herdr": {
+        "tracking": "exact",
+        "repository": "herdr",
+        "path": "skills/herdr",
+        "installed_hash": "5aae74c4fecf6fd105e43f279b8c4196e333dabb38d8f099f967590d1d619dd1"
       },
       "improve-react": {
         "tracking": "overlay",
