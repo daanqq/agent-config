@@ -442,6 +442,10 @@
         "tracking": "local",
         "installed_hash": "64655a02e555b02e6c070b44c6fd981ea3553e537edc8c1061c674b51a8987fe"
       },
+      "session-screenshot": {
+        "tracking": "local",
+        "installed_hash": "82831b76ab2cb21b32a7bbc3b0c80c2d84f00fd6aa44df54d6205ebacfde616b"
+      },
       "why": {
         "tracking": "overlay",
         "repository": "cursor-plugins",

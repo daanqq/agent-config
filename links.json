@@ -194,6 +194,10 @@
       "target": ".claude/skills/telegram-send"
     },
     {
+      "source": "claude/skills/session-screenshot",
+      "target": ".claude/skills/session-screenshot"
+    },
+    {
       "source": "claude/skills/fetch-spacehub-task",
       "target": ".claude/skills/fetch-spacehub-task"
     },
