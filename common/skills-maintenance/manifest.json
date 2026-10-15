@@ -81,7 +81,7 @@
       },
       "task-worktree": {
         "tracking": "local",
-        "installed_hash": "b6ac9fbaafdcd19b80a7a1eb9cc7702865be14fdfdd72f0f8b66a9168d69fc3a"
+        "installed_hash": "3235c9a5e98df8f41e17efdc6268463b552a15fbe8f8b0564412f450a9665a2b"
       },
       "task-worktree-transfer": {
         "tracking": "local",
@@ -365,7 +365,7 @@
     "claude": {
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "be8b652869d51c23ffd66943fad081730483463c50118fc1f6704788e59f4771"
+        "installed_hash": "102564b707ad40d733764d8059e542a63f90e60bad5b79ac128434eb25615395"
       },
       "review-gpt": {
         "tracking": "local",
