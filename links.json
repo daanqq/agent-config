@@ -114,6 +114,82 @@
       "target": ".agents/skills/vercel-react-best-practices"
     },
     {
+      "source": "common/skills/analyze-spacehub-task",
+      "target": ".agents/skills/analyze-spacehub-task"
+    },
+    {
+      "source": "common/skills/retro",
+      "target": ".agents/skills/retro"
+    },
+    {
+      "source": "common/skills/blast-radius",
+      "target": ".agents/skills/blast-radius"
+    },
+    {
+      "source": "common/skills/typescript-best-practices",
+      "target": ".agents/skills/typescript-best-practices"
+    },
+    {
+      "source": "common/skills/code-review",
+      "target": ".agents/skills/code-review"
+    },
+    {
+      "source": "common/skills/coding-discipline",
+      "target": ".agents/skills/coding-discipline"
+    },
+    {
+      "source": "common/skills/diagnosing-bugs",
+      "target": ".agents/skills/diagnosing-bugs"
+    },
+    {
+      "source": "common/skills/fix-gitlab-mr-review",
+      "target": ".agents/skills/fix-gitlab-mr-review"
+    },
+    {
+      "source": "common/skills/improve-codebase-architecture",
+      "target": ".agents/skills/improve-codebase-architecture"
+    },
+    {
+      "source": "common/skills/prove-it-works",
+      "target": ".agents/skills/prove-it-works"
+    },
+    {
+      "source": "common/skills/tdd",
+      "target": ".agents/skills/tdd"
+    },
+    {
+      "source": "common/skills/mr-review",
+      "target": ".agents/skills/mr-review"
+    },
+    {
+      "source": "common/skills/writing-for-agents",
+      "target": ".agents/skills/writing-for-agents"
+    },
+    {
+      "source": "common/skills/librarian",
+      "target": ".agents/skills/librarian"
+    },
+    {
+      "source": "common/skills/how",
+      "target": ".agents/skills/how"
+    },
+    {
+      "source": "common/skills/fix-gitlab-mr-conflicts",
+      "target": ".agents/skills/fix-gitlab-mr-conflicts"
+    },
+    {
+      "source": "common/skills/telegram-send",
+      "target": ".agents/skills/telegram-send"
+    },
+    {
+      "source": "common/skills/update-proxies",
+      "target": ".agents/skills/update-proxies"
+    },
+    {
+      "source": "common/skills/yeet",
+      "target": ".agents/skills/yeet"
+    },
+    {
       "source": "claude/CLAUDE.md",
       "target": ".claude/CLAUDE.md"
     },
@@ -810,14 +886,6 @@
       "target": ".pi/agent/pi-fff.json"
     },
     {
-      "source": "pi/agent/prompts/update-proxies.md",
-      "target": ".pi/agent/prompts/update-proxies.md"
-    },
-    {
-      "source": "pi/agent/prompts/yeet.md",
-      "target": ".pi/agent/prompts/yeet.md"
-    },
-    {
       "source": "pi/agent/scripts/install-dependencies.mjs",
       "target": ".pi/agent/scripts/install-dependencies.mjs"
     },
@@ -1032,6 +1100,18 @@
     {
       "source": "pi/agent/skills/writing-for-agents",
       "target": ".pi/agent/skills/writing-for-agents"
+    },
+    {
+      "source": "pi/agent/skills/telegram-send",
+      "target": ".pi/agent/skills/telegram-send"
+    },
+    {
+      "source": "pi/agent/skills/update-proxies",
+      "target": ".pi/agent/skills/update-proxies"
+    },
+    {
+      "source": "pi/agent/skills/yeet",
+      "target": ".pi/agent/skills/yeet"
     },
     {
       "source": "pi/agent/systemd/cliproxy-tunnel.service",
