@@ -33,6 +33,10 @@ already transferred back, continue in that checkout.
   If the child IDs or parent relationship are missing, ask before creating
   branches. Do not create SpaceHub tasks or works without a separate request.
 - Several repositories may use the same feature T-ID; that is not decomposition.
+- A hotfix branch is still `feature/T-<task-id>`, created from the latest
+  `release-*` branch with `git switch --no-track -c feature/T-<task-id> origin/release-<version>`:
+  without `--no-track` a plain push goes to the release branch. Its MR targets
+  `hotfix/<version>`; until the user prepares that branch, target the release branch.
 
 When isolation is required, create one worktree per affected repository under
 `~/echat/worktrees/` unless the user specifies another location. Name it
