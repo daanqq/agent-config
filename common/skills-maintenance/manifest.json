@@ -277,6 +277,10 @@
         "overlay": "overlays/common/prove-it-works.md",
         "installed_hash": "81cde6e46975870b08b8a70dfe82a0a104d4d0f7cbe9b92c35c2af05c5476f7f"
       },
+      "solution-discovery": {
+        "tracking": "local",
+        "installed_hash": "e5be4fc346758c53fe41b70d3ed5e08b364740968e2e96f9fb2da0f0fca22a4c"
+      },
       "tdd": {
         "tracking": "overlay",
         "repository": "mattpocock-skills",

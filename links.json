@@ -154,6 +154,10 @@
       "target": ".agents/skills/prove-it-works"
     },
     {
+      "source": "common/skills/solution-discovery",
+      "target": ".agents/skills/solution-discovery"
+    },
+    {
       "source": "common/skills/tdd",
       "target": ".agents/skills/tdd"
     },
@@ -360,6 +364,10 @@
     {
       "source": "claude/skills/prove-it-works",
       "target": ".claude/skills/prove-it-works"
+    },
+    {
+      "source": "claude/skills/solution-discovery",
+      "target": ".claude/skills/solution-discovery"
     },
     {
       "source": "claude/skills/retro",
@@ -1036,6 +1044,10 @@
     {
       "source": "pi/agent/skills/prove-it-works",
       "target": ".pi/agent/skills/prove-it-works"
+    },
+    {
+      "source": "pi/agent/skills/solution-discovery",
+      "target": ".pi/agent/skills/solution-discovery"
     },
     {
       "source": "pi/agent/skills/retro",
