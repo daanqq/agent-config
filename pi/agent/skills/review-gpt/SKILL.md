@@ -18,13 +18,13 @@ Read `../subagents/SKILL.md` before spawning. This skill's explicit model and th
 
 ## 2. Build the reviewer prompt
 
-The reviewer sees nothing of this conversation, so build a self-contained prompt containing:
+Start the prompt with `/skill:code-review` followed by a space, not a line break, so the reviewer loads its `code-review` skill, which defines the review process and report format. Pi expands the command only at the very start of the prompt and reads the skill name up to the first space. The reviewer sees nothing of this conversation, so the rest of the prompt must stand alone:
 
-- Repository path(s) and how to see the change: base ref / commit range, or "uncommitted working tree" (`git diff`, `git status`). For multiple repositories, list each.
-- Goal of the change: ticket id and its requirement, in your own summary.
+- Repository path(s) and the review scope in `code-review` terms: `branch` with its fixed point, `working-tree`, or `all`. For multiple repositories, list each.
+- Goal of the change: ticket id and its requirement, in your own summary. This is the spec for the Spec axis.
 - Agreed constraints and deliberate decisions, so they are not reported as defects.
 - Extra focus from the arguments.
-- Instructions: read-only, do not modify files or apply fixes; inspect the diff and surrounding code; report findings ordered by severity, each with `file:line`, the problem, why it matters, and a suggested fix; say explicitly when nothing significant is found. Answer in Russian.
+- Instructions: read-only, do not modify files or apply fixes. Answer in Russian.
 
 Done when a reader with only the prompt and the repository could review the change without guessing its intent. Pass the prompt directly to the tool; no temporary brief file is needed.
 

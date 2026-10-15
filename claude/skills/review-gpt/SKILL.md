@@ -15,13 +15,13 @@ Run a read-only review through `pi`, then triage its findings for the user. Neve
 
 ## 2. Write the brief
 
-Write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`). The reviewer sees nothing of this conversation, so the brief must stand alone:
+Write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`). Start it with `/skill:code-review` followed by a space, not a line break (pi reads the skill name up to the first space), so pi loads its `code-review` skill, which defines the review process and report format. The reviewer sees nothing of this conversation, so the rest of the brief must stand alone:
 
-- Repository path(s) and how to see the change: base ref / commit range, or "uncommitted working tree" (`git diff`, `git status`). For multiple repositories, list each.
-- Goal of the change: ticket id and its requirement, in your own summary.
+- Repository path(s) and the review scope in `code-review` terms: `branch` with its fixed point, `working-tree`, or `all`. For multiple repositories, list each.
+- Goal of the change: ticket id and its requirement, in your own summary. This is the spec for the Spec axis.
 - Agreed constraints and deliberate decisions, so they are not reported as defects.
 - Extra focus from the arguments.
-- Instructions: read-only, do not modify files; inspect the diff and surrounding code; report findings ordered by severity, each with `file:line`, the problem, why it matters, and a suggested fix; say explicitly when nothing significant is found. Answer in Russian.
+- Instructions: read-only, do not modify files or apply fixes. Answer in Russian.
 
 Done when a reader with only the brief and the repository could review the change without guessing its intent.
 
@@ -30,10 +30,10 @@ Done when a reader with only the brief and the repository could review the chang
 Run from the repository root with `run_in_background: true`:
 
 ```bash
-pi -p --no-session --model "$MODEL" --thinking "$THINKING" --tools read,bash @"$BRIEF"
+pi -p --no-session --model "$MODEL" --thinking "$THINKING" --tools read,bash < "$BRIEF"
 ```
 
-stdout contains only the agent's final answer. Do not poll; wait for the completion notification.
+Pass the brief on stdin, not as `@"$BRIEF"`: pi expands `/skill:` only at the very start of the message, and `@file` wraps the content in a `<file>` tag. stdout contains only the agent's final answer. Do not poll; wait for the completion notification.
 
 ## 4. Triage
 

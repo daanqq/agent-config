@@ -343,7 +343,7 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "44fa1e52071a3074080a79d5d05697a36386d6cdcae87d141771529ca546c9b9"
+        "installed_hash": "61c871e4d0ff1744ef768654aabc601c98ca2e9d3e8c7525c4b0676c1920fb9c"
       },
       "review-plan-gpt": {
         "tracking": "local",
@@ -430,7 +430,7 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "9b6b7c1d003147e4bf012536afd63502b6360c8a8fc472abba68cdd5ca7e33c6"
+        "installed_hash": "013fb7aaf7f2fcbb1aaacdd6f7c100585328a140784703240250c876a1eefca5"
       },
       "review-plan-gpt": {
         "tracking": "local",
