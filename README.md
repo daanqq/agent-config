@@ -42,6 +42,21 @@ Exact upstream copies retain their original formatting. `.gitattributes`
 permits upstream trailing whitespace only in the DnD and Vercel skill trees;
 source checks still require their complete contents to match the locked commits.
 
+## Commit checks
+
+Enable this checkout's pre-commit hook explicitly:
+
+```bash
+git config --local core.hooksPath .githooks
+```
+
+If another hooks path or active pre-commit already exists, reconcile it before
+changing the setting. The hook runs the existing `make check` against a private
+snapshot of the Git index, not the working tree. It does not stash, modify the
+original index, install links, or refresh skill hashes. Unstaged fixes cannot
+hide a broken staged snapshot; unrelated unstaged files remain untouched.
+Stage the intended code, manifest entries, and links together before committing.
+
 ## Connect HOME
 
 This checkout is prepared separately; the original clients are not switched
