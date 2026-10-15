@@ -33,6 +33,25 @@ Use the cheapest level that proves the actual claim. A higher level is not autom
 
 When using verdict labels, use `VERIFIED` only when the evidence reaches the stated predicate, `NOT VERIFIED` when it fails, and `INCONCLUSIVE` when the necessary runtime, permission, external system, or safe environment is unavailable.
 
+## Command checks with trimmed output
+
+Use the bundled runner when a check's output needs trimming. Resolve this skill's
+directory as `SKILL_ROOT`, then pass the actual command as argv, not a shell pipeline:
+
+```sh
+python3 "$SKILL_ROOT/scripts/run-check.py" --tail 20 -- npm run typecheck
+```
+
+The runner keeps the complete combined log in a private temporary directory,
+prints its path and the tail, and preserves the command's status even if reporting
+fails. POSIX signal termination maps to 128 + signal; interruption remains a
+failure even if the command handles the signal and exits zero. On interruption,
+the runner also stops remaining members of its own process group. Inspect the
+status and the log before making a completion claim;
+`check | tail; echo $?` without `pipefail` only reports the formatter's status.
+Logs retain all command output: keep them outside repositories and do not run
+checks that print credentials.
+
 ## Guardrails
 
 - A successful build proves compilation, not product behavior.

@@ -275,7 +275,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/principle-prove-it-works",
         "overlay": "overlays/common/prove-it-works.md",
-        "installed_hash": "aff3d66a97a0ab0606fdfa332d8f840479bd96f71a14305ee4199f8f1e6e07f2"
+        "installed_hash": "81cde6e46975870b08b8a70dfe82a0a104d4d0f7cbe9b92c35c2af05c5476f7f"
       },
       "tdd": {
         "tracking": "overlay",

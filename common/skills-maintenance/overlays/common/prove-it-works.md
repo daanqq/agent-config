@@ -7,6 +7,7 @@
 - Choose the cheapest direct observation that covers the full claim, inspect delegated artifacts directly, and report verification blockers honestly.
 - Respect task permissions and avoid creating permanent verification artifacts unless the work benefits from them.
 - Preserve the bundled license and shared Claude Code and Pi metadata.
+- Keep the bundled argv-based check runner for trimmed output: private complete logs, the original exit status, and interruption forwarding. Do not substitute the status of a formatter for the check's status.
 
 ## Replace or omit from upstream
 
