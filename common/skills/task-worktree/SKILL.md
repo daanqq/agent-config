@@ -1,19 +1,23 @@
 ---
 name: task-worktree
-description: Prepare an isolated Git worktree for a SpaceHub task when the user requests isolation, existing unrelated changes require it, or several repositories need independent changes.
+description: Branch naming (`feature/T-`, `task/T-`) and isolated Git worktrees for SpaceHub tasks. Use before creating any task branch, or when the user requests isolation, existing unrelated changes require it, or several repositories need independent changes.
 ---
 
 # Task Worktree
 
-Use this skill only when repository isolation is needed. A task ID alone does
-not require a worktree. If the checkout is clean, only one repository is affected,
-and isolation was not requested, use the original checkout on the task branch.
-If the same task was already transferred back, continue in that checkout.
+Follow the branch contract for every new task branch. Create a worktree only
+when repository isolation is needed: a task ID alone does not require one. If
+the checkout is clean, only one repository is affected, and isolation was not
+requested, use the original checkout on the task branch. If the same task was
+already transferred back, continue in that checkout.
 
 ## Branch contract
 
-- Ordinary implementation uses `feature/T-<task-id>` regardless of repository
-  count. New branch names always use task T-IDs, never work J-IDs.
+- The prefix follows the MR target. A branch whose MR targets the integration
+  branch (master/main) is always `feature/T-<task-id>`, whatever the task class
+  (bug or feature) and repository count. `task/T-<task-id>` merges only into its
+  parent `feature/`. Existing `task/` branches merged into master are legacy,
+  not a naming precedent. New branch names always use task T-IDs, never work J-IDs.
 - Use `task/T-<child-task-id>` only when the user explicitly requests splitting
   one feature into several task branches AND the parent SpaceHub task contains
   more than one programming work. Check that condition with
@@ -28,8 +32,7 @@ If the same task was already transferred back, continue in that checkout.
   master/main. Do not invent child T-IDs or derive them from J-ID numbers.
   If the child IDs or parent relationship are missing, ask before creating
   branches. Do not create SpaceHub tasks or works without a separate request.
-- The parent feature MR targets the repository's normal integration branch.
-  Several repositories may use the same feature T-ID; that is not decomposition.
+- Several repositories may use the same feature T-ID; that is not decomposition.
 
 When isolation is required, create one worktree per affected repository under
 `~/echat/worktrees/` unless the user specifies another location. Name it
