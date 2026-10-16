@@ -390,6 +390,10 @@
         "tracking": "local",
         "installed_hash": "82831b76ab2cb21b32a7bbc3b0c80c2d84f00fd6aa44df54d6205ebacfde616b"
       },
+      "trade-offs": {
+        "tracking": "local",
+        "installed_hash": "345c45f79afb57d634470ee99730e07d1cc4a1d458f0bc3e4e456d233b3f1f41"
+      },
       "why": {
         "tracking": "overlay",
         "repository": "cursor-plugins",
