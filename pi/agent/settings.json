@@ -1,12 +1,14 @@
 {
-  "lastChangelogVersion": "1.0.4",
+  "lastChangelogVersion": "1.3.0",
   "defaultThinkingLevel": "medium",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "packages": [
     "npm:@ff-labs/pi-fff",
     "npm:@plannotator/pi-extension",
-    "npm:pi-context-view"
+    "npm:pi-context-view",
+    "npm:pi-claude-bridge",
+    "npm:pi-system-prompt"
   ],
   "skills": [
     "-skills/plannotator/SKILL.md"
