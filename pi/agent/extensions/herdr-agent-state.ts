@@ -13,7 +13,6 @@ const socketEndpoint =
   process.platform === "win32" && socketPath ? `\\\\.\\pipe\\${socketPath}` : socketPath;
 const paneId = process.env.HERDR_PANE_ID;
 const source = "herdr:pi";
-const sessionNameSource = "herdr:pi-session-name";
 
 function enabled() {
   return HERDR_ENV === "1" && !!socketPath && !!paneId;
@@ -128,21 +127,6 @@ function reportSession(sessionStartSource?: string): Promise<void> {
   });
 }
 
-function reportSessionName(name?: string): Promise<void> {
-  return sendRequest({
-    id: `${sessionNameSource}:${Date.now()}:${Math.random().toString(36).slice(2)}`,
-    method: "pane.report_metadata",
-    params: {
-      pane_id: paneId,
-      source: sessionNameSource,
-      seq: nextReportSeq(),
-      tokens: {
-        pi_session: name ?? null,
-      },
-    },
-  });
-}
-
 function sendState(state: AgentState, message?: string, seq = nextReportSeq()): Promise<void> {
   return sendRequest({
     id: `${source}:${Date.now()}:${Math.random().toString(36).slice(2)}`,
@@ -247,17 +231,9 @@ export default function (pi) {
     rootSession = true;
     updateSessionRef(ctx);
     await reportSession(event?.reason);
-    await reportSessionName(pi.getSessionName());
     // A reload can replace this extension mid-run without emitting another agent_start.
     agentActive = ctx?.isIdle?.() === false;
     publishState(true);
-  });
-
-  pi.on("session_info_changed", (event) => {
-    if (!rootSession) {
-      return;
-    }
-    void reportSessionName(event?.name);
   });
 
   pi.on("agent_start", (_event, ctx) => {
