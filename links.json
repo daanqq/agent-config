@@ -158,6 +158,10 @@
       "target": ".agents/skills/solution-discovery"
     },
     {
+      "source": "common/skills/ambition",
+      "target": ".agents/skills/ambition"
+    },
+    {
       "source": "common/skills/tdd",
       "target": ".agents/skills/tdd"
     },
@@ -368,6 +372,10 @@
     {
       "source": "claude/skills/solution-discovery",
       "target": ".claude/skills/solution-discovery"
+    },
+    {
+      "source": "claude/skills/ambition",
+      "target": ".claude/skills/ambition"
     },
     {
       "source": "claude/skills/retro",
@@ -1048,6 +1056,10 @@
     {
       "source": "pi/agent/skills/solution-discovery",
       "target": ".pi/agent/skills/solution-discovery"
+    },
+    {
+      "source": "pi/agent/skills/ambition",
+      "target": ".pi/agent/skills/ambition"
     },
     {
       "source": "pi/agent/skills/retro",

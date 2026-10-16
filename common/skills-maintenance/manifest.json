@@ -325,6 +325,10 @@
       "yeet": {
         "tracking": "local",
         "installed_hash": "fca57c45f1618179a61b0ae237722fdd2d71000937e8421736fc1d9d9daa8b95"
+      },
+      "ambition": {
+        "tracking": "local",
+        "installed_hash": "9af5b2e1027d85cd59a10c59bf19a838b75586af962534245e191288a8d72956"
       }
     },
     "pi": {
