@@ -232,7 +232,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/blast-radius",
         "overlay": "overlays/common/blast-radius.md",
-        "installed_hash": "fa5ab4d16c8579af3019ba90b3417556ad67f578b8d8a2b42b57cccde11276d2"
+        "installed_hash": "1a0712c67f057756b8fa125bc7bdcedc8fb78e7780e9513d0dcf73536382e94b"
       },
       "typescript-best-practices": {
         "tracking": "overlay",
@@ -373,7 +373,7 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "013fb7aaf7f2fcbb1aaacdd6f7c100585328a140784703240250c876a1eefca5"
+        "installed_hash": "34835248a73d3a61686892ba02cf6ba472306fc9c353fed58d91e767b270895a"
       },
       "review-plan-gpt": {
         "tracking": "local",

@@ -23,6 +23,8 @@ Write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`). Start it wi
 - Extra focus from the arguments.
 - Instructions: read-only, do not modify files or apply fixes. Answer in Russian.
 
+When preparing a repeat review after an identity or async-state finding was fixed, first run a narrow, read-only [blast-radius](../blast-radius/SKILL.md) pass on the already established invariant, not just the previously flagged line. Include the invariant, affected operations, and current evidence or explicit gaps from that pass in the brief. This does not require another reviewer or a full-suite rerun without a concrete reason, and does not authorize fixes beyond the user's selected scope.
+
 Done when a reader with only the brief and the repository could review the change without guessing its intent.
 
 ## 3. Run pi in background

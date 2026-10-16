@@ -16,3 +16,5 @@
 ## Acceptance
 
 The skill must find one or two load-bearing safety facts, prove them as directly as the environment allows, and label anything below executable proof as unproven.
+
+For a repeat pass after an identity or async-state finding was fixed, completion requires the established invariant's key scope or state-freshness point, all dependent operations in the affected path, and current evidence or an explicit gap for each. Keep this pass narrow; fixing only the flagged line is not sufficient.

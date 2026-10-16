@@ -32,6 +32,8 @@ A fact below level 4 remains **UNPROVEN**. Do not round it up because the writeu
 5. **Prove the fact cheaply.** Use the lowest-cost check that reaches the real behavior. In a read-only request, run existing checks or place throwaway scripts under `/tmp`; do not edit repository files. If proof requires a repository change, external write, configured database, or unavailable runtime, stop at the achieved level and mark the fact `UNPROVEN` or `INCONCLUSIVE`.
 6. **Judge the risks.** Keep only risks with a credible trigger and consequence. Record checked-and-cleared candidates separately so they do not return as findings.
 
+For a repeat pass after an identity or async-state finding was fixed, keep the scope to the established invariant in the affected path. Completion: name the key's identity scope or the point at which state must still be current (including after the last relevant `await`), enumerate all operations in that path that depend on it, and give current evidence at the achieved ladder level or an explicit gap for each operation. A fix at the previously flagged line alone does not complete this pass.
+
 Use at most one subagent by default and only when the risk surface has a genuine independent slice. The parent verifies its findings. Do not turn a blast-radius review into a broad multi-model ceremony.
 
 ## Report
