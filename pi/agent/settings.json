@@ -7,7 +7,6 @@
     "npm:@ff-labs/pi-fff",
     "npm:@plannotator/pi-extension",
     "npm:pi-context-view",
-    "npm:pi-claude-bridge",
     "npm:pi-system-prompt"
   ],
   "skills": [
