@@ -10,7 +10,8 @@
     "CLAUDE_CODE_SCROLL_SPEED": "3",
     "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1",
     "ENABLE_TOOL_SEARCH": "true",
-    "CLAUDE_CODE_AUTO_CONNECT_IDE": "false"
+    "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
+    "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1"
   },
   "attribution": {
     "commit": "",
