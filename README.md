@@ -22,8 +22,9 @@ the Claude skill is retained only in the Claude configuration.
 
 ## Prepare and check
 
-Requirements: Git, Python 3.10+, and the clients' existing dependencies. Node.js
-and npm are needed for Pi extensions. No new dependencies were introduced.
+Requirements: Git, Python 3.10+, Go for the native Claude hook, and the
+clients' existing dependencies. Node.js and npm are needed for Pi extensions.
+The Go hook uses only the standard library and builds without network access.
 
 ```bash
 cd ~/agent-config
@@ -31,6 +32,12 @@ make check
 python3 common/skills-maintenance/check.py --check-sources
 python3 scripts/install.py --backup-existing
 ```
+
+The Bash `PreToolUse` grep guard runs a native binary at
+`~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python.
+`make install-hooks` builds and atomically replaces only this binary; a failed
+build retains the installed version. Run it after editing
+`claude/hooks/grep-literal-glob.go`. Tests build their own temporary binary.
 
 The last command is a **dry run**. `--backup-existing` lets it plan replacing
 occupied paths; no HOME paths are changed without `--apply`.
@@ -66,7 +73,7 @@ dependencies in the new checkout first:
 
 ```bash
 make dep
-python3 scripts/install.py --backup-existing --apply
+make install
 ```
 
 Dependencies are not copied from the old clients, and `make dep` needs network

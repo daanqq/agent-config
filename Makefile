@@ -1,4 +1,4 @@
-.PHONY: check dep plan install
+.PHONY: check dep plan install install-hooks
 
 check:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests --buffer
@@ -12,5 +12,15 @@ dep:
 plan:
 	python3 scripts/install.py --backup-existing
 
-install:
+install-hooks:
+	@set -eu; \
+		dir="$(HOME)/.local/libexec/agent-config"; \
+		mkdir -p "$$dir"; \
+		temporary=$$(mktemp "$$dir/.grep-literal-glob.XXXXXX"); \
+		trap 'rm -f "$$temporary"' EXIT; \
+		CGO_ENABLED=0 GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off \
+			go build -trimpath -o "$$temporary" claude/hooks/grep-literal-glob.go; \
+		mv -f "$$temporary" "$$dir/grep-literal-glob"
+
+install: install-hooks
 	python3 scripts/install.py --backup-existing --apply
