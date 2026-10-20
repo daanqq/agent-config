@@ -68,6 +68,11 @@ snapshot of the Git index, not the working tree. It does not stash, modify the
 original index, install links, or refresh skill hashes. Unstaged fixes cannot
 hide a broken staged snapshot; unrelated unstaged files remain untouched.
 Stage the intended code, manifest entries, and links together before committing.
+The coverage check requires an individual HOME mapping in `links.json` for every
+physical skill and client skill alias. A deliberately repository-only skill can
+be listed in the optional `uninstalled_skills` object, mapping its repository
+source path to a nonempty reason. Stale exclusions and mapped-but-excluded skills
+are errors; existing manual HOME links do not substitute for installation mappings.
 
 ## Connect HOME
 
