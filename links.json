@@ -410,6 +410,10 @@
       "target": ".claude/skills/thermo-nuclear-code-quality-review"
     },
     {
+      "source": "claude/skills/trade-offs",
+      "target": ".claude/skills/trade-offs"
+    },
+    {
       "source": "claude/skills/troubleshooting",
       "target": ".claude/skills/troubleshooting"
     },
