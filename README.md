@@ -22,9 +22,10 @@ the Claude skill is retained only in the Claude configuration.
 
 ## Prepare and check
 
-Requirements: Git, Python 3.10+, Go for the native Claude hook, and the
-clients' existing dependencies. Node.js and npm are needed for Pi extensions.
-The Go hook uses only the standard library and builds without network access.
+Requirements: Git, Python 3.10+, Node.js 22.6+ for offline extension tests,
+Go for the native Claude hook, and the clients' existing dependencies. npm is
+needed to install Pi extension dependencies. The Go hook uses only the standard
+library and builds without network access.
 
 ```bash
 cd ~/agent-config
@@ -32,6 +33,10 @@ make check
 python3 common/skills-maintenance/check.py --check-sources
 python3 scripts/install.py --backup-existing
 ```
+
+`make check-extensions` runs the dependency-free TypeScript regression tests
+without starting Pi, Herdr or model calls. It is included in `make check` and
+runs from a staged snapshot without node_modules or dependency installation.
 
 The Bash `PreToolUse` grep guard runs a native binary at
 `~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python.
