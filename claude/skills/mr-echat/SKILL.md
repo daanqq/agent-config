@@ -68,7 +68,7 @@ python3 "$SKILL_ROOT/scripts/mr_echat.py" generate \
   [--title "<user-supplied title>"]
 ```
 
-Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. Stop and report the error if generation fails; do not compose the texts yourself.
+Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. For missing or empty required output tags, the helper saves the response in its workspace and makes one format-correction attempt. Other errors are not retried. Stop and report the error if generation fails; do not compose the texts yourself.
 
 ## Confirm once before writes
 

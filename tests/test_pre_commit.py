@@ -115,6 +115,38 @@ class PreCommitTests(unittest.TestCase):
         self.assertEqual((self.repo / "value").read_text(), "unstaged user edit")
         self.assertEqual(self.git("stash", "list").stdout, "")
 
+    def test_mr_suite_failure_blocks_make_check_and_staged_commit(self):
+        (self.repo / "Makefile").write_bytes((ROOT / "Makefile").read_bytes())
+        root_tests = self.repo / "tests"
+        root_tests.mkdir()
+        (root_tests / "test_root.py").write_text(
+            "import unittest\nclass RootTest(unittest.TestCase):\n"
+            "    def test_passes(self): pass\n", encoding="utf-8",
+        )
+        mr_tests = self.repo / "claude/skills/mr-echat/tests"
+        mr_tests.mkdir(parents=True)
+        test = mr_tests / "test_guard.py"
+        test.write_text(
+            "import unittest\nclass MrTest(unittest.TestCase):\n"
+            "    def test_guard(self): self.fail('MR_GUARD_SENTINEL')\n",
+            encoding="utf-8",
+        )
+        self.install_hook()
+        result = subprocess.run(
+            ["make", "check"], cwd=self.repo, env=self.env,
+            capture_output=True, text=True,
+        )
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("MR_GUARD_SENTINEL", result.stdout + result.stderr)
+        test.write_text("# Unstaged fix must not hide the failing staged test.\n", encoding="utf-8")
+        staged = self.git("ls-files", "--stage").stdout
+        result = self.git("commit", "--quiet", "-m", "test: rejected MR regression", check=False)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("MR_GUARD_SENTINEL", result.stdout + result.stderr)
+        self.assertIn("Unstaged fix", test.read_text(encoding="utf-8"))
+        self.assertEqual(self.git("ls-files", "--stage").stdout, staged)
+        self.assertNotEqual(self.git("rev-parse", "--verify", "HEAD", check=False).returncode, 0)
+
     def test_staged_whitespace_error_is_rejected(self):
         (self.repo / "whitespace.txt").write_text("trailing space \n", encoding="utf-8")
         self.git("add", "whitespace.txt")

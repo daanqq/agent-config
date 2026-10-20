@@ -373,7 +373,7 @@
     "claude": {
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "102564b707ad40d733764d8059e542a63f90e60bad5b79ac128434eb25615395"
+        "installed_hash": "e6e81c1db6984f122b2c9a95b19ad880955a158a2188572294dbc75c82ba363d"
       },
       "review-gpt": {
         "tracking": "local",

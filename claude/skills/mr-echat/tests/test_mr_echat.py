@@ -350,5 +350,122 @@ class MrEchatTests(unittest.TestCase):
             self.assertEqual(generated["description"], f"Новое.\n\n{block}")
 
 
+class GenerationFormatTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory(prefix="mr-format-test-")
+        self.addCleanup(temporary.cleanup)
+        self.workspace = Path(temporary.name)
+        self.state_path = self.workspace / "state.json"
+        self.state_path.write_text("{}\n", encoding="utf-8")
+        (self.workspace / "template.md").write_text("Template.\n", encoding="utf-8")
+        self.state = {
+            "workspace": str(self.workspace), "task_id": "T-1",
+            "included_paths": ["file.txt"], "existing_mr": None,
+        }
+        for name, options in (
+            ("load_state", {"return_value": (self.workspace, self.state)}),
+            ("previous_title", {"return_value": None}),
+        ):
+            patcher = patch.object(mr_echat, name, **options)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def generate(self, title: str | None = None):
+        return mr_echat.generate(SimpleNamespace(
+            state=str(self.state_path), notes_file=None, title=title,
+        ))
+
+    def test_valid_first_answer_needs_no_retry(self) -> None:
+        with patch.object(mr_echat, "ask_model", return_value=(
+            "<title>fix rendering</title><description>Text.</description>"
+        )) as ask:
+            result = self.generate()
+        self.assertEqual(ask.call_count, 1)
+        self.assertEqual(result["title"], "fix rendering #T-1")
+        self.assertEqual(list(self.workspace.glob("generation-invalid-*.txt")), [])
+
+    def test_bad_title_tag_is_archived_and_corrected_once(self) -> None:
+        invalid = "<fix>fix rendering</fix><description>Text.</description>\n" + "x" * 700
+        valid = "<title>fix rendering</title><description>Corrected.</description>"
+        with patch.object(mr_echat, "ask_model", side_effect=[invalid, valid]) as ask:
+            result = self.generate()
+        self.assertEqual(ask.call_count, 2)
+        self.assertIn("Missing or empty required blocks: <title>", ask.call_args.args[0])
+        self.assertEqual(result["description"], "Corrected.")
+        saved, = self.workspace.glob("generation-invalid-*.txt")
+        self.assertEqual(saved.read_text(encoding="utf-8"), invalid)
+        self.assertEqual(saved.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(Path(result["title_path"]).read_text(), "fix rendering #T-1\n")
+
+    def test_empty_description_triggers_format_retry(self) -> None:
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            "<title>fix rendering</title><description> </description>",
+            "<title>fix rendering</title><description>Text.</description>",
+        ]) as ask:
+            self.generate()
+        self.assertIn("Missing or empty required blocks: <description>", ask.call_args.args[0])
+        self.assertEqual(ask.call_count, 2)
+
+    def test_two_invalid_answers_stop_without_publishing_or_updating_state(self) -> None:
+        answers = ["<fix>first</fix>", "<title>second</title>"]
+        with (
+            patch.object(mr_echat, "ask_model", side_effect=answers) as ask,
+            patch.object(mr_echat, "git") as git,
+            patch.object(mr_echat, "glab") as glab,
+        ):
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "after one format retry") as error:
+                self.generate()
+        self.assertEqual(ask.call_count, 2)
+        saved = list(self.workspace.glob("generation-invalid-*.txt"))
+        self.assertEqual({p.read_text() for p in saved}, set(answers))
+        for path in saved:
+            self.assertIn(str(path), str(error.exception))
+        self.assertEqual(self.state_path.read_text(), "{}\n")
+        self.assertFalse((self.workspace / "title.txt").exists())
+        self.assertFalse((self.workspace / "description.md").exists())
+        git.assert_not_called()
+        glab.assert_not_called()
+
+    def test_non_format_errors_are_not_retried(self) -> None:
+        for failure in (mr_echat.WorkflowError("authentication failed"), OSError("pi missing")):
+            with self.subTest(failure=failure), patch.object(
+                mr_echat, "ask_model", side_effect=failure,
+            ) as ask:
+                with self.assertRaises(type(failure)):
+                    self.generate()
+                self.assertEqual(ask.call_count, 1)
+        self.assertEqual(list(self.workspace.glob("generation-invalid-*.txt")), [])
+
+    def test_retry_launch_failure_propagates_without_third_attempt(self) -> None:
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            "<fix>wrong</fix>", mr_echat.WorkflowError("pi failed"),
+        ]) as ask:
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "pi failed"):
+                self.generate()
+        self.assertEqual(ask.call_count, 2)
+        saved, = self.workspace.glob("generation-invalid-*.txt")
+        self.assertEqual(saved.read_text(), "<fix>wrong</fix>")
+        self.assertEqual(self.state_path.read_text(), "{}\n")
+
+    def test_title_not_required_with_user_title_or_no_pending_commit(self) -> None:
+        for title, paths in (("fix supplied title", ["file.txt"]), (None, [])):
+            with self.subTest(title=title):
+                self.state["included_paths"] = paths
+                with patch.object(mr_echat, "ask_model", return_value=(
+                    "<description>Text.</description>"
+                )) as ask:
+                    result = self.generate(title)
+                self.assertEqual(ask.call_count, 1)
+                self.assertEqual(result["title"], f"{title} #T-1" if title else None)
+
+    def test_semantically_empty_title_is_not_a_format_retry(self) -> None:
+        with patch.object(mr_echat, "ask_model", return_value=(
+            "<title>#T-1</title><description>Text.</description>"
+        )) as ask:
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "commit title is empty"):
+                self.generate()
+        self.assertEqual(ask.call_count, 1)
+
+
 if __name__ == "__main__":
     unittest.main()
