@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 1. Найди корень текущего git checkout через `git rev-parse --show-toplevel` и проверь, что `Cargo.toml` описывает пакет `herdr`. Если это не checkout Herdr, остановись и попроси путь; шаг завершён, когда исходники и `command -v herdr` найдены.
 
-2. Разреши путь установленного бинарника через `readlink -f "$(command -v herdr)"`. Выбери Zig в порядке `$ZIG`, `command -v zig`, `$HOME/.local/zig-0.15.2/zig`; если исполняемый Zig не найден, остановись с понятной ошибкой.
+2. Разреши путь установленного бинарника через `readlink -f "$(command -v herdr)"`. Получи совместимый Zig командой `python3 "<skill-dir>/scripts/resolve-zig.py" "<checkout>"`, где `<skill-dir>` - каталог этого `SKILL.md`, а `<checkout>` - корень из шага 1. [Resolver](scripts/resolve-zig.py) читает требование текущего checkout, проверяет `$ZIG`, затем PATH и соответствующую локальную установку. При ошибке остановись: явный несовместимый `$ZIG` не подменяется, toolchain автоматически не устанавливается.
 
 3. В корне checkout выполни `ZIG="<путь>" just build`. Не устанавливай бинарник, если сборка завершилась ошибкой; шаг завершён только после успешного release-build в `target/release/herdr`.
 
