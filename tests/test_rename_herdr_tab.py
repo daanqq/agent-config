@@ -68,6 +68,22 @@ class RenameHerdrTabTests(unittest.TestCase):
         self.assertIn("skipped", result.stdout)
         self.assertFalse(self.calls.exists())
 
+    def test_suggests_full_session_rename_under_claude_code(self):
+        title = "Очень длинный заголовок задачи,\nкоторый не помещается в таб"
+        result = self.rename(title, CLAUDECODE="1")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            "/rename T-123123 Очень длинный заголовок задачи, который не помещается в таб\n",
+            result.stdout,
+        )
+
+    def test_suggests_no_session_rename_outside_claude_code(self):
+        result = self.rename("Title", HERDR_ENV="1", HERDR_TAB_ID="w1:t2")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("/rename", result.stdout)
+
     def test_herdr_failure_is_a_warning(self):
         result = self.rename("Title", HERDR_ENV="1", HERDR_TAB_ID="w1:t2", PATH="/nonexistent")
 

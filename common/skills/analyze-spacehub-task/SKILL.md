@@ -21,7 +21,9 @@ python3 "$SKILL_ROOT/scripts/rename-herdr-tab.py" <context_dir>/task.json
 
 Renaming the tab does not change the repository and is allowed in read-only
 work. The script skips outside Herdr and only warns on failure; continue the
-analysis either way.
+analysis either way. Under Claude Code it also prints a `/rename` command for
+the session; only the user can run it, so end the answer with that command
+verbatim.
 
 Completion criterion: the target issue and relevant accessible attachments
 have been analyzed without unrequested related-issue fetches.
