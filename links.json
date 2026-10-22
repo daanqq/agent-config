@@ -166,6 +166,10 @@
       "target": ".agents/skills/html-artifact"
     },
     {
+      "source": "common/skills/publish-artifact-page",
+      "target": ".agents/skills/publish-artifact-page"
+    },
+    {
       "source": "common/skills/tdd",
       "target": ".agents/skills/tdd"
     },
@@ -384,6 +388,10 @@
     {
       "source": "claude/skills/html-artifact",
       "target": ".claude/skills/html-artifact"
+    },
+    {
+      "source": "claude/skills/publish-artifact-page",
+      "target": ".claude/skills/publish-artifact-page"
     },
     {
       "source": "claude/skills/retro",
@@ -1076,6 +1084,10 @@
     {
       "source": "pi/agent/skills/html-artifact",
       "target": ".pi/agent/skills/html-artifact"
+    },
+    {
+      "source": "pi/agent/skills/publish-artifact-page",
+      "target": ".pi/agent/skills/publish-artifact-page"
     },
     {
       "source": "pi/agent/skills/retro",
