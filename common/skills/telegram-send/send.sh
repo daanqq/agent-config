@@ -21,7 +21,7 @@ else
   file="${1:?file is required}"
   [[ -f "$file" ]] || { echo "not a file: $file" >&2; exit 1; }
   # Bot API rejects uploads over 50 MB.
-  if (( $(stat -c %s "$file") > 50 * 1024 * 1024 )); then
+  if (( $(wc -c < "$file") > 50 * 1024 * 1024 )); then
     echo "file exceeds the 50 MB Bot API limit: $file" >&2
     exit 1
   fi
