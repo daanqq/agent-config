@@ -162,6 +162,10 @@
       "target": ".agents/skills/ambition"
     },
     {
+      "source": "common/skills/html-artifact",
+      "target": ".agents/skills/html-artifact"
+    },
+    {
       "source": "common/skills/tdd",
       "target": ".agents/skills/tdd"
     },
@@ -376,6 +380,10 @@
     {
       "source": "claude/skills/ambition",
       "target": ".claude/skills/ambition"
+    },
+    {
+      "source": "claude/skills/html-artifact",
+      "target": ".claude/skills/html-artifact"
     },
     {
       "source": "claude/skills/retro",
@@ -1064,6 +1072,10 @@
     {
       "source": "pi/agent/skills/ambition",
       "target": ".pi/agent/skills/ambition"
+    },
+    {
+      "source": "pi/agent/skills/html-artifact",
+      "target": ".pi/agent/skills/html-artifact"
     },
     {
       "source": "pi/agent/skills/retro",

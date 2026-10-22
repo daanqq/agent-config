@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #000;
+    --surface: #0a0a0a;
+    --line: #1a1a1a;
+    --text: #e6e6e6;
+    --muted: #8a8a8a;
+    --faint: #4d4d4d;
+    --accent: #ff4545;
+    --add: #3ddc84;
+    --del: #ff6b6b;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); scroll-behavior: smooth; }
+  body { margin: 0; color: var(--text); background: var(--bg); font: 14.5px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  .layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 720px);
+    gap: 48px;
+    max-width: 1010px;
+    margin: 0 auto;
+    padding: 48px 28px 96px;
+  }
+  nav { position: sticky; top: 48px; align-self: start; }
+  nav ol { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  nav li { margin: 2px 0; }
+  nav a { display: flex; gap: 10px; padding: 3px 0; color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--text); }
+  nav .n { color: var(--faint); font-family: var(--mono); min-width: 12px; }
+  nav .top { margin-bottom: 8px; }
+  nav .top a { color: var(--text); }
+  .eyebrow { font: 11.5px var(--mono); color: var(--muted); letter-spacing: .04em; }
+  h1 { font-size: 26px; line-height: 1.25; font-weight: 600; margin: 8px 0 18px; letter-spacing: -.01em; }
+  h2 { font-size: 18px; font-weight: 600; margin: 4px 0 6px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  strong { font-weight: 600; color: #fff; }
+  ul { margin: 0 0 10px; padding-left: 18px; }
+  li { margin: 3px 0; }
+  code { font: 12.5px var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .demo { margin: 22px 0 0; }
+  .demo video { display: block; width: 100%; max-width: 560px; height: auto; border-radius: 6px; }
+  .demo-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 560px; margin-bottom: 8px; font: 12px var(--mono); color: var(--muted); }
+  .demo figcaption { max-width: 560px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .commit { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .step { font: 11.5px var(--mono); color: var(--accent); letter-spacing: .04em; }
+  .lead { color: var(--muted); }
+  .step .subject { color: var(--muted); margin-left: 12px; }
+  .block { margin-top: 26px; }
+  .code { position: relative; margin-top: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  .code-body { max-height: 128px; overflow: hidden; }
+  .code::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 30px; height: 72px; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(10, 10, 10, 0), var(--surface));
+  }
+  .code.open .code-body { max-height: none; overflow-x: auto; }
+  .code.open::after { display: none; }
+  .path { font: 11.5px var(--mono); color: var(--faint); padding: 8px 12px 0; }
+  pre { margin: 0; padding: 4px 12px 10px; font: 12px/1.55 var(--mono); color: #9a9a9a; }
+  pre span { display: block; white-space: pre; }
+  pre .add { color: var(--add); }
+  pre .add::before { content: "+ "; color: var(--faint); }
+  pre .del { color: var(--del); }
+  pre .del::before { content: "- "; color: var(--faint); }
+  pre .ctx::before { content: "  "; }
+  pre .gap { color: var(--faint); }
+  .toggle {
+    display: block; width: 100%; padding: 7px 12px; border: 0; border-top: 1px solid var(--line);
+    background: transparent; color: var(--muted); font: 12px var(--mono); text-align: left; cursor: pointer;
+    border-radius: 0 0 6px 6px;
+  }
+  .toggle:hover { color: var(--text); }
+  .plain { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .plain h2 { margin-bottom: 10px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; gap: 24px; padding: 28px 18px 72px; }
+    nav { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <ol>
+      <li class="top"><a href="#top">{{L_OVERVIEW}}</a></li>
+      {{TOC}}
+    </ol>
+  </nav>
+  <main>
+    <header id="top">
+      <div class="eyebrow">{{EYEBROW}}</div>
+      <h1>{{TITLE}}</h1>
+      {{INTRO}}
+      {{DEMO}}
+    </header>
+    {{BODY}}
+  </main>
+</div>
+<script>
+  document.querySelectorAll('.code').forEach(code => {
+    const body = code.querySelector('.code-body');
+    const toggle = code.querySelector('.toggle');
+    if (body.scrollHeight <= body.clientHeight + 4) {
+      code.classList.add('open');
+      toggle.remove();
+      return;
+    }
+    toggle.addEventListener('click', () => {
+      const open = code.classList.toggle('open');
+      toggle.textContent = open ? toggle.dataset.hide : toggle.dataset.show;
+    });
+  });
+</script>
+</body>
+</html>

@@ -329,6 +329,10 @@
       "ambition": {
         "tracking": "local",
         "installed_hash": "9af5b2e1027d85cd59a10c59bf19a838b75586af962534245e191288a8d72956"
+      },
+      "html-artifact": {
+        "tracking": "local",
+        "installed_hash": "01171cfa3eb1b713f087e5a49bced3abbed22e7c2994eb0047c442e8c0d01488"
       }
     },
     "pi": {
