@@ -30,10 +30,10 @@ have been analyzed without unrequested related-issue fetches.
 
 If the user requests implementation, first decide whether repository isolation is needed.
 Use [`task-worktree`](../task-worktree/SKILL.md) only when the user requests a worktree, the original
-checkout contains pre-existing or unrelated changes, multiple repositories need
-independent changes, or the task explicitly requires isolation. If the original
-checkout is clean and only one repository is affected, implement in the original
-checkout on the task branch. Follow the branch contract in `task-worktree`
+checkout contains pre-existing or unrelated changes, is on another branch or serves
+a stand, multiple repositories need independent changes, or the task explicitly
+requires isolation. Otherwise, with one repository affected, implement in the
+original checkout on the task branch. Follow the branch contract in `task-worktree`
 even without a worktree; it owns the default feature branch and the gate for
 decomposed task branches.
 

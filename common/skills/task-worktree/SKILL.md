@@ -7,9 +7,14 @@ description: Branch naming (`feature/T-`, `task/T-`) and isolated Git worktrees 
 
 Follow the branch contract for every new task branch. Create a worktree only
 when repository isolation is needed: a task ID alone does not require one. If
-the checkout is clean, only one repository is affected, and isolation was not
-requested, use the original checkout on the task branch. If the same task was
-already transferred back, continue in that checkout.
+the checkout is clean, only one repository is affected, isolation was not
+requested, and the original checkout is on its base branch and serves no stand,
+use it for the task branch. Isolation is required when the checkout is on
+another branch (another task's work may be running from it), or when a stand
+runs from it: `devtask status` lists it, or a tmux session such as
+`echat-client` serves that path. Switching branches there silently changes the
+code the stand serves. If the same task was already transferred back, continue
+in that checkout.
 
 ## Branch contract
 
