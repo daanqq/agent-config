@@ -91,7 +91,9 @@ changed line or listed untracked file.
 
 ## Severity calibration
 
-Before reporting a Major or Blocker, state:
+For every finding, including Minor, name the real producer of the triggering input in the post-merge system (caller, writer, migration, or client). If no producer is shown, report a conditional compatibility risk, not a confirmed defect, or drop the finding per the reporting rules below.
+
+Before reporting a Major or Blocker, also state:
 
 - The failure introduced or re-exposed by the change, or the exact new requirement it fails.
 - The user impact, available workaround, and recovery path.
