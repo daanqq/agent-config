@@ -21,9 +21,11 @@ from echat_mr_review.core import (  # noqa: E402
     ReviewError,
     _NoRedirect,
     _fetch_json,
+    _render_verification,
     extract_task_id,
     extract_task_ids,
     parse_mr_url,
+    verification_commands,
 )
 
 
@@ -103,6 +105,101 @@ class PureLogicTests(unittest.TestCase):
                 _fetch_json(object(), timeout=3, label="test")
 
 
+class VerificationCommandsTests(unittest.TestCase):
+    def make_package(self, root: Path, package: dict, *, tools: tuple[str, ...] = (), installed: tuple[str, ...] = ()) -> None:
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "package.json").write_text(json.dumps(package), encoding="utf-8")
+        modules = root / "node_modules"
+        modules.mkdir()
+        (modules / ".bin").mkdir()
+        for tool in tools:
+            (modules / ".bin" / tool).write_text("", encoding="utf-8")
+        for name in installed:
+            (modules / name).mkdir(parents=True, exist_ok=True)
+
+    def test_no_package_json_gives_no_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self.assertIsNone(verification_commands(Path(raw)))
+
+    def test_scripts_use_lockfile_package_manager(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            self.make_package(
+                repo,
+                {"scripts": {"test": "vitest run", "typecheck": "tsc --noEmit"}, "devDependencies": {"vitest": "1"}},
+                installed=("vitest",),
+            )
+            (repo / "pnpm-lock.yaml").write_text("", encoding="utf-8")
+            result = verification_commands(repo)
+            self.assertEqual(result["test_command"], f"cd '{repo}' && pnpm run test")
+            self.assertEqual(result["typecheck_command"], f"cd '{repo}' && pnpm run typecheck")
+            self.assertEqual(result["missing_dependencies"], [])
+            self.assertEqual(result["notes"], [])
+
+    def test_binaries_come_from_node_modules_bin_when_scripts_are_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            self.make_package(repo, {}, tools=("vitest", "tsc"))
+            (repo / "tsconfig.json").write_text("{}", encoding="utf-8")
+            result = verification_commands(repo)
+            self.assertEqual(result["test_command"], f"cd '{repo}' && '{repo}/node_modules/.bin/vitest' run")
+            self.assertEqual(result["typecheck_command"], f"cd '{repo}' && '{repo}/node_modules/.bin/tsc' --noEmit")
+
+    def test_missing_runner_and_dependencies_are_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            self.make_package(
+                repo,
+                {"dependencies": {"libphonenumber-js": "1", "@scope/present": "1"}},
+                installed=("@scope/present",),
+            )
+            result = verification_commands(repo)
+            self.assertEqual(result["missing_dependencies"], ["libphonenumber-js"])
+            self.assertIsNone(result["test_command"])
+            self.assertIsNone(result["typecheck_command"])
+            notes = " ".join(result["notes"])
+            self.assertIn("libphonenumber-js", notes)
+            self.assertIn("report test as not run", notes)
+            self.assertIn("report typecheck as not run", notes)
+
+    def test_missing_node_modules_gives_no_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw) / "repo"
+            repo.mkdir()
+            (repo / "package.json").write_text(json.dumps({"scripts": {"test": "vitest run"}}), encoding="utf-8")
+            result = verification_commands(repo)
+            self.assertIsNone(result["node_modules"])
+            self.assertIsNone(result["test_command"])
+            self.assertIn("not found", result["notes"][0])
+
+    def test_source_repository_node_modules_is_used_with_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            source = root / "source"
+            self.make_package(source, {"scripts": {"test": "vitest run"}})
+            worktree = root / "worktree"
+            worktree.mkdir()
+            (worktree / "package.json").write_text(json.dumps({"scripts": {"test": "vitest run"}}), encoding="utf-8")
+            result = verification_commands(worktree, source)
+            self.assertEqual(result["node_modules"], str(source / "node_modules"))
+            self.assertEqual(
+                result["test_command"],
+                f"cd '{worktree}' && PATH='{source}/node_modules/.bin':\"$PATH\" npm run test",
+            )
+            self.assertIn("only in the source repository", result["notes"][0])
+
+    def test_markdown_renders_commands_and_notes(self) -> None:
+        target = {
+            "repo": "app",
+            "verification": {"test_command": "cd x && npm run test", "typecheck_command": None, "notes": ["note one"]},
+        }
+        text = "\n".join(_render_verification(target))
+        self.assertIn("## Verification commands: app", text)
+        self.assertIn("cd x && npm run test", text)
+        self.assertIn("- note one", text)
+        self.assertEqual(_render_verification({"repo": "app", "verification": None}), [])
+
+
 class CliIntegrationTests(unittest.TestCase):
     def invoke(self, argv: list[str]) -> tuple[int, str, str]:
         stdout, stderr = io.StringIO(), io.StringIO()
@@ -145,6 +242,37 @@ class CliIntegrationTests(unittest.TestCase):
             cleanup_code, _, cleanup_stderr = self.invoke(["cleanup", result["workspace"]])
             self.assertEqual((cleanup_code, cleanup_stderr), (0, ""))
             self.assertFalse(Path(result["workspace"]).exists())
+
+    def test_local_prepare_emits_verification_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo = root / "repo"
+            run("git", "init", "-b", "master", str(repo))
+            configure_repo(repo)
+            (repo / "package.json").write_text(
+                json.dumps({"scripts": {"test": "vitest run"}, "dependencies": {"absent-dep": "1"}}), encoding="utf-8"
+            )
+            (repo / ".gitignore").write_text("node_modules\n", encoding="utf-8")
+            run("git", "-C", str(repo), "add", ".")
+            run("git", "-C", str(repo), "commit", "-m", "base")
+            (repo / "node_modules").mkdir()
+
+            code, stdout, stderr = self.invoke(
+                [
+                    "prepare", "local", str(repo), "--base", "master", "--scope", "all",
+                    "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"), "--offline",
+                ]
+            )
+            self.assertEqual((code, stderr), (0, ""))
+            result = json.loads(stdout)
+            context = json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))
+            verification = context["targets"][0]["verification"]
+            self.assertEqual(verification["test_command"], f"cd '{repo}' && npm run test")
+            self.assertEqual(verification["missing_dependencies"], ["absent-dep"])
+            markdown = Path(result["review_context_markdown"]).read_text(encoding="utf-8")
+            self.assertIn("## Verification commands: repo", markdown)
+            self.assertIn("absent-dep", markdown)
+            self.invoke(["cleanup", result["workspace"]])
 
     def test_mr_prepare_uses_fixture_and_isolated_worktree_then_cleans_up(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

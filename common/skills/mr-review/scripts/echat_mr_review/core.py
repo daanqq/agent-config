@@ -402,6 +402,97 @@ def _shell_quote(value: str) -> str:
     return "'" + value.replace("'", "'\"'\"'") + "'"
 
 
+TEST_SCRIPTS = ("test", "test:unit")
+TYPECHECK_SCRIPTS = ("typecheck", "type-check", "check-types", "check:types", "tsc")
+LOCKFILE_MANAGERS = (("pnpm-lock.yaml", "pnpm"), ("yarn.lock", "yarn"), ("bun.lockb", "bun"), ("bun.lock", "bun"))
+MAX_LISTED_MISSING = 20
+
+
+def _read_package_json(path: Path) -> dict[str, Any] | None:
+    try:
+        value = json.loads((path / "package.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _package_manager(path: Path) -> str:
+    for lockfile, manager in LOCKFILE_MANAGERS:
+        if (path / lockfile).is_file():
+            return manager
+    return "npm"
+
+
+def _first_script(scripts: dict[str, Any], names: Sequence[str]) -> str | None:
+    return next((name for name in names if isinstance(scripts.get(name), str)), None)
+
+
+def verification_commands(path: Path, fallback_root: Path | None = None) -> dict[str, Any] | None:
+    """Ready test and typecheck commands from package.json and the node_modules that exist on disk."""
+    package = _read_package_json(path)
+    if package is None:
+        return None
+    modules = next((root for root in (path, fallback_root) if root and (root / "node_modules").is_dir()), None)
+    notes: list[str] = []
+    result: dict[str, Any] = {
+        "package_manager": _package_manager(path),
+        "node_modules": str(modules / "node_modules") if modules else None,
+        "test_command": None,
+        "typecheck_command": None,
+        "missing_dependencies": [],
+        "notes": notes,
+    }
+    if modules is None:
+        notes.append(
+            "node_modules not found in the target or its source repository: tests and typecheck cannot run. "
+            "Report them as not run instead of guessing binary paths."
+        )
+        return result
+    if modules != path:
+        notes.append(
+            f"node_modules resolves only in the source repository {modules}, not in the reviewed checkout: "
+            "its packages may not match the reviewed lockfile, and imports may fail to resolve. Report any such failure."
+        )
+    declared = {
+        name
+        for section in ("dependencies", "devDependencies")
+        if isinstance(package.get(section), dict)
+        for name in package[section]
+    }
+    missing = sorted(name for name in declared if not (modules / "node_modules" / name).is_dir())
+    result["missing_dependencies"] = missing
+    if missing:
+        listed = ", ".join(missing[:MAX_LISTED_MISSING])
+        extra = f" and {len(missing) - MAX_LISTED_MISSING} more" if len(missing) > MAX_LISTED_MISSING else ""
+        notes.append(
+            f"Declared dependencies missing from node_modules: {listed}{extra}. "
+            "Behavior that needs them is unverified: report it instead of guessing."
+        )
+
+    bin_dir = modules / "node_modules" / ".bin"
+    scripts = package.get("scripts") if isinstance(package.get("scripts"), dict) else {}
+    prefix = f"cd {_shell_quote(str(path))} && "
+    if modules != path:
+        prefix += f"PATH={_shell_quote(str(bin_dir))}:\"$PATH\" "
+    manager = result["package_manager"]
+
+    def command(script_names: Sequence[str], binary: str, binary_args: str, required_file: str | None = None) -> str | None:
+        script = _first_script(scripts, script_names)
+        if script:
+            return f"{prefix}{manager} run {script}"
+        if (bin_dir / binary).exists() and (required_file is None or (path / required_file).is_file()):
+            return f"{prefix}{_shell_quote(str(bin_dir / binary))} {binary_args}".rstrip()
+        return None
+
+    runner = "vitest" if (bin_dir / "vitest").exists() else "jest"
+    result["test_command"] = command(TEST_SCRIPTS, runner, "run" if runner == "vitest" else "")
+    result["typecheck_command"] = command(TYPECHECK_SCRIPTS, "tsc", "--noEmit", "tsconfig.json")
+    for label, key in (("test", "test_command"), ("typecheck", "typecheck_command")):
+        if result[key] is None:
+            notes.append(f"No {label} script or runner found in package.json and node_modules/.bin: report {label} as not run.")
+    return result
+
+
 def task_id_from_commits(repo: Path, head_ref: str, base_ref: str) -> str | None:
     result = git(repo, "log", head_ref, "--not", base_ref, "--format=%B", check=False)
     return extract_task_id(result.stdout) if result.returncode == 0 else None
@@ -471,6 +562,7 @@ def prepare_local(
                     "merge_base": merge_base_sha,
                     "scope": scope,
                     "task_id": task_id,
+                    "verification": verification_commands(repo),
                     **state,
                 }
             )
@@ -566,6 +658,7 @@ def prepare_mr(
                     "file_sets": state["file_sets"],
                     "review_commands": state["review_commands"],
                     "task_id": task_id,
+                    "verification": verification_commands(worktree, source_repo),
                     "mr": {
                         "url": ref.url,
                         "host": ref.host,
@@ -673,9 +766,23 @@ def render_context_markdown(context: dict[str, Any]) -> str:
             lines.extend(["", "Untracked files:", *[f"- `{item}`" for item in target["untracked_files"]]])
         if target.get("review_commands"):
             lines.extend(["", "Minimal review commands:", "```sh", *target["review_commands"], "```"])
+    for target in targets:
+        lines.extend(_render_verification(target))
     if context.get("warnings"):
         lines.extend(["", "## Preparation warnings", "", *[f"- {warning}" for warning in context["warnings"]]])
     return "\n".join(lines) + "\n"
+
+
+def _render_verification(target: dict[str, Any]) -> list[str]:
+    verification = target.get("verification")
+    if not verification:
+        return []
+    lines = ["", f"## Verification commands: {target['repo']}", ""]
+    commands = [verification[key] for key in ("test_command", "typecheck_command") if verification.get(key)]
+    if commands:
+        lines.extend(["```sh", *commands, "```", ""])
+    lines.extend(f"- {note}" for note in verification["notes"])
+    return lines
 
 
 def _is_within(path: Path, parent: Path) -> bool:

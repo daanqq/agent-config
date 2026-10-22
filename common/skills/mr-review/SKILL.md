@@ -66,7 +66,7 @@ logical change when several repositories are present. Branches normally use
 5. Establish changed files and changed lines before judging code. Read files outside that boundary only as supporting context; a finding must be caused by an in-scope changed line or listed untracked file.
 6. Inspect immediate callers, consumers, tests, schemas, mappers, and both sides of changed contracts. For multi-repository changes, check deploy order, rollback, compatibility, defaults, nullability, migrations, and graceful degradation.
 7. Compare implementation with the primary task, related tasks, and additional information in the context. A missing task must not block review.
-8. Run focused non-destructive tests, type checks, or lint checks when practical. State exactly what ran.
+8. Run focused non-destructive tests, type checks, or lint checks when practical, using the target's `verification` commands from the context; do not guess binary paths. If a command or dependency is reported missing, say the check was not run and which behavior stays unverified. State exactly what ran.
 
 ## Behavioral and reuse checklist
 
