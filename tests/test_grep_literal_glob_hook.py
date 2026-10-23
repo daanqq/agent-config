@@ -192,7 +192,7 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("fixture build failure", result.stderr)
             self.assertEqual(binary.read_bytes(), before)
-            self.assertEqual(list(binary.parent.glob(".grep-literal-glob.*")), [])
+            self.assertEqual(list(binary.parent.glob(".*")), [])
 
 
 if __name__ == "__main__":

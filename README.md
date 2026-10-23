@@ -44,6 +44,15 @@ The Bash `PreToolUse` grep guard runs a native binary at
 build retains the installed version. Run it after editing
 `claude/hooks/grep-literal-glob.go`. Tests build their own temporary binary.
 
+The `Stop` hook `~/.local/libexec/agent-config/reply-language` is built by the
+same `make install-hooks` from `claude/hooks/reply-language.go`. When the last
+real user message contains Cyrillic but the final reply has no Cyrillic and more
+than 200 letters outside code, inline code, URLs and paths, it returns
+`{"decision":"block","reason":...}` asking for a Russian rewrite. It does nothing
+when `stop_hook_active` is true, so it fires at most once in a row, and it fails
+open on any input or transcript error. Run `make install-hooks` after editing
+the source or Claude Code will keep using the installed binary.
+
 The last command is a **dry run**. `--backup-existing` lets it plan replacing
 occupied paths; no HOME paths are changed without `--apply`.
 

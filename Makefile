@@ -19,15 +19,21 @@ dep:
 plan:
 	python3 scripts/install.py --backup-existing
 
+hooks := grep-literal-glob reply-language
+
 install-hooks:
 	@set -eu; \
 		dir="$(HOME)/.local/libexec/agent-config"; \
 		mkdir -p "$$dir"; \
-		temporary=$$(mktemp "$$dir/.grep-literal-glob.XXXXXX"); \
-		trap 'rm -f "$$temporary"' EXIT; \
-		CGO_ENABLED=0 GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off \
-			go build -trimpath -o "$$temporary" claude/hooks/grep-literal-glob.go; \
-		mv -f "$$temporary" "$$dir/grep-literal-glob"
+		stage=$$(mktemp -d "$$dir/.install.XXXXXX"); \
+		trap 'rm -rf "$$stage"' EXIT; \
+		for name in $(hooks); do \
+			CGO_ENABLED=0 GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off \
+				go build -trimpath -o "$$stage/$$name" "claude/hooks/$$name.go"; \
+		done; \
+		for name in $(hooks); do \
+			mv -f "$$stage/$$name" "$$dir/$$name"; \
+		done
 
 install: install-hooks
 	python3 scripts/install.py --backup-existing --apply
