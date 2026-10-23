@@ -493,6 +493,62 @@ def verification_commands(path: Path, fallback_root: Path | None = None) -> dict
     return result
 
 
+DEPENDENCY_INSTALL_TIMEOUT = 600
+INSTALL_DETAIL_LINES = 20
+
+
+def install_review_dependencies(worktree: Path, *, timeout: float) -> dict[str, Any]:
+    """Run `npm ci` from the MR's own lockfile inside its isolated worktree; source clones stay untouched."""
+    command = ["npm", "ci", "--ignore-scripts", "--prefer-offline", "--no-audit", "--no-fund"]
+    nvmrc = worktree / ".nvmrc"
+    if nvmrc.is_file() and shutil.which("n"):
+        version = nvmrc.read_text(encoding="utf-8").strip()
+        if version:
+            command = ["n", "exec", version, *command]
+    started = time.monotonic()
+    try:
+        result = subprocess.run(command, cwd=worktree, text=True, capture_output=True, timeout=timeout, check=False)
+        status, output = ("installed" if result.returncode == 0 else "failed"), result.stderr or result.stdout
+    except FileNotFoundError:
+        status, output = "failed", f"command not found: {command[0]}"
+    except subprocess.TimeoutExpired:
+        status, output = "failed", f"timed out after {timeout:g}s"
+    install: dict[str, Any] = {
+        "command": " ".join(command),
+        "status": status,
+        "seconds": round(time.monotonic() - started, 1),
+    }
+    if status == "failed":
+        install["detail"] = "\n".join(output.strip().splitlines()[-INSTALL_DETAIL_LINES:])
+    return install
+
+
+def mr_verification(worktree: Path, source_repo: Path, *, install_dependencies: bool, install_timeout: float) -> dict[str, Any] | None:
+    verification = verification_commands(worktree, source_repo)
+    if (
+        not install_dependencies
+        or verification is None
+        or verification["package_manager"] != "npm"
+        or not (worktree / "package-lock.json").is_file()
+        or (worktree / "node_modules").exists()
+    ):
+        return verification
+    install = install_review_dependencies(worktree, timeout=install_timeout)
+    verification = verification_commands(worktree, source_repo) or verification
+    verification["install"] = install
+    if install["status"] == "installed":
+        verification["notes"].insert(
+            0,
+            f"Dependencies installed from the MR lockfile into the review worktree ({install['command']}). "
+            "Install scripts were skipped: report failures that need native binaries or postinstall output.",
+        )
+    else:
+        verification["notes"].insert(
+            0, f"Dependency install in the review worktree failed: {install['detail']}. Commands below use what is left."
+        )
+    return verification
+
+
 def task_id_from_commits(repo: Path, head_ref: str, base_ref: str) -> str | None:
     result = git(repo, "log", head_ref, "--not", base_ref, "--format=%B", check=False)
     return extract_task_id(result.stdout) if result.returncode == 0 else None
@@ -590,6 +646,8 @@ def prepare_mr(
     additional_information: str,
     network_timeout: float,
     offline: bool,
+    install_dependencies: bool = True,
+    install_timeout: float = DEPENDENCY_INSTALL_TIMEOUT,
 ) -> dict[str, str]:
     refs = [parse_mr_url(url) for url in urls]
     duplicate_keys = [key for key in {ref.key for ref in refs} if sum(item.key == key for item in refs) > 1]
@@ -658,7 +716,12 @@ def prepare_mr(
                     "file_sets": state["file_sets"],
                     "review_commands": state["review_commands"],
                     "task_id": task_id,
-                    "verification": verification_commands(worktree, source_repo),
+                    "verification": mr_verification(
+                        worktree,
+                        source_repo,
+                        install_dependencies=install_dependencies,
+                        install_timeout=install_timeout,
+                    ),
                     "mr": {
                         "url": ref.url,
                         "host": ref.host,

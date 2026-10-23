@@ -9,6 +9,7 @@ import shlex
 import sys
 
 from .core import (
+    DEPENDENCY_INSTALL_TIMEOUT,
     ReviewError,
     cleanup_workspace,
     extract_task_id,
@@ -48,6 +49,15 @@ def build_parser() -> ArgumentParser:
     token_group.add_argument("--gitlab-token", help="GitLab token; prefer env/file because argv may be visible")
     token_group.add_argument("--gitlab-token-file", type=Path, help="read GitLab token from a file")
     mr.add_argument("--gitlab-token-env", default="GITLAB_TOKEN", help="token environment variable (default: GITLAB_TOKEN)")
+    mr.add_argument(
+        "--no-install-dependencies",
+        dest="install_dependencies",
+        action="store_false",
+        help="do not run npm ci from the MR lockfile inside its review worktree",
+    )
+    mr.add_argument(
+        "--install-timeout", type=float, default=DEPENDENCY_INSTALL_TIMEOUT, help="npm ci timeout in seconds per target"
+    )
     _add_common_prepare_options(mr)
 
     local = kinds.add_parser("local", help="prepare review context from local repositories")
@@ -136,6 +146,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     fallback_target=args.target,
                     gitlab_token=gitlab_token,
                     metadata_file=args.gitlab_metadata_file,
+                    install_dependencies=args.install_dependencies,
+                    install_timeout=args.install_timeout,
                     **common,
                 )
             result["cleanup_command"] = (

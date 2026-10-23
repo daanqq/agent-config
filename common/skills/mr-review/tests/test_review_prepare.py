@@ -4,6 +4,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -322,6 +323,131 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual((cleanup_code, cleanup_stderr), (0, ""))
             self.assertFalse(Path(result["workspace"]).exists())
             self.assertNotIn("echat-mr-review", run("git", "-C", str(source), "show-ref"))
+
+
+def mr_fixture(root: Path, files: dict[str, str]) -> tuple[Path, str]:
+    """Bare origin with MR !7 adding `files`, and a review clone under root/clones."""
+    origin, seed, clones = root / "origin.git", root / "seed", root / "clones"
+    run("git", "init", "--bare", str(origin))
+    run("git", "init", "-b", "master", str(seed))
+    configure_repo(seed)
+    (seed / ".gitignore").write_text("node_modules\n", encoding="utf-8")
+    run("git", "-C", str(seed), "add", ".")
+    run("git", "-C", str(seed), "commit", "-m", "base")
+    run("git", "-C", str(seed), "remote", "add", "origin", str(origin))
+    run("git", "-C", str(seed), "push", "origin", "master")
+    run("git", "-C", str(seed), "checkout", "-b", "feature/T-78")
+    for name, content in files.items():
+        (seed / name).write_text(content, encoding="utf-8")
+    run("git", "-C", str(seed), "add", ".")
+    run("git", "-C", str(seed), "commit", "-m", "T-78 MR")
+    run("git", "-C", str(seed), "push", "origin", "HEAD:refs/merge-requests/7/head")
+    clones.mkdir()
+    run("git", "clone", str(origin), str(clones / "project"))
+    return clones, "https://git.example.test/group/project/-/merge_requests/7"
+
+
+def stub_bin(root: Path, scripts: dict[str, str]) -> Path:
+    bin_dir = root / "bin"
+    bin_dir.mkdir()
+    for name, body in scripts.items():
+        path = bin_dir / name
+        path.write_text("#!/bin/sh\n" + body, encoding="utf-8")
+        path.chmod(0o755)
+    return bin_dir
+
+
+PACKAGE_FILES = {
+    "package.json": json.dumps({"scripts": {"test": "vitest run"}, "dependencies": {"dep-a": "1"}}),
+    "package-lock.json": "{}\n",
+}
+# Records its argv and installs dep-a like a successful `npm ci`.
+FAKE_NPM = 'printf "%s\\n" "$*" >> "$NPM_LOG"\nmkdir -p node_modules/dep-a\n'
+
+
+class DependencyInstallTests(unittest.TestCase):
+    def prepare(self, root: Path, clones: Path, url: str, *extra: str) -> dict:
+        stdout, stderr = io.StringIO(), io.StringIO()
+        metadata = root / "metadata.json"
+        metadata.write_text(json.dumps({"source_branch": "feature/T-78", "target_branch": "master"}), encoding="utf-8")
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            code = main(
+                [
+                    "prepare", "mr", url, "--repo-root", str(clones), "--gitlab-metadata-file", str(metadata),
+                    "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"), "--offline", *extra,
+                ]
+            )
+        self.assertEqual((code, stderr.getvalue()), (0, ""))
+        result = json.loads(stdout.getvalue())
+        self.addCleanup(main, ["cleanup", result["manifest"]])
+        return json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))["targets"][0]
+
+    def env(self, root: Path, bin_dir: Path) -> dict[str, str]:
+        return {"PATH": f"{bin_dir}:/usr/bin:/bin", "NPM_LOG": str(root / "npm.log")}
+
+    def test_npm_ci_runs_in_review_worktree_from_mr_lockfile(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, PACKAGE_FILES)
+            bin_dir = stub_bin(root, {"npm": FAKE_NPM})
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url)
+            verification = target["verification"]
+            self.assertEqual(verification["install"]["status"], "installed")
+            self.assertEqual(verification["node_modules"], str(Path(target["path"]) / "node_modules"))
+            self.assertEqual(verification["missing_dependencies"], [])
+            self.assertEqual(verification["test_command"], f"cd '{target['path']}' && npm run test")
+            self.assertIn("installed from the MR lockfile", verification["notes"][0])
+            log = (root / "npm.log").read_text(encoding="utf-8")
+            self.assertEqual(log, "ci --ignore-scripts --prefer-offline --no-audit --no-fund\n")
+            self.assertFalse((clones / "project" / "node_modules").exists())
+
+    def test_nvmrc_runs_npm_through_n(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, {**PACKAGE_FILES, ".nvmrc": "22\n"})
+            bin_dir = stub_bin(
+                root,
+                {"npm": FAKE_NPM, "n": 'printf "n %s\\n" "$*" >> "$NPM_LOG"\nshift 2\nexec "$@"\n'},
+            )
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url)
+            self.assertTrue(target["verification"]["install"]["command"].startswith("n exec 22 npm ci"))
+            log = (root / "npm.log").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(log[0], "n exec 22 npm ci --ignore-scripts --prefer-offline --no-audit --no-fund")
+
+    def test_failed_install_is_reported_without_failing_preparation(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, PACKAGE_FILES)
+            bin_dir = stub_bin(root, {"npm": 'echo "npm ERR! 401 Unauthorized" >&2\nexit 1\n'})
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url)
+            verification = target["verification"]
+            self.assertEqual(verification["install"]["status"], "failed")
+            self.assertIn("401 Unauthorized", verification["install"]["detail"])
+            self.assertIn("401 Unauthorized", verification["notes"][0])
+            self.assertIsNone(verification["node_modules"])
+
+    def test_install_can_be_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, PACKAGE_FILES)
+            bin_dir = stub_bin(root, {"npm": FAKE_NPM})
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url, "--no-install-dependencies")
+            self.assertNotIn("install", target["verification"])
+            self.assertFalse((root / "npm.log").exists())
+
+    def test_without_lockfile_nothing_is_installed(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, {"package.json": PACKAGE_FILES["package.json"]})
+            bin_dir = stub_bin(root, {"npm": FAKE_NPM})
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url)
+            self.assertNotIn("install", target["verification"])
+            self.assertFalse((root / "npm.log").exists())
 
 
 if __name__ == "__main__":
