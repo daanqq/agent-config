@@ -223,7 +223,7 @@
       },
       "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "e4d841b1b53cbc4a87b5e29dc489a0bb72e47bebac6106cf167381c9e8ce390f"
+        "installed_hash": "83be78413d425cd54679b498a3ff5e0dc569a9bf849b0fe0493f852c342f0500"
       },
       "retro": {
         "tracking": "overlay",

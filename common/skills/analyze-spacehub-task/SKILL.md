@@ -11,6 +11,9 @@ Get the task context with [`fetch-spacehub-task`](../fetch-spacehub-task/SKILL.m
 through the active agent's SpaceHub MCP tools. Follow its rules for exact task
 lookup, artifacts, linked tasks, and attachments. Analyze only the requested
 task's description, artifacts, and metadata.
+Before writing conclusions, apply the checks in
+[`references/analysis-checks.md`](references/analysis-checks.md) whose condition
+matches the task, such as spatial claims from screenshots or video.
 
 After the task context is written, resolve this skill's directory as
 `SKILL_ROOT` and label the calling Herdr tab with the task ID and title:
