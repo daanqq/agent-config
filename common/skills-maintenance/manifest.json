@@ -46,6 +46,11 @@
       "cache": "github.com/aidenybai/react-doctor",
       "revision": "95db911e3c9aa5a0c64ded8d94e810fea9a6bf52"
     },
+    "tidy-artifacts": {
+      "url": "git@git.esoft.tech:tidy/artifacts.git",
+      "cache": "git.esoft.tech/tidy/artifacts",
+      "revision": "26f18e19357d18554a5c4a2ed4a6a6d611d5dd30"
+    },
     "vercel-agent-skills": {
       "url": "https://github.com/vercel-labs/agent-skills.git",
       "cache": "github.com/vercel-labs/agent-skills",
@@ -335,7 +340,9 @@
         "installed_hash": "01171cfa3eb1b713f087e5a49bced3abbed22e7c2994eb0047c442e8c0d01488"
       },
       "publish-artifact-page": {
-        "tracking": "local",
+        "tracking": "exact",
+        "repository": "tidy-artifacts",
+        "path": ".agents/skills/publish-artifact-page",
         "installed_hash": "ca5bb5b919d2eff76481cc759ca23246c3632c875f02a49ac21bdf8adc3f1199"
       }
     },
