@@ -37,6 +37,8 @@ pi -p --no-session --model "$MODEL" --thinking "$THINKING" --tools read,bash < "
 
 Pass the brief on stdin, not as `@"$BRIEF"`: pi expands `/skill:` only at the very start of the message, and `@file` wraps the content in a `<file>` tag. stdout contains only the agent's final answer. Do not poll; wait for the completion notification.
 
+If pi exits within seconds and stdout is only `fetch failed`, run the same command once more after 15 seconds without diagnosing the network. Report a second failure to the user as a blocker.
+
 ## 4. Triage
 
 Verify every finding against the actual code before judging it. Report to the user:
