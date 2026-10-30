@@ -10,7 +10,7 @@ Produce one self-contained HTML file that introduces a team to a change: what pr
 
 ## Steps
 
-1. **Fix the scope.** Name the repository and the exact commits or range. Read code from those revisions (`git show <rev>:<path>`, `git diff`), never from the working tree: it may hold uncommitted edits that are not part of the change. Done when every section maps to one commit, or to one `base..head` range when the change is not committed.
+1. **Fix the scope.** Name the repository and the exact commits or range. Read code from those revisions (`git show <rev>:<path>`, `git diff`), never from the working tree: it may hold uncommitted edits that are not part of the change. If the demo or the described behaviour depends on uncommitted edits, first propose committing them so the page covers them; ask this together with any later publication question, so the user answers once and the published page is not rebuilt for a missing edit. Done when every section maps to one commit, or to one `base..head` range when the change is not committed.
 2. **Write the content** as a content JSON for [`build.py`](build.py); its docstring is the schema. Follow the content rules below. Done when every commit in scope has a section and every block has one to three focused code refs.
 3. **Add the before/after demo only when the user asks for it**, following [`DEMO.md`](DEMO.md). Done when the clip is synced and trimmed as DEMO.md requires.
 4. **Build**: `python3 <skill-dir>/build.py content.json <out.html>`. Write the output outside the repository unless the user names a place. The script fails loudly on an ambiguous or missing ref anchor; fix the anchor, not the script.
