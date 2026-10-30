@@ -52,6 +52,11 @@ status and the log before making a completion claim;
 Logs retain all command output: keep them outside repositories and do not run
 checks that print credentials.
 
+When a measurement starts background helpers such as memory samplers or watchers,
+bound each helper with its own `timeout`, wait only for the saved PIDs of the
+measured commands, and stop helpers by saved PID. `pkill -f` and `pgrep -f` also
+match the invoking shell's command line and can kill the measurement itself.
+
 ## Guardrails
 
 - A successful build proves compilation, not product behavior.

@@ -8,6 +8,7 @@
 - Respect task permissions and avoid creating permanent verification artifacts unless the work benefits from them.
 - Preserve the bundled license and shared Claude Code and Pi metadata.
 - Keep the bundled argv-based check runner for trimmed output: private complete logs, the original exit status, and interruption forwarding. Do not substitute the status of a formatter for the check's status.
+- Keep the background-helper rule for measurements: bounded helpers, waiting only on measured PIDs, stopping by saved PID rather than `pkill -f`.
 
 ## Replace or omit from upstream
 
