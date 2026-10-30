@@ -9,8 +9,10 @@ Unless the user explicitly requests implementation, keep the work read-only.
 
 Get the task context with [`fetch-spacehub-task`](../fetch-spacehub-task/SKILL.md)
 through the active agent's SpaceHub MCP tools. Follow its rules for exact task
-lookup, artifacts, linked tasks, and attachments. Analyze only the requested
-task's description, artifacts, and metadata.
+lookup, programming works, linked tasks, attachments, and refetching. Analyze
+the requested task's description, artifacts, and metadata together with its
+programming works; when they disagree, the programming work wins for
+implementation and the disagreement is reported.
 Before writing conclusions, apply the checks in
 [`references/analysis-checks.md`](references/analysis-checks.md) whose condition
 matches the task, such as spatial claims from screenshots or video.
@@ -28,8 +30,9 @@ analysis either way. Under Claude Code it also prints a `/rename` command for
 the session; only the user can run it, so end the answer with that command
 verbatim.
 
-Completion criterion: the target issue and relevant accessible attachments
-have been analyzed without unrequested related-issue fetches.
+Completion criterion: the target issue, its programming works, and relevant
+accessible attachments have been analyzed without other unrequested
+related-issue fetches.
 
 If the user requests implementation, first decide whether repository isolation is needed.
 Use [`task-worktree`](../task-worktree/SKILL.md) only when the user requests a worktree, the original

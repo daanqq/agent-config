@@ -179,7 +179,7 @@
       },
       "fetch-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "63eafeaf88915f9534105ac3cfb649edb00fdab475ac244c5acc4c09d385bbfc"
+        "installed_hash": "fe605c0c814a4ebb97cd2410f4b7b30ee6f418ecc5e4b51a736f15394b964f97"
       },
       "update-skills": {
         "tracking": "local",
@@ -223,7 +223,7 @@
       },
       "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "83be78413d425cd54679b498a3ff5e0dc569a9bf849b0fe0493f852c342f0500"
+        "installed_hash": "4d74f2da9d34fb1cb2f974fcb29a9b1a1da27638ceb5d0c80091ccdd2537355d"
       },
       "retro": {
         "tracking": "overlay",
