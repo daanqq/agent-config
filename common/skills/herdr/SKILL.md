@@ -205,6 +205,7 @@ If a larger recent read still does not reveal the completed response, ask the ag
 
 - Use `--no-focus` for background work unless the user asked to switch context.
 - Use `--current`, an explicit pane ID, or a unique agent name. Do not rely on another client's focused pane.
+- Before `agent prompt` to an agent you did not start for this task, check `agent get`: if it reports `focused: true`, the user may be typing in that pane, and submitted text would merge with their draft. `idle` does not rule this out. Do not prompt it; write the information to a handoff file and tell the user its path, or wait until the pane is no longer focused.
 - Parse IDs from JSON responses. Do not derive them from sidebar order or examples.
 - Do not close workspaces, tabs, panes, or sessions you did not create unless the user explicitly asked. `workspace close --group` closes the primary workspace and its linked worktree workspaces; never add it merely to bypass `workspace_group_close_required`.
 - Use `--trust-repository` only after the user has verified the repository. It grants per-request Git trust; it is not a routine retry for a failed worktree command.

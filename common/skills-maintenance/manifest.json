@@ -125,10 +125,11 @@
         "installed_hash": "8bc24f58d76c8978ac377817ab5baa4ee04ebb33413a028fee26fd7acca048b4"
       },
       "herdr": {
-        "tracking": "exact",
+        "tracking": "overlay",
         "repository": "herdr",
         "path": "skills/herdr",
-        "installed_hash": "5aae74c4fecf6fd105e43f279b8c4196e333dabb38d8f099f967590d1d619dd1"
+        "overlay": "overlays/common/herdr.md",
+        "installed_hash": "c43d9f1b59d48dbf38395554ebfb232cdc20f7d7dde4fc8917f02efaca114fef"
       },
       "improve-react": {
         "tracking": "overlay",
