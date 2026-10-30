@@ -86,7 +86,7 @@
       },
       "task-worktree": {
         "tracking": "local",
-        "installed_hash": "05e24feb25b1645fcf4083d87642727f8dd2bdfdde26a026ff813eb66e94035c"
+        "installed_hash": "1c101e27d0e773c5284aa686923eb0e77fdc8823096b2c6813ef20fa3149421f"
       },
       "task-worktree-transfer": {
         "tracking": "local",
@@ -223,7 +223,7 @@
       },
       "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "4d74f2da9d34fb1cb2f974fcb29a9b1a1da27638ceb5d0c80091ccdd2537355d"
+        "installed_hash": "1c675f509c2a7b6a109bdc3052c4299f13b932635bce356efdf3978be9e56dbb"
       },
       "retro": {
         "tracking": "overlay",

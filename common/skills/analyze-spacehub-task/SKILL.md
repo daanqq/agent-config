@@ -34,14 +34,12 @@ Completion criterion: the target issue, its programming works, and relevant
 accessible attachments have been analyzed without other unrequested
 related-issue fetches.
 
-If the user requests implementation, first decide whether repository isolation is needed.
-Use [`task-worktree`](../task-worktree/SKILL.md) only when the user requests a worktree, the original
-checkout contains pre-existing or unrelated changes, is on another branch or serves
-a stand, multiple repositories need independent changes, or the task explicitly
-requires isolation. Otherwise, with one repository affected, implement in the
-original checkout on the task branch. Follow the branch contract in `task-worktree`
-even without a worktree; it owns the default feature branch and the gate for
-decomposed task branches.
+If the user requests implementation, first decide with
+[`task-worktree`](../task-worktree/SKILL.md) whether a worktree is allowed and
+needed: it owns the repositories that allow worktrees and the isolation
+conditions. Without a worktree, implement in the original checkout on the task
+branch. Follow the branch contract in `task-worktree` even without a worktree;
+it owns the default feature branch and the gate for decomposed task branches.
 
 If work for the same ticket was already transferred from a worktree, inspect the
 original checkout and continue there on its established task branch. Do not create

@@ -6,15 +6,34 @@ description: Branch naming (`feature/T-`, `task/T-`) and isolated Git worktrees 
 # Task Worktree
 
 Follow the branch contract for every new task branch. Create a worktree only
-when repository isolation is needed: a task ID alone does not require one. If
-the checkout is clean, only one repository is affected, isolation was not
-requested, and the original checkout is on its base branch and serves no stand,
-use it for the task branch. Isolation is required when the checkout is on
-another branch (another task's work may be running from it), or when a stand
-runs from it: `devtask status` lists it, or a tmux session such as
-`echat-client` serves that path. Switching branches there silently changes the
-code the stand serves. If the same task was already transferred back, continue
-in that checkout.
+when repository isolation is needed and the repository allows worktrees: a task
+ID alone does not require one. Judge the checkout from a fresh `git status` and
+current branch, not from earlier observations.
+
+Worktrees are allowed only in these repositories under `~/echat/`:
+
+- `tidy-client`: code, tests, and browser checks; `echat-browser-check` serves a
+  worktree through `worktree-client.sh`.
+- `tidy-rest`, `tidy-server`, `tidy-proto`: code, tests, and builds. Their stands
+  run only from the original checkout, so a stand or browser check first needs
+  the changes moved back with
+  [`task-worktree-transfer`](../task-worktree-transfer/SKILL.md).
+
+Every other repository, including the Space services under
+`~/deploy/env/development/services/`, works in its original checkout: their
+stands build only from it, so a worktree cannot be checked. If that checkout has
+unrelated changes, is on another branch, or serves a stand, ask the user once
+whether to switch it to the task branch (the stand then serves the task); do not
+create a worktree instead.
+
+In an allowed repository, if the checkout is clean, only one repository is
+affected, isolation was not requested, and the original checkout is on its base
+branch and serves no stand, use it for the task branch. Isolation is required
+when the checkout is on another branch (another task's work may be running from
+it), or when a stand runs from it: `devtask status` lists it, or a tmux session
+such as `echat-client` serves that path. Switching branches there silently
+changes the code the stand serves. If the same task was already transferred
+back, continue in that checkout.
 
 ## Branch contract
 
