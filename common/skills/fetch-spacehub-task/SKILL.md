@@ -6,9 +6,12 @@ compatibility: Requires an authenticated SpaceHub issues MCP server in the activ
 
 # Fetch SpaceHub Task
 
-Discover the SpaceHub MCP server's read-only `find_issues` and `get_issue`
-tools in the active agent. Tool prefixes differ between Pi and Claude Code;
-use the discovered names and input schemas. If the server is unavailable or
+Use the SpaceHub MCP server's read-only `find_issues` and `get_issue` tools.
+Their names are `mcp__sph_issues__find_issues` and `mcp__sph_issues__get_issue`
+in Pi, `mcp__sph-issues__find_issues` and `mcp__sph-issues__get_issue` in
+Claude Code; keyword tool search may return `get_image` instead. Only if these
+names are absent, discover them by filtering tool `name` fields for these
+suffixes, and use the discovered input schemas. If the server is unavailable or
 unauthenticated, report the blocker. Do not fall back to raw HTTP, PORA cookies,
 browser scraping, or public fetch tools, and do not call mutation tools.
 
