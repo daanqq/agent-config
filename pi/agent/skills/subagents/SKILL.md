@@ -40,7 +40,9 @@ Higher price efficiency means lower cost.
 **Prompt nicknames:** “pi”, “pi agent”, “pi coding agent”, “pi subagent”
 It inherits the parent model and thinking level when `model` or `reasoning_effort` is omitted.
 
-For an explicit model selection, check `pi --list-models`. Prefer `provider/model-id`;
+For an explicit model selection, check only the chosen models, for example
+`pi --list-models | rg '^openai-codex.*(gpt-5.6-luna|gpt-6.1-sol)'`: the full
+catalog is long enough to truncate other output. Prefer `provider/model-id`;
 a bare model id only works when unambiguous.
 
 **Thinking budgets:** `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`.

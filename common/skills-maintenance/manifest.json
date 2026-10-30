@@ -364,7 +364,7 @@
       },
       "subagents": {
         "tracking": "local",
-        "installed_hash": "ef6cfea337a41729170b5a8d7b54f082e14366894f428d84893f4d35710ceb25"
+        "installed_hash": "99b70726d431cc2ff84b713bd2573f41b738b8547d1539e8a67a9135fedc4065"
       },
       "why": {
         "tracking": "overlay",
