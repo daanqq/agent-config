@@ -32,4 +32,4 @@ ffmpeg -i before.mp4 -i after.mp4 -filter_complex \
 
 Use 560px per half: the page shows the clip at about half that width, so it stays sharp on retina screens. Set both halves to the same explicit even height when `-2` rounds them differently. Prefer H.264 over animated WebP or GIF: for screen recordings it is several times smaller at better quality (a 10 s clip is about 2-3 MB, while lossy WebP of similar quality is about 7 MB and lossless WebP is over 20 MB).
 
-Pass the clip, its pixel size, and a caption naming what each half shows in the `demo` field of the content JSON; `build.py` embeds it as base64 in a muted, looping, autoplaying `<video>`.
+Pass the clip, its pixel size, and a caption naming what each half shows in the `demo` field of the content JSON; `build.py` embeds it as base64 in a muted, looping, autoplaying `<video>`. Set `"controls": true` when the clip is long enough that the reader needs to pause or seek (roughly over 30 seconds).

@@ -338,7 +338,7 @@
       },
       "html-artifact": {
         "tracking": "local",
-        "installed_hash": "1012ce6e28f56b9716c29f0e4793571e0bb1828fb9d352d160a8368ca9b7e3cc"
+        "installed_hash": "d097024a5734c04ab2f9b8d65230b11bc81316efad6028bb765450e40e38d1a3"
       },
       "publish-artifact-page": {
         "tracking": "exact",

@@ -13,7 +13,8 @@ paragraphs; a paragraph made only of "- " lines becomes a list):
   "labels": {"overview": "...", "step": "Коммит {n} из {total}",
              "show_code": "...", "hide_code": "...", "before": "...", "after": "..."},
   "subject_strip": "\\s*#[A-Z]+-\\d+$",            # optional regex removed from commit subjects
-  "demo": {"video": "/abs/clip.mp4", "width": 1136, "height": 1246, "caption": "..."},  # optional
+  "demo": {"video": "/abs/clip.mp4", "width": 1136, "height": 1246, "caption": "...",
+           "controls": false},  # optional; controls adds pause and seek for long clips
   "sections": [
     {"rev": "<commit>", "title": "...", "lead": "...",
      "blocks": [{"title": "...", "text": "...",
@@ -160,6 +161,7 @@ if C.get('demo'):
         f'<figure class="demo"><div class="demo-labels"><span>{html.escape(L["before"])}</span>'
         f'<span>{html.escape(L["after"])}</span></div>'
         f'<video src="data:video/mp4;base64,{data}" autoplay loop muted playsinline '
+        f'{"controls " if d.get("controls") else ""}'
         f'width="{d["width"]}" height="{d["height"]}" aria-label="{html.escape(d["caption"])}"></video>'
         f'<figcaption>{inline(d["caption"])}</figcaption></figure>'
     )
