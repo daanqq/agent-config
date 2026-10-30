@@ -90,7 +90,7 @@
       },
       "task-worktree-transfer": {
         "tracking": "local",
-        "installed_hash": "92ff71b834c156b90b3e17556c66a12915457bb6f60addc7df4bb6e4ca27904f"
+        "installed_hash": "01caf03f672ebd7089a6afd62b8bf2ee6474b77c7f7adcfbcad778a3c7f155cd"
       },
       "fix-merge-conflicts": {
         "tracking": "overlay",
