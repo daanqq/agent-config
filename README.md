@@ -38,8 +38,11 @@ python3 scripts/install.py --backup-existing
 without starting Pi, Herdr or model calls. It is included in `make check` and
 runs from a staged snapshot without node_modules or dependency installation.
 
-The Bash `PreToolUse` grep guard runs a native binary at
-`~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python.
+The Bash `PreToolUse` guard runs a native binary at
+`~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python. It
+blocks unquoted globs in grep `--include`/`--exclude`, and test, typecheck or
+lint commands piped straight into grep, rg or head without pipefail, pointing to
+`prove-it-works/scripts/run-check.py`.
 `make install-hooks` builds and atomically replaces only this binary; a failed
 build retains the installed version. Run it after editing
 `claude/hooks/grep-literal-glob.go`. Tests build their own temporary binary.

@@ -127,6 +127,61 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "cat <<EOF\ngrep --include=*.md x\n",
         ], False)
 
+    def check_pipes(self, commands, blocked):
+        for command in commands:
+            with self.subTest(command=command):
+                result = self.invoke(command)
+                self.assertEqual(result.returncode, 2 if blocked else 0, result.stderr)
+                self.assertEqual(result.stdout, "")
+                if blocked:
+                    self.assertIn("prove-it-works/scripts/run-check.py", result.stderr)
+                    self.assertIn("not executed or rewritten", result.stderr)
+                else:
+                    self.assertEqual(result.stderr, "")
+
+    def test_check_output_piped_into_filters_blocks(self):
+        self.check_pipes([
+            "npm run test:run 2>&1 | grep -E 'Test Files|Tests |FAIL' | head",
+            'n exec "$(cat .nvmrc)" npm run test:run 2>&1 | grep -E "Tests"',
+            'cd tidy-client && n exec "$(cat "$(pwd)/.nvmrc")" npm run typecheck | head -20',
+            "cd tidy-client && npx tsc --noEmit -p . | head -20",
+            "npx eslint src | rg error",
+            "CI=1 npm test | head",
+            "timeout -k 5 300 npx vitest run | grep FAIL",
+            "pnpm lint | grep warn",
+            "npm run -s typecheck:client 2>&1 | head -5",
+            "./node_modules/.bin/vitest run x | grep -v skip",
+            "npm run check:quick | egrep x",
+            "echo start\nnpm test 2>&1 | /usr/bin/grep -c passed",
+        ], True)
+
+    def test_check_output_kept_or_unrelated_pipes_allow(self):
+        self.check_pipes([
+            "npm run test:run 2>&1 | tail -40",
+            "set -o pipefail; npm run test:run | grep FAIL",
+            "npm run test:run | tee log; echo ${PIPESTATUS[0]}",
+            "npm run test:run > log 2>&1; grep Errors log",
+            "grep vitest package.json | head",
+            "npm ci | head",
+            "npm run build | grep error",
+            "echo npm run test | grep x",
+            "git log --oneline | head",
+            'python3 run-check.py --tail 40 -- n exec "$(cat .nvmrc)" npm run test:run',
+            'sh -c "npm test | grep x"',
+            "npm test",
+        ], False)
+
+    def test_quoted_substitutions_are_opaque_words(self):
+        self.check_commands([
+            'grep --include=*.json "$(pwd)" .',
+            'grep --include=*.json "${HOME}/x" .',
+        ], True)
+        self.check_commands([
+            'echo "$(grep --include=*.md x)"',
+            'echo "$(unbalanced"',
+            'echo "$(echo `date`)" && grep --include=*.md x',
+        ], False)
+
     def test_hook_input_boundary(self):
         for overrides in ({"tool_name": "Read"}, {"hook_event_name": "PostToolUse"},
                           {"tool_input": None}, {"tool_input": []},

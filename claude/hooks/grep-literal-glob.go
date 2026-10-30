@@ -1,5 +1,7 @@
 // Advisory Claude PreToolUse guard, not a shell parser or security boundary.
-// Only direct grep commands with literal include/exclude values are checked.
+// It checks direct grep commands with literal include/exclude globs, and test,
+// typecheck or lint commands piped straight into grep, rg or head without
+// pipefail: the pipe drops the check's exit status and can hide error lines.
 // Unsupported substitutions, grouping and malformed shell input fail open.
 // Contract: JSON stdin; silent exit 0 allows, exit 2 + stderr blocks PreToolUse.
 package main
@@ -53,7 +55,57 @@ type heredoc struct {
 	tabs   bool
 }
 
+// skipSubstitution returns the index after the $(...) or ${...} starting at i,
+// or -1 when its end cannot be found without a real shell parser.
+func skipSubstitution(source []rune, i int) int {
+	open, closing := source[i+1], ')'
+	if open == '{' {
+		closing = '}'
+	}
+	depth := 1
+	for j := i + 2; j < len(source); j++ {
+		switch char := source[j]; {
+		case char == '\\':
+			j++
+		case char == '`':
+			return -1
+		case char == '\'':
+			for j++; j < len(source) && source[j] != '\''; j++ {
+			}
+			if j == len(source) {
+				return -1
+			}
+		case char == '"':
+			for j++; j < len(source) && source[j] != '"'; j++ {
+				if source[j] == '\\' {
+					j++
+				} else if source[j] == '`' {
+					return -1
+				} else if source[j] == '$' && j+1 < len(source) && (source[j+1] == '(' || source[j+1] == '{') {
+					end := skipSubstitution(source, j)
+					if end < 0 {
+						return -1
+					}
+					j = end - 1
+				}
+			}
+			if j >= len(source) {
+				return -1
+			}
+		case char == open:
+			depth++
+		case char == closing:
+			depth--
+			if depth == 0 {
+				return j + 1
+			}
+		}
+	}
+	return -1
+}
+
 // Tokenize words, separators and redirects without expanding or executing text.
+// A substitution inside double quotes stays one opaque, non-literal word.
 // Heredoc bodies are opaque; false means the entire command is unsupported.
 func tokens(command string) ([]token, bool) {
 	source := []rune(command)
@@ -131,6 +183,18 @@ func tokens(command string) ([]token, bool) {
 				break
 			}
 			substitution := char == '$' && i+1 < len(source) && (source[i+1] == '(' || source[i+1] == '{')
+			if quote == '"' && substitution {
+				end := skipSubstitution(source, i)
+				if end < 0 {
+					return nil, false
+				}
+				for ; i < end; i++ {
+					value.text = append(value.text, source[i])
+					value.active = append(value.active, false)
+				}
+				value.literal = false
+				continue
+			}
 			if quote != '\'' && (char == '`' || substitution) {
 				return nil, false
 			}
@@ -228,13 +292,101 @@ func unsafeOption(words []word) string {
 	return ""
 }
 
+var (
+	assignment  = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
+	checkScript = regexp.MustCompile(`^(test|typecheck|lint|check)(:|$)`)
+	checkTools  = map[string]bool{"vitest": true, "tsc": true, "eslint": true, "oxlint": true, "jest": true}
+	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
+)
+
+func name(w word) string {
+	text := string(w.text)
+	return text[strings.LastIndex(text, "/")+1:]
+}
+
+func skipOptions(words []word, i int) int {
+	for i < len(words) && strings.HasPrefix(string(words[i].text), "-") {
+		i++
+	}
+	return i
+}
+
+// checkCommand reports a test, typecheck or lint run, also behind env
+// assignments and the npx, n exec, timeout, time, nice, env or command wrappers.
+func checkCommand(words []word) bool {
+	i := 0
+wrappers:
+	for i < len(words) {
+		switch tool := name(words[i]); {
+		case words[i].literal && assignment.MatchString(string(words[i].text)):
+			i++
+		case tool == "npx" || tool == "time" || tool == "nice" || tool == "env" || tool == "command":
+			i = skipOptions(words, i+1)
+		case tool == "n" && i+1 < len(words) && string(words[i+1].text) == "exec":
+			i += 3
+		case tool == "timeout":
+			for i++; i < len(words) && strings.HasPrefix(string(words[i].text), "-"); i++ {
+				if text := string(words[i].text); text == "-k" || text == "-s" {
+					i++ // --kill-after and --signal take a separate value
+				}
+			}
+			i++ // duration
+		default:
+			break wrappers
+		}
+	}
+	if i >= len(words) || !words[i].literal {
+		return false
+	}
+	tool := name(words[i])
+	if checkTools[tool] {
+		return true
+	}
+	switch tool {
+	case "npm", "pnpm", "yarn", "bun":
+		var args []string
+		for _, w := range words[i+1:] {
+			if text := string(w.text); !strings.HasPrefix(text, "-") {
+				args = append(args, text)
+			}
+		}
+		if len(args) > 0 && (args[0] == "run" || args[0] == "run-script") {
+			args = args[1:]
+		}
+		return len(args) > 0 && (args[0] == "t" || checkScript.MatchString(args[0]))
+	}
+	return false
+}
+
+func grepMessage(option string) string {
+	return fmt.Sprintf("Unquoted glob in literal grep %s argument. Quote the pattern "+
+		"(for example %s='*.json') or use the search tool / rg -g '*.json'. "+
+		"The command was not executed or rewritten.\n", option, option)
+}
+
+func pipeMessage(filter string) string {
+	return fmt.Sprintf("A test, typecheck or lint command piped into %s loses its exit status "+
+		"and can drop error lines such as the Vitest Errors block. Run it through the runner, "+
+		"which keeps the status and the full log and prints the tail: "+
+		"python3 \"$HOME/.claude/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
+		"grep the printed log path if you need specific lines. Piping into tail or set -o pipefail "+
+		"is also accepted. The command was not executed or rewritten.\n", filter)
+}
+
 func detect(source string) string {
 	parts, supported := tokens(source)
 	if !supported {
 		return ""
 	}
+	pipefail := false
+	for _, part := range parts {
+		if text := string(part.word.text); strings.Contains(text, "pipefail") ||
+			strings.Contains(strings.ToUpper(text), "PIPESTATUS") {
+			pipefail = true
+		}
+	}
 	var command []word
-	redirect := false
+	redirect, fromCheck := false, false
 	for _, part := range append(parts, token{operator: "\n"}) {
 		switch part.operator {
 		case "":
@@ -245,8 +397,12 @@ func detect(source string) string {
 			}
 		case ";", "&", "|", "&&", "||", "\n":
 			if found := unsafeOption(command); found != "" {
-				return found
+				return grepMessage(found)
 			}
+			if fromCheck && !pipefail && len(command) > 0 && filters[name(command[0])] {
+				return pipeMessage(name(command[0]))
+			}
+			fromCheck = part.operator == "|" && checkCommand(command)
 			command = nil
 			redirect = false
 		default:
@@ -305,10 +461,8 @@ func run() int {
 		json.Unmarshal(input["command"], &command) != nil || !validUnicodeEscapes(input["command"]) {
 		return 0
 	}
-	if option := detect(command); option != "" {
-		fmt.Fprintf(os.Stderr, "Unquoted glob in literal grep %s argument. Quote the pattern "+
-			"(for example %s='*.json') or use the search tool / rg -g '*.json'. "+
-			"The command was not executed or rewritten.\n", option, option)
+	if message := detect(command); message != "" {
+		fmt.Fprint(os.Stderr, message)
 		return 2
 	}
 	return 0
