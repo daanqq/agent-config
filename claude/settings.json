@@ -142,5 +142,6 @@
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoContinueAtUsageLimit": true,
-  "fileCheckpointingEnabled": false
+  "fileCheckpointingEnabled": false,
+  "cleanupPeriodDays": 90
 }
