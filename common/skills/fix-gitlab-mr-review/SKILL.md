@@ -1,13 +1,15 @@
 ---
 name: fix-gitlab-mr-review
 description: Fix unresolved GitLab merge request review comments on the original MR source branch.
-compatibility: Requires git, glab, Python 3, SSH access to GitLab, and repositories normally located under ~/echat.
+compatibility: Requires git, glab, Python 3, SSH access to GitLab, and repositories under ~/echat or Space services under ~/deploy/env/development/services.
 disable-model-invocation: true
 ---
 
 # Fix GitLab MR review
 
 Treat the MR as the index: derive the project, source branch, target branch, and every unresolved discussion from it instead of asking the user to restate them.
+
+When the request lists several MRs of one task, run sections 1-3 for every MR before editing or asking anything, with a separate `--output` file per MR. Then apply mechanical fixes MR by MR and ask one batched question covering all of them: a decision in one repository often changes another, and every extra round waits for the user.
 
 ## 1. Fetch the review
 
@@ -31,19 +33,19 @@ Treat the MR as the index: derive the project, source branch, target branch, and
 MR and unresolved count, and `/tmp/mr-review.json` contains every item from
 `unresolved_discussions`, including replies.
 
-## 2. Isolate the branch
+## 2. Select the checkout
 
-Repositories for this workflow normally live under `~/echat`.
+[`task-worktree`](../task-worktree/SKILL.md) decides whether a repository may use a worktree and when to ask before switching an original checkout's branch. Read it first; this section adds the MR-specific steps.
 
-1. Prefer `~/echat/<repo-name>`. Verify its `origin` matches the MR host and project path; do not trust a matching directory name alone.
-2. If it is absent, clone with SSH, never HTTPS:
+1. **Space services: original checkout only.** If `~/deploy/env/development/services/<repo-name>` exists and its `origin` matches the MR host and project path, fix the MR there. Never create a worktree or a clone under `~/echat` for a Space service, and do not edit an existing one left there by earlier sessions: the stand builds only from the original checkout, so changes elsewhere cannot be checked. Also read `~/deploy/AGENTS.md`.
+2. Other repositories live in `~/echat/<repo-name>`. Verify its `origin` matches the MR host and project path; do not trust a matching directory name alone. If it is absent, clone with SSH, never HTTPS:
 
    ```bash
    git clone git@<host>:<project-path>.git ~/echat/<repo-name>
    ```
 
 3. Fetch the source and target branches without altering the existing checkout.
-4. Use the MR's original `source_branch`, usually `feature/*` or `task/*`, not a synthetic `mr-review-*` branch. Inspect `git worktree list`. If the branch is already checked out, reuse that checkout after verifying its task identity and clean state. Stop and ask if it has unrelated changes; do not create another branch to bypass them. Otherwise create a worktree on the existing local source branch, or create that branch tracking the remote if absent:
+4. Use the MR's original `source_branch`, usually `feature/*` or `task/*`, not a synthetic `mr-review-*` branch. Inspect `git worktree list`. If a permitted checkout already has the branch, reuse it after verifying its task identity. If the repository is not on the `task-worktree` allowlist, use its original checkout, asking once as `task-worktree` requires if it is on another branch. Otherwise create a worktree on the existing local source branch, or create that branch tracking the remote if absent:
 
    ```bash
    # Existing local source branch:
@@ -56,9 +58,10 @@ Repositories for this workflow normally live under `~/echat`.
    ```
 
 5. Compare the local source branch with the fetched remote. Fast-forward when behind; preserve and inspect local-only task commits when ahead. Stop and ask if histories diverge. Verify an existing destination worktree rather than overwriting it. Never reset, clean, stash, or overwrite another checkout to make room.
-6. Read the applicable project instruction files from `~/echat` through the worktree repository before editing.
+6. Treat uncommitted changes already in the selected checkout as the user's, for example a local stand config. Record them with `git status --short`. Do not ask about them unless they touch a file a discussion requires you to edit; then stop and ask. Otherwise leave them as they are, keep them out of your diff checks and any commit, and list them in the report.
+7. Read the applicable project instruction files from `~/echat` through the selected repository before editing.
 
-**Completion criterion:** the selected checkout is clean, belongs to the MR, and uses its original source branch. Its relationship to the fetched remote is known; unrelated changes are untouched.
+**Completion criterion:** the selected checkout is permitted by `task-worktree`, belongs to the MR, and uses its original source branch. Its relationship to the fetched remote is known; pre-existing changes are recorded and untouched.
 
 ## 3. Triage every discussion
 
@@ -76,7 +79,7 @@ Do not classify from the comment text alone. A review suggestion becomes mechani
 ## 4. Apply safe fixes and stop at product decisions
 
 1. Apply all valid mechanical fixes surgically. Search broadly before deleting or declaring anything unused.
-2. Do not change business or ambiguous behavior. Ask the user one batched question containing:
+2. Do not change business or ambiguous behavior. Ask the user one batched question, covering every MR of the request, containing:
    - the discussion URL and reviewer request;
    - the current behavior;
    - the plausible options and their consequences;
@@ -88,7 +91,7 @@ Do not classify from the comment text alone. A review suggestion becomes mechani
 
 ## 5. Verify the repair
 
-Run the narrowest relevant checks from repository instructions, then the broader typecheck/lint/test suite justified by the touched files. Always run `git diff --check` and inspect the complete diff against `origin/<source-branch>` for unrelated changes.
+Run the narrowest relevant checks from repository instructions, then the broader typecheck/lint/test suite justified by the touched files. Always run `git diff --check` and inspect the complete diff against `origin/<source-branch>` for unrelated changes, apart from the pre-existing changes recorded in section 2.
 
 Map each discussion to one of: fixed, awaiting decision, or no change with reason. A passing build does not compensate for an unaccounted discussion.
 
@@ -96,12 +99,12 @@ Map each discussion to one of: fixed, awaiting decision, or no change with reaso
 
 ## 6. Report and optionally publish
 
-Report the worktree path, source branch, changed files, discussion-to-fix mapping, validation results, and remaining decisions.
+Report the checkout path, source branch, changed files, untouched pre-existing changes, discussion-to-fix mapping, validation results, and remaining decisions.
 
 When the user explicitly asks to publish:
 
 1. Fetch `origin/<source-branch>` again and ensure it has not advanced unexpectedly.
-2. Commit with the requested message.
+2. Stage only the review-driven files, never the pre-existing changes from section 2, and commit with the requested message.
 3. Push to the MR source branch with a normal fast-forward push:
 
    ```bash

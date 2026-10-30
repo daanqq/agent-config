@@ -266,7 +266,7 @@
       },
       "fix-gitlab-mr-review": {
         "tracking": "local",
-        "installed_hash": "709e43e6cc27dadbbad199f57510f7109e32c2b2195d5a177d597dff8a1ab62b"
+        "installed_hash": "6a64c06eb74f41a57bf10a4496a5c9f18f45037d7f14b7bfe1c2ae6f26ff215e"
       },
       "improve-codebase-architecture": {
         "tracking": "overlay",
