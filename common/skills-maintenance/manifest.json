@@ -397,15 +397,19 @@
     "claude": {
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "e6e81c1db6984f122b2c9a95b19ad880955a158a2188572294dbc75c82ba363d"
+        "installed_hash": "201ece6c61d701aef33ef5f5b048be48b709de65813c86450bc0bfd2d4cb2d27"
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "b55c8aa04b48409c8222c0bbbf21fbae3835f0ea5b3e6f9c9dbd0a4d107a77b5"
+        "installed_hash": "2ce603ccfdb9589ad0ec48439e4e8369f1d758c07a68766c23baa21f9dd663f0"
       },
       "review-plan-gpt": {
         "tracking": "local",
         "installed_hash": "c8646fd5cc96e74eebf4fb15fc978eddd175b784dca941ada5008b03ad821893"
+      },
+      "task-to-mr": {
+        "tracking": "local",
+        "installed_hash": "1e5b64db6ab46dea8a96a8bf4dd13d03b1bfdc130e0748f3c99fc88ff7de6f78"
       },
       "show-me-your-work": {
         "tracking": "overlay",

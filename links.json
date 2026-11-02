@@ -422,6 +422,10 @@
       "target": ".claude/skills/review-plan-gpt"
     },
     {
+      "source": "claude/skills/task-to-mr",
+      "target": ".claude/skills/task-to-mr"
+    },
+    {
       "source": "claude/skills/show-me",
       "target": ".claude/skills/show-me"
     },
