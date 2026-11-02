@@ -126,6 +126,10 @@
       "target": ".agents/skills/blast-radius"
     },
     {
+      "source": "common/skills/babysit-mr",
+      "target": ".agents/skills/babysit-mr"
+    },
+    {
       "source": "common/skills/typescript-best-practices",
       "target": ".agents/skills/typescript-best-practices"
     },
@@ -240,6 +244,10 @@
     {
       "source": "claude/skills/blast-radius",
       "target": ".claude/skills/blast-radius"
+    },
+    {
+      "source": "claude/skills/babysit-mr",
+      "target": ".claude/skills/babysit-mr"
     },
     {
       "source": "claude/skills/bro",
@@ -956,6 +964,10 @@
     {
       "source": "pi/agent/skills/blast-radius",
       "target": ".pi/agent/skills/blast-radius"
+    },
+    {
+      "source": "pi/agent/skills/babysit-mr",
+      "target": ".pi/agent/skills/babysit-mr"
     },
     {
       "source": "pi/agent/skills/bro",

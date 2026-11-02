@@ -240,6 +240,10 @@
         "overlay": "overlays/common/blast-radius.md",
         "installed_hash": "1a0712c67f057756b8fa125bc7bdcedc8fb78e7780e9513d0dcf73536382e94b"
       },
+      "babysit-mr": {
+        "tracking": "local",
+        "installed_hash": "3bafd3b4a5863d293157d82b1b4b7e90847a4e7e37fb006fe6fb72dbe72f608a"
+      },
       "typescript-best-practices": {
         "tracking": "overlay",
         "repository": "cursor-plugins",
