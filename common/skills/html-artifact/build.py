@@ -10,11 +10,17 @@ paragraphs; a paragraph made only of "- " lines becomes a list):
   "repo": "/abs/path/to/repo",
   "lang": "ru",
   "title": "...", "eyebrow": "...", "intro": "...",
-  "labels": {"overview": "...", "step": "Коммит {n} из {total}",
-             "show_code": "...", "hide_code": "...", "before": "...", "after": "..."},
+  "labels": {"overview": "...", "step": "Коммит {n} из {total}", "show_code": "...", "hide_code": "...",
+             "before": "...", "after": "...", "validation": "...",
+             "previous": "...", "next": "...", "close": "..."},  # last three: image viewer buttons
   "subject_strip": "\\s*#[A-Z]+-\\d+$",            # optional regex removed from commit subjects
-  "demo": {"video": "/abs/clip.mp4", "width": 1136, "height": 1246, "caption": "...",
-           "controls": false},  # optional; controls adds pause and seek for long clips
+  "demo": [                                         # optional validation evidence, one item per scenario
+    {"video": "/abs/clip.mp4", "width": 1136, "height": 1246, "caption": "...",
+     "controls": false},                            # controls adds pause and seek for long clips
+    {"before": "/abs/before.png", "after": "/abs/after.png", "caption": "..."},
+    {"image": "/abs/shot.png", "caption": "..."}
+  ],
+  "demo_lead": "...",                               # optional: where and how it was checked
   "sections": [
     {"rev": "<commit>", "title": "...", "lead": "...",
      "blocks": [{"title": "...", "text": "...",
@@ -27,11 +33,17 @@ with "base" and "head" instead shows the combined diff of that range.
 A ref with substrings shows only the diff lines inside that range of the new
 file; a ref with a path only shows the whole file diff. Every substring must
 occur exactly once in the file at the shown revision.
+"demo" (a single object is accepted too) renders as the validation section right
+after the intro, before the commit sections. Screenshots are PNG or JPEG.
+Landscape ones (desktop) take the column width, before above after; portrait
+ones (mobile) sit side by side, like the video halves. Every screenshot opens
+in the page's image viewer, which pages through all of them.
 """
 import base64
 import html
 import json
 import re
+import struct
 import subprocess
 import sys
 
@@ -40,7 +52,8 @@ C = json.load(open(CONTENT))
 REPO = C['repo']
 L = {
     'overview': 'Overview', 'step': 'Commit {n} of {total}', 'show_code': 'Show full code',
-    'hide_code': 'Collapse code', 'before': 'Before', 'after': 'After', **C.get('labels', {}),
+    'hide_code': 'Collapse code', 'before': 'Before', 'after': 'After', 'validation': 'Validation',
+    'previous': 'Previous', 'next': 'Next', 'close': 'Close', **C.get('labels', {}),
 }
 
 
@@ -153,17 +166,67 @@ for n, section in enumerate(C['sections'], 1):
         )
     body.append('</section>')
 
+def image(path):
+    """Returns (mime, width, height, bytes) of a PNG or JPEG file."""
+    data = open(path, 'rb').read()
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        width, height = struct.unpack('>II', data[16:24])
+        return 'png', width, height, data
+    i = 2 if data[:2] == b'\xff\xd8' else len(data)
+    while i + 9 <= len(data):
+        marker, length = data[i + 1], struct.unpack('>H', data[i + 2:i + 4])[0]
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            height, width = struct.unpack('>HH', data[i + 5:i + 9])
+            return 'jpeg', width, height, data
+        i += 2 + length
+    sys.exit(f'{path}: demo screenshots must be PNG or JPEG')
+
+
+def img_tag(path, alt):
+    mime, width, height, data = image(path)
+    tag = (
+        f'<img src="data:image/{mime};base64,{base64.b64encode(data).decode()}" '
+        f'width="{width}" height="{height}" alt="{html.escape(alt)}">'
+    )
+    return width, height, tag
+
+
+def demo_figure(d):
+    caption = f'<figcaption>{inline(d["caption"])}</figcaption></figure>'
+    if 'image' in d:
+        width, height, tag = img_tag(d['image'], d['caption'])
+        layout = 'stack' if width > height else 'row'
+        return f'<figure class="demo"><div class="demo-pair {layout}"><div>{tag}</div></div>{caption}'
+    if 'video' in d:
+        data = base64.b64encode(open(d['video'], 'rb').read()).decode()
+        return (
+            f'<figure class="demo"><div class="demo-labels"><span>{html.escape(L["before"])}</span>'
+            f'<span>{html.escape(L["after"])}</span></div>'
+            f'<video src="data:video/mp4;base64,{data}" autoplay loop muted playsinline '
+            f'{"controls " if d.get("controls") else ""}'
+            f'width="{d["width"]}" height="{d["height"]}" aria-label="{html.escape(d["caption"])}"></video>'
+            f'<figcaption>{inline(d["caption"])}</figcaption></figure>'
+        )
+    shots = {key: img_tag(d[key], L[key]) for key in ('before', 'after')}
+    if shots['before'][:2] != shots['after'][:2]:
+        print(f'warning: before and after differ in size: {d["before"]}, {d["after"]}', file=sys.stderr)
+    width, height, _ = shots['before']
+    layout = 'stack' if width > height else 'row'
+    cells = ''.join(
+        f'<div><span class="demo-label">{html.escape(L[key])}</span>{tag}</div>' for key, (_, _, tag) in shots.items()
+    )
+    return f'<figure class="demo"><div class="demo-pair {layout}">{cells}</div>{caption}'
+
+
+demos = C.get('demo') or []
+demos = demos if isinstance(demos, list) else [demos]
 demo = ''
-if C.get('demo'):
-    d = C['demo']
-    data = base64.b64encode(open(d['video'], 'rb').read()).decode()
+if demos:
+    toc.insert(0, f'<li><a href="#validation"><span class="n">✓</span>{html.escape(L["validation"])}</a></li>')
+    lead = f'<p class="lead">{inline(C["demo_lead"])}</p>' if C.get('demo_lead') else ''
     demo = (
-        f'<figure class="demo"><div class="demo-labels"><span>{html.escape(L["before"])}</span>'
-        f'<span>{html.escape(L["after"])}</span></div>'
-        f'<video src="data:video/mp4;base64,{data}" autoplay loop muted playsinline '
-        f'{"controls " if d.get("controls") else ""}'
-        f'width="{d["width"]}" height="{d["height"]}" aria-label="{html.escape(d["caption"])}"></video>'
-        f'<figcaption>{inline(d["caption"])}</figcaption></figure>'
+        f'<section class="commit" id="validation"><h2>{html.escape(L["validation"])}</h2>{lead}'
+        + ''.join(demo_figure(d) for d in demos) + '</section>'
     )
 
 template = open(__file__.rsplit('/', 1)[0] + '/template.html').read()
@@ -172,6 +235,7 @@ for key, value in {
     'LANG': html.escape(C.get('lang', 'en')), 'TITLE': html.escape(C['title']),
     'EYEBROW': html.escape(C.get('eyebrow', '')), 'L_OVERVIEW': html.escape(L['overview']),
     'INTRO': md(C['intro']), 'DEMO': demo, 'TOC': '\n'.join(toc), 'BODY': '\n'.join(body),
+    'L_PREVIOUS': html.escape(L['previous']), 'L_NEXT': html.escape(L['next']), 'L_CLOSE': html.escape(L['close']),
 }.items():
     page = page.replace('{{' + key + '}}', value)
 open(OUT, 'w').write(page)

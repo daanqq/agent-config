@@ -1,6 +1,11 @@
-# Before/after demo
+# Validation evidence
 
-A side-by-side screen recording that shows the same scenario before and after the change, embedded in the page as one video.
+What the reader sees first after the intro: the change working, one item per scenario, in one of these forms:
+
+- a side-by-side before/after screen recording embedded as one video, when the change is in motion: timing, transitions, a flow across screens (Recordings, Sync and trim, Encode);
+- screenshots, when the change is visible in a static state: a before/after pair when the old behaviour can be shown, a single screenshot when only the result can (Screenshots).
+
+Pass the items as a list in the `demo` field and say where and how they were checked (stand, test data, anything simulated) in `demo_lead`.
 
 ## Recordings
 
@@ -32,4 +37,14 @@ ffmpeg -i before.mp4 -i after.mp4 -filter_complex \
 
 Use 560px per half: the page shows the clip at about half that width, so it stays sharp on retina screens. Set both halves to the same explicit even height when `-2` rounds them differently. Prefer H.264 over animated WebP or GIF: for screen recordings it is several times smaller at better quality (a 10 s clip is about 2-3 MB, while lossy WebP of similar quality is about 7 MB and lossless WebP is over 20 MB).
 
-Pass the clip, its pixel size, and a caption naming what each half shows in the `demo` field of the content JSON; `build.py` embeds it as base64 in a muted, looping, autoplaying `<video>`. Set `"controls": true` when the clip is long enough that the reader needs to pause or seek (roughly over 30 seconds).
+Pass the clip, its pixel size, and a caption naming what each half shows as a `demo` item; `build.py` embeds it as base64 in a muted, looping, autoplaying `<video>`. Set `"controls": true` when the clip is long enough that the reader needs to pause or seek (roughly over 30 seconds).
+
+## Screenshots
+
+1. Capture before and after from the same screen, state, and window size, so a pair differs only where the change does.
+2. Keep the full frame, uncropped: it shows where on the screen the change is, and the page's image viewer opens every screenshot enlarged, paging through all of them with the arrow keys.
+3. Save UI screenshots as PNG (JPEG only for photographic content). The page embeds them as base64; a FullHD UI screenshot is about 100-200 KB.
+
+`build.py` picks the layout from the image size: landscape (desktop) screenshots take the column width, a pair stacked before above after; portrait (mobile) ones sit side by side within 560px, like the video halves. It warns when the two images of a pair differ in size.
+
+Pass a pair as `{"before", "after", "caption"}` and a single screenshot as `{"image", "caption"}`. Done when every scenario has its item and every caption names what the reader should notice.

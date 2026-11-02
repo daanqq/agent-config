@@ -49,6 +49,10 @@
   code { font: 12.5px var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
   .demo { margin: 22px 0 0; }
   .demo video { display: block; width: 100%; max-width: 560px; height: auto; border-radius: 6px; }
+  .demo img { display: block; width: 100%; height: auto; border-radius: 6px; cursor: zoom-in; }
+  .demo-pair { display: grid; gap: 16px; }
+  .demo-pair.row { grid-template-columns: 1fr 1fr; max-width: 560px; }
+  .demo-label { display: block; margin-bottom: 8px; font: 12px var(--mono); color: var(--muted); }
   .demo-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 560px; margin-bottom: 8px; font: 12px var(--mono); color: var(--muted); }
   .demo figcaption { max-width: 560px; margin-top: 8px; font-size: 13px; color: var(--muted); }
   .commit { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); }
@@ -63,7 +67,7 @@
     background: linear-gradient(to bottom, rgba(10, 10, 10, 0), var(--surface));
   }
   .code.open .code-body { max-height: none; overflow-x: auto; }
-  .code.open::after { display: none; }
+  .code.open::after, .code.fits::after, .code.fits .toggle { display: none; }
   .path { font: 11.5px var(--mono); color: var(--faint); padding: 8px 12px 0; }
   pre { margin: 0; padding: 4px 12px 10px; font: 12px/1.55 var(--mono); color: #9a9a9a; }
   pre span { display: block; white-space: pre; }
@@ -79,6 +83,17 @@
     border-radius: 0 0 6px 6px;
   }
   .toggle:hover { color: var(--text); }
+  .viewer { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+  .viewer[hidden] { display: none; }
+  .viewer figure { margin: 0; }
+  .viewer img { display: block; max-width: calc(100vw - 112px); max-height: calc(100vh - 96px); margin: 0 auto; border-radius: 6px; }
+  .viewer figcaption { max-width: 720px; margin: 10px auto 0; font-size: 13px; color: var(--muted); text-align: center; }
+  .viewer .count { margin-right: 10px; font-family: var(--mono); color: var(--faint); }
+  .viewer button { position: absolute; padding: 12px 16px; border: 0; background: transparent; color: var(--muted); font: 22px var(--mono); cursor: pointer; }
+  .viewer button:hover { color: var(--text); }
+  .viewer .prev { left: 4px; top: 50%; transform: translateY(-50%); }
+  .viewer .next { right: 4px; top: 50%; transform: translateY(-50%); }
+  .viewer .close { top: 4px; right: 4px; }
   .plain { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); }
   .plain h2 { margin-bottom: 10px; }
   @media (max-width: 860px) {
@@ -100,24 +115,65 @@
       <div class="eyebrow">{{EYEBROW}}</div>
       <h1>{{TITLE}}</h1>
       {{INTRO}}
-      {{DEMO}}
     </header>
+    {{DEMO}}
     {{BODY}}
   </main>
+</div>
+<div class="viewer" hidden>
+  <figure><img alt=""><figcaption><span class="count"></span><span class="text"></span></figcaption></figure>
+  <button type="button" class="prev" aria-label="{{L_PREVIOUS}}">←</button>
+  <button type="button" class="next" aria-label="{{L_NEXT}}">→</button>
+  <button type="button" class="close" aria-label="{{L_CLOSE}}">×</button>
 </div>
 <script>
   document.querySelectorAll('.code').forEach(code => {
     const body = code.querySelector('.code-body');
     const toggle = code.querySelector('.toggle');
-    if (body.scrollHeight <= body.clientHeight + 4) {
-      code.classList.add('open');
-      toggle.remove();
-      return;
-    }
+    // A page opened in a hidden tab or iframe has no layout yet, so the block stays
+    // collapsed until it gets a real size and only then checks whether it fits.
+    new ResizeObserver(() => {
+      if (code.classList.contains('open') || !body.clientHeight) return;
+      code.classList.toggle('fits', body.scrollHeight <= body.clientHeight + 4);
+    }).observe(body);
     toggle.addEventListener('click', () => {
       const open = code.classList.toggle('open');
       toggle.textContent = open ? toggle.dataset.hide : toggle.dataset.show;
     });
+  });
+  const shots = [...document.querySelectorAll('.demo img')];
+  const viewer = document.querySelector('.viewer');
+  const big = viewer.querySelector('img');
+  let current = 0;
+  const show = index => {
+    current = (index + shots.length) % shots.length;
+    const shot = shots[current];
+    const label = shot.parentElement.querySelector('.demo-label');
+    const caption = shot.closest('figure').querySelector('figcaption');
+    big.src = shot.src;
+    big.alt = shot.alt;
+    viewer.querySelector('.count').textContent = `${current + 1} / ${shots.length}`;
+    viewer.querySelector('.text').textContent = [label?.textContent, caption?.textContent].filter(Boolean).join(': ');
+    viewer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  };
+  const close = () => {
+    viewer.hidden = true;
+    big.removeAttribute('src');
+    document.body.style.overflow = '';
+  };
+  shots.forEach((shot, index) => shot.addEventListener('click', () => show(index)));
+  viewer.querySelectorAll('.prev, .next').forEach(button => {
+    button.hidden = shots.length < 2;
+    button.addEventListener('click', () => show(current + (button.classList.contains('next') ? 1 : -1)));
+  });
+  viewer.querySelector('.close').addEventListener('click', close);
+  viewer.addEventListener('click', event => { if (event.target === viewer) close(); });
+  document.addEventListener('keydown', event => {
+    if (viewer.hidden) return;
+    if (event.key === 'Escape') close();
+    if (event.key === 'ArrowLeft' && shots.length > 1) show(current - 1);
+    if (event.key === 'ArrowRight' && shots.length > 1) show(current + 1);
   });
 </script>
 </body>
