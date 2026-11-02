@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Rename the calling Herdr tab after a fetched SpaceHub task.
-
-Under Claude Code, also print the /rename command for the session: only the
-user can run slash commands.
-"""
+"""Rename the calling Herdr tab after a fetched SpaceHub task."""
 
 from __future__ import annotations
 
@@ -65,8 +61,6 @@ def main(argv: Sequence[str]) -> int:
         return 0
 
     rename_herdr_tab(tab_label(title))
-    if os.environ.get("CLAUDECODE") == "1":
-        print(f"Claude Code session rename command: /rename {title}")
     return 0
 
 

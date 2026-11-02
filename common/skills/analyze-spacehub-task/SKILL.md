@@ -1,6 +1,6 @@
 ---
 name: analyze-spacehub-task
-description: Analyze an ESOFT SpaceHub task against the codebase, read-only. Use for analysis or planning requests containing a T-ID or SpaceHub task URL.
+description: Analyze an ESOFT SpaceHub task against the codebase, read-only. Use for analysis or planning requests containing a T-ID or SpaceHub task URL, when user asks to analyze task and gives you task URL.
 ---
 
 # Analyze SpaceHub Task
@@ -26,9 +26,7 @@ python3 "$SKILL_ROOT/scripts/rename-herdr-tab.py" <context_dir>/task.json
 
 Renaming the tab does not change the repository and is allowed in read-only
 work. The script skips outside Herdr and only warns on failure; continue the
-analysis either way. Under Claude Code it also prints a `/rename` command for
-the session; only the user can run it, so end the answer with that command
-verbatim.
+analysis either way.
 
 Completion criterion: the target issue, its programming works, and relevant
 accessible attachments have been analyzed without other unrequested
