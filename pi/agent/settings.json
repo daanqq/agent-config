@@ -44,6 +44,10 @@
   "enableInstallTelemetry": true,
   "doubleEscapeAction": "tree",
   "httpIdleTimeoutMs": 120000,
+  "retry": {
+    "maxRetries": 9,
+    "maxAgentDelayMs": 60000
+  },
   "defaultProjectTrust": "always",
   "outputPad": 0,
   "fullscreenScrollbar": "auto",
