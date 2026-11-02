@@ -5,7 +5,8 @@ Personal configuration for the `pi` coding agent.
 
 ## Usage requirements
 
-- Tailscale connected with MagicDNS enabled and access to CLIProxyAPI at https://new.tail354056.ts.net
+- CLIProxyAPI reachable through the SSH tunnel at http://127.0.0.1:8317 (`cliproxy-tunnel.service`) for models
+- Tailscale connected with MagicDNS enabled and access to https://new.tail354056.ts.net for the `cliproxy-quota` management API
 
 ## Extensions
 
