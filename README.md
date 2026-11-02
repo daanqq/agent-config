@@ -138,12 +138,11 @@ linked or copied into this repository. `pi/agent/models.example.json` uses
 to work; on another machine, copy the example there and configure the variable
 privately. The installer does not perform that copy.
 
-Claude uses CLIProxyAPI through Tailscale at `https://new.tail354056.ts.net`;
-connect Tailscale with MagicDNS enabled before starting it. The Pi example uses
-the SSH tunnel at `http://127.0.0.1:8317/backend-api`, because the local tunnel
-script falls back from the DE server to NL when DE is unreachable. NL serves only
-OpenAI models, so Claude stays on Tailscale and gains nothing from the tunnel.
-Existing private `~/.pi/agent/models.json` files must be updated separately;
+Claude and the Pi example use CLIProxyAPI through Tailscale at
+`https://new.tail354056.ts.net`; connect Tailscale with MagicDNS enabled before
+starting them. The SSH tunnel to `http://127.0.0.1:8317` was removed: its
+long-lived connection stalled requests for up to 20 seconds, while Tailscale to
+the same server stayed stable. Existing private `~/.pi/agent/models.json` files must be updated separately;
 changing the example does not change them. API keys stay unchanged.
 
 Claude's installed-plugin state and Pi's old checkout-specific `.pi/settings.json`

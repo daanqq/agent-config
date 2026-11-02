@@ -1194,10 +1194,6 @@
       "target": ".pi/agent/skills/yeet"
     },
     {
-      "source": "pi/agent/systemd/cliproxy-tunnel.service",
-      "target": ".pi/agent/systemd/cliproxy-tunnel.service"
-    },
-    {
       "source": "pi/agent/themes/alabaster.json",
       "target": ".pi/agent/themes/alabaster.json"
     },

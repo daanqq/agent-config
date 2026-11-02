@@ -1,7 +1,7 @@
 {
   "providers": {
     "openai-codex": {
-      "baseUrl": "http://127.0.0.1:8317/backend-api",
+      "baseUrl": "https://new.tail354056.ts.net/backend-api",
       "apiKey": "${CLIPROXY_API_KEY}",
       "headers": {
         "X-Api-Key": "$CLIPROXY_API_KEY"
