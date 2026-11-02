@@ -298,6 +298,10 @@
         "tracking": "local",
         "installed_hash": "807b6874953ca87617c6b6d8760ed2e3b2aeed52792aa672fffbaf94bfb976ef"
       },
+      "mr-space": {
+        "tracking": "local",
+        "installed_hash": "f84d5c95d2b5d73b8a3f4df7820a859c54c224da35706678215aebb391f300e2"
+      },
       "writing-for-agents": {
         "tracking": "overlay",
         "repository": "mattpocock-skills",

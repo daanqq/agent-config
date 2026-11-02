@@ -178,6 +178,10 @@
       "target": ".agents/skills/mr-review"
     },
     {
+      "source": "common/skills/mr-space",
+      "target": ".agents/skills/mr-space"
+    },
+    {
       "source": "common/skills/writing-for-agents",
       "target": ".agents/skills/writing-for-agents"
     },
@@ -364,6 +368,10 @@
     {
       "source": "claude/skills/mr-review",
       "target": ".claude/skills/mr-review"
+    },
+    {
+      "source": "claude/skills/mr-space",
+      "target": ".claude/skills/mr-space"
     },
     {
       "source": "claude/skills/optimize-images",
@@ -1060,6 +1068,10 @@
     {
       "source": "pi/agent/skills/mr-review",
       "target": ".pi/agent/skills/mr-review"
+    },
+    {
+      "source": "pi/agent/skills/mr-space",
+      "target": ".pi/agent/skills/mr-space"
     },
     {
       "source": "pi/agent/skills/optimize-images",
