@@ -153,6 +153,8 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "./node_modules/.bin/vitest run x | grep -v skip",
             "npm run check:quick | egrep x",
             "echo start\nnpm test 2>&1 | /usr/bin/grep -c passed",
+            "mise exec -- npm run test:run 2>&1 | grep -E Tests",
+            "cd tidy-client && mise x node@24 -- npx tsc --noEmit | head -20",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
@@ -169,6 +171,8 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             'python3 run-check.py --tail 40 -- n exec "$(cat .nvmrc)" npm run test:run',
             'sh -c "npm test | grep x"',
             "npm test",
+            "mise exec -- npm run test:run 2>&1 | tail -40",
+            "mise exec node@24 npm test | grep x",
         ], False)
 
     def test_quoted_substitutions_are_opaque_words(self):

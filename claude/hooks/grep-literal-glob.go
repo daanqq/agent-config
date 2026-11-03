@@ -330,7 +330,7 @@ func skipOptions(words []word, i int) int {
 }
 
 // checkCommand reports a test, typecheck or lint run, also behind env
-// assignments and the npx, n exec, timeout, time, nice, env or command wrappers.
+// assignments and the npx, n exec, mise exec, timeout, time, nice, env or command wrappers.
 func checkCommand(words []word) bool {
 	i := 0
 wrappers:
@@ -342,6 +342,11 @@ wrappers:
 			i = skipOptions(words, i+1)
 		case tool == "n" && i+1 < len(words) && string(words[i+1].text) == "exec":
 			i += 3
+		case tool == "mise" && i+1 < len(words) && (string(words[i+1].text) == "exec" || string(words[i+1].text) == "x"):
+			// mise exec [options] [tool@version...] -- command; without -- the command is ambiguous.
+			for i += 2; i < len(words) && string(words[i].text) != "--"; i++ {
+			}
+			i++
 		case tool == "timeout":
 			for i++; i < len(words) && strings.HasPrefix(string(words[i].text), "-"); i++ {
 				if text := string(words[i].text); text == "-k" || text == "-s" {
