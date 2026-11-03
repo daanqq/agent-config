@@ -413,7 +413,7 @@
       },
       "task-to-mr": {
         "tracking": "local",
-        "installed_hash": "f5ded125d72dd5e70386a43a917924ca84765af604abd107a97432742fce0dba"
+        "installed_hash": "6856028a69f43d45617d7f22579b143a5d14905a7885c2b597ad7ee540abe70f"
       },
       "show-me-your-work": {
         "tracking": "overlay",
