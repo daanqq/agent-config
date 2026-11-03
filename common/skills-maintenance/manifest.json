@@ -182,6 +182,10 @@
         "tracking": "local",
         "installed_hash": "0f430d6afd9a08786b473eb0955b15f189ab4a15c5ccb824854b1a8b11ea3ad9"
       },
+      "spacehub-write": {
+        "tracking": "local",
+        "installed_hash": "83bff25c399b80805a6b1ff92e7d0a5c92ad22ac536570a3e7ab291c376e2d6d"
+      },
       "update-skills": {
         "tracking": "local",
         "installed_hash": "f500165bc1c5a6347c7e04acc69fd1bc4a351dd7298bfc7de274b8862d783fc8"
@@ -409,7 +413,7 @@
       },
       "task-to-mr": {
         "tracking": "local",
-        "installed_hash": "d88b78d7e2e7ada4617eaf0e38c1bc2a398da2edd4feaddf18af2a5ddce0aab3"
+        "installed_hash": "f5ded125d72dd5e70386a43a917924ca84765af604abd107a97432742fce0dba"
       },
       "show-me-your-work": {
         "tracking": "overlay",

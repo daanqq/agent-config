@@ -1,8 +1,7 @@
 ---
 name: task-to-mr
-description: Take a SpaceHub task from its URL to an open, reviewed GitLab merge request with a final pipeline status, unattended.
+description: Take a SpaceHub task from its URL to an open, reviewed GitLab merge request with a final pipeline status, unattended. Use when user mentions "task to mr"
 argument-hint: "<SpaceHub task URL or T-ID> [constraints]"
-disable-model-invocation: true
 ---
 
 # Task to MR
@@ -76,11 +75,9 @@ ask-first step.
    changes that existed before the task stay out of the commit. Its `notes.md` carries
    the intent, the step 2 decisions, the exact checks and results, and the
    review outcome. For several repositories use its batch and `link`.
-8. **Link the task.** Read the task again with `get_issue`. In the artifact
-   titled exactly `Merge requests`, add each missing MR URL on its own line
-   without captions, keeping the existing lines (`update_artifact` with the
-   full text). Without that artifact, create it with `create_artifact`, title
-   `Merge requests`, no template. Read the task back to confirm.
+8. **Link the task.** Add each missing MR URL to the task's `Merge requests`
+   artifact following [`spacehub-write`](../spacehub-write/SKILL.md), then read
+   the task back to confirm.
 9. **Pipeline.** Follow [`babysit-mr`](../babysit-mr/SKILL.md) with
    `--until pipeline` for every MR. Fix failures the diff caused, prove the
    fix, push, and wait again. Done when each head pipeline is `success` or
