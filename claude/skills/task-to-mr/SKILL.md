@@ -65,8 +65,9 @@ ask-first step.
 
    Done when every change in the diff has evidence observed in this session,
    and every check is green or its failure is shown on the base too.
-6. **Review.** Follow [`review-gpt`](../review-gpt/SKILL.md) with `mode=auto`
-   over the whole change against the base. When the change touches shared
+6. **Review.** Follow [`review-gpt`](../review-gpt/SKILL.md) with
+   `model=openai-codex/gpt-6.1-terra thinking=max mode=auto` over the whole
+   change against the base. When the change touches shared
    state, protocols, lifecycle code, or external boundaries, run
    [`blast-radius`](../blast-radius/SKILL.md) too. Repeat the step 5 checks
    that cover each fix.
