@@ -427,6 +427,12 @@ def _first_script(scripts: dict[str, Any], names: Sequence[str]) -> str | None:
     return next((name for name in names if isinstance(scripts.get(name), str)), None)
 
 
+def _uses_mise(path: Path) -> bool:
+    """mise picks Node from the checkout's .nvmrc or .node-version, whatever PATH the agent inherited."""
+    has_version_file = any((path / name).is_file() for name in (".nvmrc", ".node-version"))
+    return has_version_file and shutil.which("mise") is not None
+
+
 def verification_commands(path: Path, fallback_root: Path | None = None) -> dict[str, Any] | None:
     """Ready test and typecheck commands from package.json and the node_modules that exist on disk."""
     package = _read_package_json(path)
@@ -474,6 +480,8 @@ def verification_commands(path: Path, fallback_root: Path | None = None) -> dict
     prefix = f"cd {_shell_quote(str(path))} && "
     if modules != path:
         prefix += f"PATH={_shell_quote(str(bin_dir))}:\"$PATH\" "
+    if _uses_mise(path):
+        prefix += "mise exec -- "
     manager = result["package_manager"]
 
     def command(script_names: Sequence[str], binary: str, binary_args: str, required_file: str | None = None) -> str | None:
@@ -501,7 +509,9 @@ def install_review_dependencies(worktree: Path, *, timeout: float) -> dict[str, 
     """Run `npm ci` from the MR's own lockfile inside its isolated worktree; source clones stay untouched."""
     command = ["npm", "ci", "--ignore-scripts", "--prefer-offline", "--no-audit", "--no-fund"]
     nvmrc = worktree / ".nvmrc"
-    if nvmrc.is_file() and shutil.which("n"):
+    if _uses_mise(worktree):
+        command = ["mise", "exec", "--", *command]
+    elif nvmrc.is_file() and shutil.which("n"):
         version = nvmrc.read_text(encoding="utf-8").strip()
         if version:
             command = ["n", "exec", version, *command]

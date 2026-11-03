@@ -416,6 +416,26 @@ class DependencyInstallTests(unittest.TestCase):
             log = (root / "npm.log").read_text(encoding="utf-8").splitlines()
             self.assertEqual(log[0], "n exec 22 npm ci --ignore-scripts --prefer-offline --no-audit --no-fund")
 
+    def test_nvmrc_prefers_mise_over_n(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, {**PACKAGE_FILES, ".nvmrc": "22\n"})
+            bin_dir = stub_bin(
+                root,
+                {
+                    "npm": FAKE_NPM,
+                    "n": 'printf "n %s\\n" "$*" >> "$NPM_LOG"\nshift 2\nexec "$@"\n',
+                    "mise": 'printf "mise %s\\n" "$*" >> "$NPM_LOG"\nshift 2\nexec "$@"\n',
+                },
+            )
+            with patch.dict(os.environ, self.env(root, bin_dir)):
+                target = self.prepare(root, clones, url)
+            verification = target["verification"]
+            self.assertTrue(verification["install"]["command"].startswith("mise exec -- npm ci"))
+            log = (root / "npm.log").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(log[0], "mise exec -- npm ci --ignore-scripts --prefer-offline --no-audit --no-fund")
+            self.assertEqual(verification["test_command"], f"cd '{target['path']}' && mise exec -- npm run test")
+
     def test_failed_install_is_reported_without_failing_preparation(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
