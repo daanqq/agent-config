@@ -104,7 +104,7 @@ Report the checkout path, source branch, changed files, untouched pre-existing c
 When the user explicitly asks to publish:
 
 1. Fetch `origin/<source-branch>` again and ensure it has not advanced unexpectedly.
-2. Stage only the review-driven files, never the pre-existing changes from section 2, and commit with the requested message.
+2. Stage only the review-driven files, never the pre-existing changes from section 2, and commit with the requested message. Without one, in a Space service under `~/deploy/env/development/services` follow [`mr-space`](../mr-space/SKILL.md): the message is the MR source branch name, as `git log --first-parent --format=%s origin/<target>..HEAD` shows for the earlier task commits.
 3. Push to the MR source branch with a normal fast-forward push:
 
    ```bash
