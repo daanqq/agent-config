@@ -12,7 +12,9 @@
     "ENABLE_TOOL_SEARCH": "true",
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
-    "CLAUDE_CODE_SHELL": "/bin/bash"
+    "CLAUDE_CODE_SHELL": "/bin/bash",
+    "no_proxy": "localhost,127.0.0.1,.ts.net",
+    "NO_PROXY": "localhost,127.0.0.1,.ts.net"
   },
   "attribution": {
     "commit": "",
