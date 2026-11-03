@@ -182,6 +182,20 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             'echo "$(echo `date`)" && grep --include=*.md x',
         ], False)
 
+    def test_assignment_substitutions_are_opaque_words(self):
+        self.check_pipes([
+            'cd tidy-client-T-3594; V=$(cat .nvmrc); n exec $V npx vitest run tests/unit/MessagesNew.test.ts 2>&1 | grep -E "×|Tests |FAIL|Error" | head -20',
+            'cd tidy-client-T-3594; export N_PREFIX=$HOME/.n; V=$(cat .nvmrc); n exec $V npx vitest run tests/unit/MessagesNew.test.ts 2>&1 | grep -E "×|Tests "',
+            'cd tidy-client-T-3594; export N_PREFIX=$HOME/.n; V=$(cat .nvmrc); n exec $V npm run typecheck:test 2>&1 | grep -c "error TS"',
+            'V=${NODE_VERSION}; n exec $V npm test | head',
+        ], True)
+        self.check_pipes([
+            'V=$(cat .nvmrc); n exec $V npm run test:run 2>&1 | tail -40',
+            'echo $(cat .nvmrc) | grep 24',
+            '"V"=$(cat .nvmrc); npm test | grep x',
+            'npm test $(cat args) | grep x',
+        ], False)
+
     def test_hook_input_boundary(self):
         for overrides in ({"tool_name": "Read"}, {"hook_event_name": "PostToolUse"},
                           {"tool_input": None}, {"tool_input": []},

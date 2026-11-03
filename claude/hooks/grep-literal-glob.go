@@ -104,8 +104,26 @@ func skipSubstitution(source []rune, i int) int {
 	return -1
 }
 
+// assignmentPrefix reports whether the word read so far starts with an unquoted
+// NAME=. Bash does not word-split an assignment value, so a substitution there
+// stays one word even without quotes, as in `V=$(cat .nvmrc); n exec $V ...`.
+func assignmentPrefix(value word) bool {
+	prefix := assignment.FindStringIndex(string(value.text))
+	if prefix == nil {
+		return false
+	}
+	// NAME= is ASCII, so its byte length is also its length in runes.
+	for _, active := range value.active[:prefix[1]] {
+		if !active {
+			return false
+		}
+	}
+	return true
+}
+
 // Tokenize words, separators and redirects without expanding or executing text.
-// A substitution inside double quotes stays one opaque, non-literal word.
+// A substitution inside double quotes or an assignment value stays one opaque,
+// non-literal word.
 // Heredoc bodies are opaque; false means the entire command is unsupported.
 func tokens(command string) ([]token, bool) {
 	source := []rune(command)
@@ -183,7 +201,7 @@ func tokens(command string) ([]token, bool) {
 				break
 			}
 			substitution := char == '$' && i+1 < len(source) && (source[i+1] == '(' || source[i+1] == '{')
-			if quote == '"' && substitution {
+			if quote == '"' && substitution || quote == 0 && substitution && assignmentPrefix(value) {
 				end := skipSubstitution(source, i)
 				if end < 0 {
 					return nil, false
