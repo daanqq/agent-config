@@ -1,22 +1,27 @@
 ---
 name: review-gpt
-description: Get an independent second-opinion code review of the current task's changes from a GPT model via the pi agent CLI. Use when the user invokes /review-gpt.
+description: Get an independent second-opinion code review of the current task's changes from a GPT model via pi, in a T3 Code thread or the pi CLI. Use when the user invokes /review-gpt.
 disable-model-invocation: true
 argument-hint: "[model=openai-codex/gpt-6.1-sol] [thinking=high] [mode=auto] [extra focus]"
 ---
 
-Run a read-only review through `pi`, then triage its findings. By default the output is a proposal for the user: never apply fixes from the review yourself. `mode=auto`, used by [`task-to-mr`](../task-to-mr/SKILL.md), replaces the stop after triage with the fix loop in section 5.
+Run a read-only review through pi, then triage its findings. By default the output is a proposal for the user: never apply fixes from the review yourself. `mode=auto`, used by [`task-to-mr`](../task-to-mr/SKILL.md), replaces the stop after triage with the fix loop in section 5.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `pi --list-models <search>`.
+- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `orchestrator_capabilities` (`search`) in T3 Code, otherwise `pi --list-models <search>`.
 - `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
 - `mode=auto`: run the fix loop in section 5.
 - Any remaining text is an extra review focus.
 
 ## 2. Write the brief
 
-Write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`). Start it with `/skill:code-review` followed by a space, not a line break (pi reads the skill name up to the first space), so pi loads its `code-review` skill, which defines the review process and report format. The reviewer sees nothing of this conversation, so the rest of the brief must stand alone:
+The reviewer must load pi's `code-review` skill, which defines the review process and report format. How the brief starts depends on the route in section 3:
+
+- **T3 Code**: start with `Make a code review of the change below.` T3 does not pass the message to pi as typed, so a `/skill:` prefix arrives unexpanded; pi picks the skill by its description instead.
+- **CLI**: write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`) and start it with `/skill:code-review` followed by a space, not a line break (pi reads the skill name up to the first space).
+
+The reviewer sees nothing of this conversation, so the rest of the brief must stand alone:
 
 - Repository path(s) and the review scope in `code-review` terms: `branch` with its fixed point, `working-tree`, or `all`. For multiple repositories, list each.
 - Goal of the change: ticket id and its requirement, in your own summary. This is the spec for the Spec axis.
@@ -28,7 +33,21 @@ When preparing a repeat review after an identity or async-state finding was fixe
 
 Done when a reader with only the brief and the repository could review the change without guessing its intent.
 
-## 3. Run pi in background
+## 3. Run the reviewer
+
+Choose the route once per review: **T3 Code** when its `delegate_task` tool is available (load it with ToolSearch if it is deferred), otherwise **CLI**. Both routes run in the background: do not poll, wait for the completion notification, and do not edit the reviewed files while the reviewer runs.
+
+### T3 Code
+
+Call `orchestrator_capabilities` once, then `delegate_task` with:
+
+- `task`: the complete brief text;
+- `target`: `{providerInstanceId: "pi", model: <model>, options: {thinking: <thinking>}}`;
+- `role: "review"`, `mode: "async"`, a new `clientRequestId` per round, `title: "review-gpt <ticket id> round <n>"`.
+
+The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. A timeout, error, or empty reply is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If pi or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
+
+### CLI
 
 Run from the repository root with `run_in_background: true`:
 
@@ -36,7 +55,7 @@ Run from the repository root with `run_in_background: true`:
 pi -p --no-session --model "$MODEL" --thinking "$THINKING" --tools read,bash < "$BRIEF"
 ```
 
-Pass the brief on stdin, not as `@"$BRIEF"`: pi expands `/skill:` only at the very start of the message, and `@file` wraps the content in a `<file>` tag. stdout contains only the agent's final answer. Do not poll; wait for the completion notification. Do not edit the reviewed files while it runs.
+Pass the brief on stdin, not as `@"$BRIEF"`: pi expands `/skill:` only at the very start of the message, and `@file` wraps the content in a `<file>` tag. stdout contains only the agent's final answer.
 
 If pi exits within seconds and stdout is only `fetch failed`, run the same command once more after 15 seconds without diagnosing the network. Report a second failure to the user as a blocker.
 
@@ -48,7 +67,7 @@ Verify every finding against the actual code before judging it. Report to the us
 - **Спорно**: real trade-offs or needs the user's decision, with your view.
 - **Отклонить**: false positives or contradictions of agreed decisions, with the evidence.
 
-Done when every finding sits in exactly one group with its reason. Delete the brief file. Without `mode=auto`, stop and wait for the user to choose what to fix.
+Done when every finding sits in exactly one group with its reason. On the CLI route, delete the brief file after the last round. Without `mode=auto`, stop and wait for the user to choose what to fix.
 
 ## 5. Auto mode: fix loop
 
