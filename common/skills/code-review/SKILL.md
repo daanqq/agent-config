@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review branch, PR, or working-tree changes for bugs, repository standards, and the available task specification. Use for code review requests or review since a fixed point.
+description: Review branch, PR, or working-tree changes for bugs, repository standards, and the available task specification. Use when asked to review code or a change, including review since a fixed point.
 ---
 
 Three-axis review of an explicitly bounded change:

@@ -16,6 +16,8 @@
 
 ## Add beyond upstream
 
+- A description that activates on any request to review code or a change, so a delegated reviewer loads this skill from a plain request.
+
 Adapted from the Claude Code built-in `/code-review`:
 
 - A Correctness axis with line-scan, removed-behavior, and TS/React pitfall angles; deep caller tracing defers to `blast-radius`.

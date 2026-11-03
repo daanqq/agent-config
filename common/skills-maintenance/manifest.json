@@ -256,7 +256,7 @@
         "repository": "mattpocock-skills",
         "path": "skills/engineering/code-review",
         "overlay": "overlays/common/code-review.md",
-        "installed_hash": "d3f0c3c6aebc804dfc3647b9a3ae85a0447761ec0b12aa4f32eeab6681fb890c"
+        "installed_hash": "a374702dd2ab56a2450cdce134562852cd591ec8d817978311fbc8518a818e53"
       },
       "coding-discipline": {
         "tracking": "local",
