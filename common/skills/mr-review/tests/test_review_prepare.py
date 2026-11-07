@@ -16,6 +16,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+from echat_mr_review import core  # noqa: E402
 from echat_mr_review.cli import main  # noqa: E402
 from echat_mr_review.core import (  # noqa: E402
     MAX_HTTP_RESPONSE_BYTES,
@@ -468,6 +469,116 @@ class DependencyInstallTests(unittest.TestCase):
                 target = self.prepare(root, clones, url)
             self.assertNotIn("install", target["verification"])
             self.assertFalse((root / "npm.log").exists())
+
+
+def discussion(index: int, *, system: bool = False, resolved: bool | None = None, position: dict | None = None) -> dict:
+    note: dict = {
+        "system": system,
+        "author": {"username": f"user{index}", "name": f"User {index}"},
+        "created_at": "2026-11-04T10:00:00Z",
+        "body": f"note {index}",
+    }
+    if resolved is not None:
+        note.update(resolvable=True, resolved=resolved)
+    if position:
+        note["position"] = position
+    return {"id": f"d{index}", "notes": [note]}
+
+
+class MrDiscussionsTests(unittest.TestCase):
+    ref = parse_mr_url("https://git.example.test/group/project/-/merge_requests/7")
+
+    def fetch(self, pages: dict[int, object] | Exception):
+        requested: list[str] = []
+
+        def fake(request, *, timeout: float, label: str):
+            requested.append(request.full_url)
+            if isinstance(pages, Exception):
+                raise pages
+            return pages[int(request.full_url.rsplit("page=", 1)[1])]
+
+        with patch("echat_mr_review.core._fetch_json_value", side_effect=fake), patch(
+            "echat_mr_review.core.shutil.which", return_value=None
+        ):
+            result = core.fetch_gitlab_discussions(self.ref, token="t", timeout=3, offline=False)
+        return result, requested
+
+    def test_offline_mode_skips_fetch(self) -> None:
+        discussions, warning = core.fetch_gitlab_discussions(self.ref, token=None, timeout=3, offline=True)
+        self.assertIsNone(discussions)
+        self.assertIn("offline", warning)
+
+    def test_all_pages_are_fetched(self) -> None:
+        full = [discussion(i) for i in range(core.DISCUSSIONS_PER_PAGE)]
+        (discussions, warning), requested = self.fetch({1: full, 2: [discussion(900)]})
+        self.assertIsNone(warning)
+        self.assertEqual(len(discussions), core.DISCUSSIONS_PER_PAGE + 1)
+        self.assertEqual(discussions[-1]["notes"][0]["author"], "user900")
+        self.assertEqual(len(requested), 2)
+        self.assertIn("/merge_requests/7/discussions?per_page=100&page=2", requested[1])
+
+    def test_system_notes_are_skipped(self) -> None:
+        system_only = discussion(1, system=True)
+        mixed = discussion(2)
+        mixed["notes"].append(discussion(3, system=True)["notes"][0])
+        (discussions, _), _ = self.fetch({1: [system_only, mixed]})
+        self.assertEqual([item["id"] for item in discussions], ["d2"])
+        self.assertEqual([note["body"] for note in discussions[0]["notes"]], ["note 2"])
+
+    def test_resolved_state_and_diff_position_are_kept(self) -> None:
+        position = {"new_path": "src/a.ts", "new_line": 12, "old_path": "src/a.ts", "old_line": None}
+        (discussions, _), _ = self.fetch(
+            {1: [discussion(1, resolved=True, position=position), discussion(2, resolved=False), discussion(3)]}
+        )
+        resolved, unresolved, plain = discussions
+        self.assertEqual((resolved["resolvable"], resolved["resolved"]), (True, True))
+        self.assertEqual(resolved["notes"][0]["position"], {"path": "src/a.ts", "line": 12})
+        self.assertEqual((unresolved["resolvable"], unresolved["resolved"]), (True, False))
+        self.assertEqual((plain["resolvable"], plain["resolved"]), (False, None))
+        self.assertNotIn("position", plain["notes"][0])
+        self.assertEqual(resolved["notes"][0]["author_name"], "User 1")
+
+    def test_fetch_failure_is_reported(self) -> None:
+        (discussions, warning), _ = self.fetch(ReviewError("GitLab API request failed: boom"))
+        self.assertIsNone(discussions)
+        self.assertIn("boom", warning)
+
+    def test_prepare_puts_discussions_and_failure_warning_into_context(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            clones, url = mr_fixture(root, {"app.txt": "mr\n"})
+            metadata = root / "metadata.json"
+            metadata.write_text(json.dumps({"source_branch": "feature/T-78", "target_branch": "master"}), encoding="utf-8")
+
+            def prepare(fake) -> dict:
+                stdout = io.StringIO()
+                with patch("echat_mr_review.core._fetch_json_value", side_effect=fake), patch(
+                    "echat_mr_review.core.shutil.which", return_value=None
+                ), redirect_stdout(stdout), redirect_stderr(io.StringIO()):
+                    code = main(
+                        [
+                            "prepare", "mr", url, "--repo-root", str(clones), "--gitlab-metadata-file", str(metadata),
+                            "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"),
+                        ]
+                    )
+                self.assertEqual(code, 0)
+                result = json.loads(stdout.getvalue())
+                self.addCleanup(main, ["cleanup", result["manifest"]])
+                context = json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))
+                return context, Path(result["review_context_markdown"]).read_text(encoding="utf-8")
+
+            context, markdown = prepare(lambda *_a, **_k: [discussion(1, resolved=False)])
+            self.assertEqual(context["targets"][0]["mr"]["discussions"][0]["notes"][0]["body"], "note 1")
+            self.assertEqual(context["warnings"], [])
+            self.assertIn("MR discussions", markdown)
+            self.assertIn("> note 1", markdown)
+
+            def broken(*_a, **_k):
+                raise ReviewError("boom")
+
+            context, _ = prepare(broken)
+            self.assertIsNone(context["targets"][0]["mr"]["discussions"])
+            self.assertTrue(any("discussions" in item and "boom" in item for item in context["warnings"]))
 
 
 if __name__ == "__main__":

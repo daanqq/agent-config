@@ -260,6 +260,13 @@ def _load_json(path: Path) -> Any:
 
 
 def _fetch_json(request: urllib.request.Request, *, timeout: float, label: str) -> dict[str, Any]:
+    data = _fetch_json_value(request, timeout=timeout, label=label)
+    if not isinstance(data, dict):
+        raise ReviewError(f"{label} response is not a JSON object")
+    return data
+
+
+def _fetch_json_value(request: urllib.request.Request, *, timeout: float, label: str) -> Any:
     opener = urllib.request.build_opener(_NoRedirect())
     try:
         with opener.open(request, timeout=timeout) as response:
@@ -279,8 +286,6 @@ def _fetch_json(request: urllib.request.Request, *, timeout: float, label: str) 
         data = json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ReviewError(f"{label} response is not valid UTF-8 JSON: {error}") from error
-    if not isinstance(data, dict):
-        raise ReviewError(f"{label} response is not a JSON object")
     return data
 
 
@@ -341,6 +346,107 @@ def fetch_gitlab_metadata(
         glab_error = (result.stderr or result.stdout).strip() or f"exit {result.returncode}"
         return None, f"GitLab API failed ({api_error}); glab fallback failed ({glab_error})"
     return None, f"GitLab API failed ({api_error}); glab is unavailable"
+
+
+DISCUSSIONS_PER_PAGE = 100
+MAX_DISCUSSION_PAGES = 100
+
+
+def compact_discussions(raw: Sequence[Any]) -> list[dict[str, Any]]:
+    """Keep non-system notes of each discussion in a compact form."""
+    result: list[dict[str, Any]] = []
+    for discussion in raw:
+        if not isinstance(discussion, dict):
+            continue
+        notes: list[dict[str, Any]] = []
+        resolvable = False
+        resolved = True
+        for note in discussion.get("notes") or []:
+            if not isinstance(note, dict) or note.get("system"):
+                continue
+            author = note.get("author") if isinstance(note.get("author"), dict) else {}
+            entry: dict[str, Any] = {
+                "author": author.get("username"),
+                "author_name": author.get("name"),
+                "created_at": note.get("created_at"),
+                "body": note.get("body") or "",
+            }
+            position = note.get("position")
+            if isinstance(position, dict):
+                path = position.get("new_path") or position.get("old_path")
+                line = position.get("new_line") or position.get("old_line")
+                if path:
+                    entry["position"] = {"path": path, "line": line}
+            if note.get("resolvable"):
+                resolvable = True
+                resolved = resolved and bool(note.get("resolved"))
+            notes.append(entry)
+        if notes:
+            result.append(
+                {
+                    "id": discussion.get("id"),
+                    "resolvable": resolvable,
+                    "resolved": resolved if resolvable else None,
+                    "notes": notes,
+                }
+            )
+    return result
+
+
+def fetch_gitlab_discussions(
+    ref: MrRef,
+    *,
+    token: str | None,
+    timeout: float,
+    offline: bool,
+) -> tuple[list[dict[str, Any]] | None, str | None]:
+    if offline:
+        return None, "GitLab discussions skipped in offline mode"
+    project = urllib.parse.quote(ref.project_path, safe="")
+    path = f"/projects/{project}/merge_requests/{ref.iid}/discussions"
+    headers = {"Accept": "application/json", "User-Agent": f"{TOOL_NAME}/1.0"}
+    if token:
+        headers["PRIVATE-TOKEN"] = token
+
+    def collect(fetch_page) -> list[Any]:
+        items: list[Any] = []
+        for page in range(1, MAX_DISCUSSION_PAGES + 1):
+            data = fetch_page(f"{path}?per_page={DISCUSSIONS_PER_PAGE}&page={page}")
+            if not isinstance(data, list):
+                raise ReviewError("discussions response is not a JSON array")
+            items.extend(data)
+            if len(data) < DISCUSSIONS_PER_PAGE:
+                return items
+        raise ReviewError(f"more than {MAX_DISCUSSION_PAGES} pages of discussions")
+
+    def via_api(page_path: str) -> Any:
+        request = urllib.request.Request(f"{ref.scheme}://{ref.host}/api/v4{page_path}", headers=headers)
+        return _fetch_json_value(request, timeout=timeout, label="GitLab API")
+
+    api_error = "unknown error"
+    try:
+        return compact_discussions(collect(via_api)), None
+    except ReviewError as error:
+        api_error = str(error)
+
+    glab = shutil.which("glab")
+    if not glab:
+        return None, f"GitLab discussions API failed ({api_error}); glab is unavailable"
+
+    def via_glab(page_path: str) -> Any:
+        result = _run([glab, "api", "--hostname", ref.host, page_path], timeout=timeout, check=False)
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip() or f"exit {result.returncode}"
+            raise ReviewError(detail)
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise ReviewError(f"glab response is not valid JSON: {error}") from error
+
+    try:
+        return compact_discussions(collect(via_glab)), None
+    except ReviewError as error:
+        return None, f"GitLab discussions API failed ({api_error}); glab fallback failed ({error})"
 
 
 def preferred_base(repo: Path) -> str:
@@ -677,6 +783,11 @@ def prepare_mr(
                 )
                 if warning:
                     warnings.append(f"{ref.key}: {warning}; using target {fallback_target}")
+            discussions, discussions_warning = fetch_gitlab_discussions(
+                ref, token=gitlab_token, timeout=network_timeout, offline=offline
+            )
+            if discussions_warning:
+                warnings.append(f"{ref.key}: {discussions_warning}; MR discussions are not in the context")
             target_branch = str((metadata or {}).get("target_branch") or fallback_target)
             source_branch = str((metadata or {}).get("source_branch") or f"MR !{ref.iid}")
             target_key = hashlib.sha256(ref.key.encode()).hexdigest()[:12]
@@ -742,6 +853,7 @@ def prepare_mr(
                         "source_branch": source_branch,
                         "target_branch": target_branch,
                         "web_url": (metadata or {}).get("web_url") or ref.url,
+                        "discussions": discussions,
                     },
                 }
             )
@@ -840,10 +952,31 @@ def render_context_markdown(context: dict[str, Any]) -> str:
         if target.get("review_commands"):
             lines.extend(["", "Minimal review commands:", "```sh", *target["review_commands"], "```"])
     for target in targets:
+        lines.extend(_render_discussions(target))
+    for target in targets:
         lines.extend(_render_verification(target))
     if context.get("warnings"):
         lines.extend(["", "## Preparation warnings", "", *[f"- {warning}" for warning in context["warnings"]]])
     return "\n".join(lines) + "\n"
+
+
+def _render_discussions(target: dict[str, Any]) -> list[str]:
+    discussions = (target.get("mr") or {}).get("discussions")
+    if discussions is None:
+        return []
+    lines = ["", f"## MR discussions: {target['repo']}", ""]
+    if not discussions:
+        return [*lines, "No discussions."]
+    for discussion in discussions:
+        state = "unresolvable" if not discussion["resolvable"] else ("resolved" if discussion["resolved"] else "unresolved")
+        lines.append(f"### Discussion {discussion['id']} ({state})")
+        for note in discussion["notes"]:
+            position = note.get("position")
+            where = f" on `{position['path']}:{position['line']}`" if position else ""
+            lines.extend(["", f"**{note['author']}** {note['created_at']}{where}", ""])
+            lines.extend(f"> {line}" for line in note["body"].splitlines() or [""])
+        lines.append("")
+    return lines
 
 
 def _render_verification(target: dict[str, Any]) -> list[str]:
