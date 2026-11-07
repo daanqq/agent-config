@@ -50,6 +50,10 @@
       "target": ".agents/skills/spacehub-write"
     },
     {
+      "source": "common/skills/mars-logs",
+      "target": ".agents/skills/mars-logs"
+    },
+    {
       "source": "common/skills/gitlab-write",
       "target": ".agents/skills/gitlab-write"
     },
@@ -328,6 +332,10 @@
     {
       "source": "claude/skills/spacehub-write",
       "target": ".claude/skills/spacehub-write"
+    },
+    {
+      "source": "claude/skills/mars-logs",
+      "target": ".claude/skills/mars-logs"
     },
     {
       "source": "claude/skills/gitlab-write",
@@ -1044,6 +1052,10 @@
     {
       "source": "pi/agent/skills/spacehub-write",
       "target": ".pi/agent/skills/spacehub-write"
+    },
+    {
+      "source": "pi/agent/skills/mars-logs",
+      "target": ".pi/agent/skills/mars-logs"
     },
     {
       "source": "pi/agent/skills/gitlab-write",

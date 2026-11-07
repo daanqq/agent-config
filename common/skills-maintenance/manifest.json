@@ -186,6 +186,10 @@
         "tracking": "local",
         "installed_hash": "83bff25c399b80805a6b1ff92e7d0a5c92ad22ac536570a3e7ab291c376e2d6d"
       },
+      "mars-logs": {
+        "tracking": "local",
+        "installed_hash": "ab12b2ded8a676016b4fcea1f6ad927212a9fe5658ce1a754860a3a6f8c2c971"
+      },
       "update-skills": {
         "tracking": "local",
         "installed_hash": "f500165bc1c5a6347c7e04acc69fd1bc4a351dd7298bfc7de274b8862d783fc8"
