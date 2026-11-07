@@ -350,6 +350,93 @@ class MrEchatTests(unittest.TestCase):
             self.assertEqual(generated["description"], f"Новое.\n\n{block}")
 
 
+class TaskChainTargetTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        root = Path(self.directory.name)
+        self.remote = root / "remote.git"
+        self.repo = root / "repo"
+        subprocess.run(["git", "init", "--bare", "--initial-branch=master", self.remote], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(["git", "clone", str(self.remote), str(self.repo)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.git("config", "user.name", "Test User")
+        self.git("config", "user.email", "test@example.com")
+        template = self.repo / ".gitlab" / "merge_request_templates" / "Default.md"
+        template.parent.mkdir(parents=True)
+        template.write_text("https://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
+        self.commit_file("base.txt", "base")
+        self.git("push", "-u", "origin", "master")
+        # feature/T-10 <- task/T-11 <- task/T-12 <- task/T-13, one commit per branch.
+        previous = "master"
+        for branch in ("feature/T-10", "task/T-11", "task/T-12"):
+            self.git("switch", "-c", branch, previous)
+            self.commit_file(f"{branch.split('/')[1]}.txt", branch)
+            self.git("push", "-u", "origin", branch)
+            previous = branch
+        self.git("switch", "-c", "task/T-13", "task/T-12")
+        self.commit_file("T-13.txt", "task/T-13")
+        (self.repo / "T-13-wip.txt").write_text("wip\n", encoding="utf-8")
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=self.repo, check=True, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        ).stdout.strip()
+
+    def commit_file(self, name: str, content: str) -> None:
+        (self.repo / name).write_text(content + "\n", encoding="utf-8")
+        self.git("add", name)
+        self.git("commit", "-m", content)
+
+    def prepare(self, target: str | None, branch: str | None = None) -> dict:
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            return mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=branch, target_branch=target))
+
+    def branch_diff(self, prepared: dict) -> str:
+        return Path(prepared["branch_diff_path"]).read_text(encoding="utf-8")
+
+    def test_chain_links_target_the_previous_task_branch(self) -> None:
+        for branch, target, own, others in (
+            ("task/T-13", "task/T-12", "T-13.txt", ("T-12.txt", "T-11.txt", "feature")),
+            ("task/T-12", "task/T-11", "T-12.txt", ("T-11.txt", "T-13.txt")),
+        ):
+            with self.subTest(branch=branch):
+                self.git("switch", branch)
+                prepared = self.prepare(target)
+                try:
+                    self.assertEqual(prepared["target_branch"], target)
+                    self.assertTrue(Path(prepared["branch_diff_path"]).is_file())
+                    diff = self.branch_diff(prepared)
+                    self.assertIn(own, diff)
+                    for other in others:
+                        self.assertNotIn(other, diff)
+                finally:
+                    shutil.rmtree(prepared["workspace"])
+
+    def test_chain_target_can_start_a_new_task_branch(self) -> None:
+        self.git("stash", "-u")
+        self.assertEqual(mr_echat.select_branch(self.repo, "task/T-14", "task/T-13"), "task/T-14")
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.git("rev-parse", "task/T-13"))
+
+    def test_default_target_stays_the_parent_feature(self) -> None:
+        self.git("switch", "task/T-11")
+        (self.repo / "T-11-wip.txt").write_text("wip\n", encoding="utf-8")
+        self.git("branch", "-D", "task/T-12", "task/T-13")
+        self.git("push", "origin", "--delete", "task/T-12")
+        prepared = self.prepare(None)
+        try:
+            self.assertEqual(prepared["target_branch"], "feature/T-10")
+        finally:
+            shutil.rmtree(prepared["workspace"])
+
+    def test_other_targets_are_still_rejected(self) -> None:
+        for target in ("master", "fix/T-12", "task/T-abc", "task/T-13", "task/T-12-extra"):
+            with self.subTest(target=target), self.assertRaises(mr_echat.WorkflowError):
+                self.prepare(target)
+        with self.assertRaises(mr_echat.WorkflowError):
+            mr_echat.select_branch(self.repo, "task/T-14", "master")
+
+
 class GenerationFormatTests(unittest.TestCase):
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory(prefix="mr-format-test-")
@@ -435,6 +522,43 @@ class GenerationFormatTests(unittest.TestCase):
                     self.generate()
                 self.assertEqual(ask.call_count, 1)
         self.assertEqual(list(self.workspace.glob("generation-invalid-*.txt")), [])
+
+    def test_quota_exhaustion_falls_back_to_another_provider(self) -> None:
+        quota = mr_echat.WorkflowError("pi --print --no-session failed: You have hit your ChatGPT usage limit.")
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            quota, "<title>fix rendering</title><description>Text.</description>",
+        ]) as ask:
+            result = self.generate()
+        self.assertEqual([c.args[2] for c in ask.call_args_list], [mr_echat.PI_MODEL, mr_echat.FALLBACK_MODEL])
+        self.assertEqual(result["model"], mr_echat.FALLBACK_MODEL)
+        self.assertFalse(mr_echat.FALLBACK_MODEL.startswith("openai-codex/"))
+
+    def test_format_retry_after_fallback_stays_on_fallback(self) -> None:
+        quota = mr_echat.WorkflowError("You have hit your ChatGPT usage limit.")
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            quota, "<fix>wrong</fix>", "<title>fix rendering</title><description>Text.</description>",
+        ]) as ask:
+            result = self.generate()
+        self.assertEqual([c.args[2] for c in ask.call_args_list],
+                         [mr_echat.PI_MODEL, mr_echat.FALLBACK_MODEL, mr_echat.FALLBACK_MODEL])
+        self.assertEqual(result["model"], mr_echat.FALLBACK_MODEL)
+
+    def test_fallback_failure_propagates_without_third_model(self) -> None:
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            mr_echat.WorkflowError("usage limit"), mr_echat.WorkflowError("openrouter: 402 insufficient credits"),
+        ]) as ask:
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "insufficient credits"):
+                self.generate()
+        self.assertEqual(ask.call_count, 2)
+        self.assertEqual(self.state_path.read_text(), "{}\n")
+
+    def test_ask_model_passes_the_model_to_pi(self) -> None:
+        completed = subprocess.CompletedProcess(args=[], returncode=0, stdout="out", stderr="")
+        with patch.object(mr_echat, "run", return_value=completed) as run:
+            mr_echat.ask_model("prompt", self.workspace, mr_echat.FALLBACK_MODEL)
+        command = run.call_args.args[1]
+        self.assertEqual(command[command.index("--model") + 1], mr_echat.FALLBACK_MODEL)
+        self.assertIn("--no-tools", command)
 
     def test_retry_launch_failure_propagates_without_third_attempt(self) -> None:
         with patch.object(mr_echat, "ask_model", side_effect=[

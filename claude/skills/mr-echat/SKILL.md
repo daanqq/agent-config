@@ -25,7 +25,7 @@ Complete the requested commit, push, and GitLab MR workflow. Interpret `$ARGUMEN
 Before requesting a new branch, follow the branch contract and decomposition
 gate in [`task-worktree`](../task-worktree/SKILL.md). For a confirmed child
 `task/T-<id>`, pass `--target-branch feature/T-<parent-id>` so it starts from and
-merges into that feature. This publishing helper requires a native feature/task
+merges into that feature. For an explicit chain, pass `--target-branch task/T-<previous-id>`: the MR then targets the previous task branch and its diff holds only this link's commits. This publishing helper requires a native feature/task
 T-branch; do not rename historical branches just to invoke it.
 
 Resolve this skill directory as `SKILL_ROOT`, then run:
@@ -68,7 +68,7 @@ python3 "$SKILL_ROOT/scripts/mr_echat.py" generate \
   [--title "<user-supplied title>"]
 ```
 
-Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. For missing or empty required output tags, the helper saves the response in its workspace and makes one format-correction attempt. Other errors are not retried. Stop and report the error if generation fails; do not compose the texts yourself.
+Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. For missing or empty required output tags, the helper saves the response in its workspace and makes one format-correction attempt. When the Codex quota is exhausted (`usage limit`), the helper itself repeats the request on `openrouter/anthropic/claude-haiku-5.5:low`; the `model` field of the result names the model that wrote the text, so report a fallback. Other errors are not retried. Stop and report the error if generation fails; do not compose the texts yourself.
 
 ## Confirm once before writes
 

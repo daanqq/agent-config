@@ -42,6 +42,9 @@ MODEL_DIFF_EXCLUDES = (
     "**/*.pb.*",
 )
 PI_MODEL = "openai-codex/gpt-5.6-luna"
+# Another provider with its own quota, used only when the Codex subscription quota is exhausted.
+FALLBACK_MODEL = "openrouter/anthropic/claude-haiku-5.5:low"
+QUOTA_EXHAUSTED_RE = re.compile(r"usage limit", re.IGNORECASE)
 PROMPT_PATH = Path(__file__).with_name("generate_prompt.md")
 # gpt-5.6-luna has a 272K-token context; two diffs of this size leave room for the rest of the prompt.
 MAX_PROMPT_DIFF_CHARS = 250_000
@@ -114,11 +117,12 @@ def select_branch(repo: Path, requested: str | None, target_branch: str | None) 
         git(repo, "switch", "--track", "-c", requested, f"origin/{requested}")
     else:
         if requested.lower().startswith("task/"):
-            parent = TASK_BRANCH_RE.fullmatch(str(target_branch or ""))
-            if not parent or parent.group("kind").lower() != "feature":
-                raise WorkflowError("creating a task branch requires --target-branch feature/T-<parent-id>")
-            task_id_for(str(target_branch))
-            candidates = (str(target_branch), f"origin/{target_branch}")
+            parent = require_task_branch_target(
+                requested,
+                target_branch,
+                "creating a task branch requires --target-branch feature/T-<parent-id> or task/T-<previous-id>",
+            )
+            candidates = (parent, f"origin/{parent}")
         else:
             candidates = (target_branch, f"origin/{target_branch}") if target_branch else ("master", "main")
         base = next(
@@ -140,6 +144,15 @@ def task_id_for(branch: str) -> str:
     if not match:
         raise WorkflowError(f"expected feature/T-<id> or decomposed task/T-<id> branch: {branch}")
     return match.group("task").upper()
+
+
+def require_task_branch_target(branch: str, target: str | None, message: str) -> str:
+    """A task branch merges into its parent feature, or into the previous task branch of an explicit chain."""
+    parsed = TASK_BRANCH_RE.fullmatch(str(target or ""))
+    if not parsed or target == branch:
+        raise WorkflowError(message)
+    task_id_for(str(target))
+    return str(target)
 
 
 def nul_paths(payload: bytes) -> list[str]:
@@ -383,10 +396,11 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         )
     target = args.target_branch or (mr.get("target_branch") if mr else select_parent_task_branch(repo, branch))
     if branch.lower().startswith("task/"):
-        parent = TASK_BRANCH_RE.fullmatch(str(target or ""))
-        if not parent or parent.group("kind").lower() != "feature":
-            raise WorkflowError("a decomposed task MR must target its parent feature/T-<id>; pass --target-branch")
-        task_id_for(str(target))
+        target = require_task_branch_target(
+            branch,
+            target,
+            "a decomposed task MR must target its parent feature/T-<id> or, in a chain, task/T-<previous-id>; pass --target-branch",
+        )
     elif not target:
         target = default_target_branch(repo)
     if target:
@@ -472,7 +486,7 @@ def prompt_diff(path: Path) -> str:
     return f"{text[:MAX_PROMPT_DIFF_CHARS]}\n[diff truncated: first {MAX_PROMPT_DIFF_CHARS} of {len(text)} characters shown]"
 
 
-def ask_model(prompt: str, cwd: Path) -> str:
+def ask_model(prompt: str, cwd: Path, model: str = PI_MODEL) -> str:
     # Diffs are untrusted, so pi runs without tools and without user or project configuration.
     return run(
         cwd,
@@ -487,7 +501,7 @@ def ask_model(prompt: str, cwd: Path) -> str:
             "--no-prompt-templates",
             "--no-approve",
             "--model",
-            PI_MODEL,
+            model,
         ),
         input=prompt,
     ).stdout
@@ -533,8 +547,15 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         )
     )
     invalid_responses: list[str] = []
+    model = PI_MODEL
     for attempt in range(2):
-        answer = ask_model(prompt, workspace)
+        try:
+            answer = ask_model(prompt, workspace, model)
+        except WorkflowError as error:
+            if model == FALLBACK_MODEL or not QUOTA_EXHAUSTED_RE.search(str(error)):
+                raise
+            model = FALLBACK_MODEL
+            answer = ask_model(prompt, workspace, model)
         description = tagged(answer, "description")
         raw_title = args.title or tagged(answer, "title")
         missing = []
@@ -553,7 +574,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         diagnostic = f"Missing or empty required blocks: {', '.join(missing)}."
         if attempt == 1:
             raise WorkflowError(
-                f"{PI_MODEL} returned invalid output after one format retry. "
+                f"{model} returned invalid output after one format retry. "
                 f"{diagnostic} Responses saved at: {', '.join(invalid_responses)}"
             )
         prompt += (
@@ -576,7 +597,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
     write_json(Path(args.state).expanduser().resolve(), state)
     return {
         "status": "generated",
-        "model": PI_MODEL,
+        "model": model,
         "title": title,
         "title_path": state["title_path"],
         "description": description,
