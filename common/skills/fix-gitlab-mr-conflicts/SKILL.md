@@ -42,7 +42,13 @@ Completion criterion: отдельный чистый worktree указывае�
 
 ## Merge и разрешение конфликтов
 
-В worktree выполни merge приватного target ref через `git merge --no-edit`.
+В worktree выполни merge приватного target ref с сообщением, которое дал бы обычный merge на source-ветке:
+
+```sh
+git merge --no-edit -m "Merge remote-tracking branch '<target-remote>/<target-branch>' into <source-branch>" <private-target-ref>
+```
+
+`<target-remote>` - remote target-проекта в основном clone. Без `-m` Git назовёт коммит по приватному ref и detached HEAD: `Merge commit 'refs/agent/...' into HEAD`.
 
 Если Git сообщает о конфликтах:
 
@@ -68,15 +74,16 @@ Completion criterion: unmerged-файлов и конфликтных марке
 
 Исправляй только регрессии, вызванные merge. Если source-ветка уже была сломана относительно собственного SHA или нужная внешняя версия ещё не опубликована, не маскируй проблему обходным кодом. Зафиксируй точную ошибку в отчёте.
 
-Создай merge-коммит с сообщением Git по умолчанию. Затем проверь:
+Если merge остановился на конфликтах, создай merge-коммит через `git commit --no-edit`: так сохраняется сообщение из `git merge -m` вместе со списком `# Conflicts:`. Затем проверь:
 
 ```sh
+git log -1 --format=%B
 git status --short --branch
 git merge-base --is-ancestor <private-target-ref> HEAD
 git diff HEAD^1..HEAD --check
 ```
 
-Completion criterion: merge-коммит создан, target ref является его предком, worktree чистый. Результаты каждой проверки известны, включая ошибки.
+Completion criterion: merge-коммит создан, его сообщение начинается со строки `Merge remote-tracking branch ...`, target ref является его предком, worktree чистый. Результаты каждой проверки известны, включая ошибки.
 
 ## Push
 

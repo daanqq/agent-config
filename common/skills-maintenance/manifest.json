@@ -334,7 +334,7 @@
       },
       "fix-gitlab-mr-conflicts": {
         "tracking": "local",
-        "installed_hash": "b0d1e3a471b3703af19fb4a946980323cba1a0b657645c704dec9ca7f25498d2"
+        "installed_hash": "01d7e93e3675b80482f8a596993c8eec3093e9b9d2e14fad753008c5c285de79"
       },
       "telegram-send": {
         "tracking": "local",
