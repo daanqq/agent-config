@@ -50,6 +50,10 @@
       "target": ".agents/skills/spacehub-write"
     },
     {
+      "source": "common/skills/gitlab-write",
+      "target": ".agents/skills/gitlab-write"
+    },
+    {
       "source": "common/skills/fix-merge-conflicts",
       "target": ".agents/skills/fix-merge-conflicts"
     },
@@ -324,6 +328,10 @@
     {
       "source": "claude/skills/spacehub-write",
       "target": ".claude/skills/spacehub-write"
+    },
+    {
+      "source": "claude/skills/gitlab-write",
+      "target": ".claude/skills/gitlab-write"
     },
     {
       "source": "claude/skills/fix-gitlab-mr-conflicts",
@@ -1036,6 +1044,10 @@
     {
       "source": "pi/agent/skills/spacehub-write",
       "target": ".pi/agent/skills/spacehub-write"
+    },
+    {
+      "source": "pi/agent/skills/gitlab-write",
+      "target": ".pi/agent/skills/gitlab-write"
     },
     {
       "source": "pi/agent/skills/fix-gitlab-mr-conflicts",
