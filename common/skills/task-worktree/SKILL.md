@@ -12,12 +12,13 @@ current branch, not from earlier observations.
 
 Worktrees are allowed only in these repositories under `~/echat/`:
 
-- `tidy-client`: code, tests, and browser checks; `echat-browser-check` serves a
-  worktree through `worktree-client.sh`.
-- `tidy-rest`, `tidy-server`, `tidy-proto`: code, tests, and builds. Their stands
-  run only from the original checkout, so a stand or browser check first needs
-  the changes moved back with
+- `tidy-client`, `tidy-rest`, `tidy-server`: code, tests, and browser checks; a
+  task stand of `echat-stand` serves their worktrees. When `echat-browser-check`
+  needs the legacy stack instead, it serves a tidy-client worktree through
+  `worktree-client.sh`, but runs tidy-rest and tidy-server only from the
+  original checkout: a check there first needs the changes moved back with
   [`task-worktree-transfer`](../task-worktree-transfer/SKILL.md).
+- `tidy-proto`: code, tests, and builds.
 
 Every other repository, including the Space services under
 `~/deploy/env/development/services/`, works in its original checkout: their
@@ -30,9 +31,9 @@ In an allowed repository, if the checkout is clean, only one repository is
 affected, isolation was not requested, and the original checkout is on its base
 branch and serves no stand, use it for the task branch. Isolation is required
 when the checkout is on another branch (another task's work may be running from
-it), or when a stand runs from it: `devtask status` lists it, or a tmux session
-such as `echat-client` serves that path. Switching branches there silently
-changes the code the stand serves. If the same task was already transferred
+it), or when a stand runs from it: `devtask status` or `echat-stand status`
+lists it, or a tmux session such as `echat-client` serves that path. Switching
+branches there silently changes the code the stand serves. If the same task was already transferred
 back, continue in that checkout.
 
 ## Branch contract
