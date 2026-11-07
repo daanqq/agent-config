@@ -2,22 +2,13 @@
 
 import argparse
 import json
-import os
 import re
-import shlex
-import ssl
+import subprocess
 import sys
-import urllib.error
 import urllib.parse
-import urllib.request
-from pathlib import Path
 
 
 MR_PATH = re.compile(r"^/(?P<project>.+)/-/merge_requests/(?P<iid>[1-9][0-9]*)/?$")
-TOKEN_NAMES = ("GITLAB_TOKEN", "GITLAB_ACCESS_TOKEN", "OAUTH_TOKEN", "EUTP_TOKEN")
-TOKEN_ASSIGNMENT = re.compile(
-    rf"^\s*(?:export\s+)?(?P<name>{'|'.join(TOKEN_NAMES)})=(?P<value>.+?)\s*$"
-)
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,58 +19,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def request_json(url: str, token: str) -> dict:
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "PRIVATE-TOKEN": token,
-            "User-Agent": "agent-fix-gitlab-mr-conflicts",
-        },
-    )
+# glab keeps its own login; agent processes do not inherit the token exported by ~/.zshrc.
+def gitlab_get(host: str, endpoint: str) -> dict:
     try:
-        with urllib.request.urlopen(
-            request,
-            timeout=30,
-            context=ssl.create_default_context(),
-        ) as response:
-            return json.load(response)
-    except urllib.error.HTTPError as error:
-        message = error.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"GitLab API returned HTTP {error.code}: {message}") from error
-    except urllib.error.URLError as error:
-        raise RuntimeError(f"GitLab API request failed: {error.reason}") from error
-
-
-def load_token() -> str:
-    for name in TOKEN_NAMES:
-        if token := os.environ.get(name):
-            return token
-
-    zshrc = Path.home() / ".zshrc"
+        completed = subprocess.run(
+            ["glab", "api", "--hostname", host, endpoint],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError("glab is not installed or not in PATH") from error
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"glab api {endpoint} timed out") from error
+    if completed.returncode != 0:
+        detail = completed.stderr.strip()[-500:]
+        raise RuntimeError(f"glab api {endpoint} failed (exit {completed.returncode}): {detail}")
     try:
-        lines = zshrc.read_text(encoding="utf-8").splitlines()
-    except OSError as error:
-        raise RuntimeError(f"Cannot read {zshrc}: {error}") from error
-
-    assignments = {}
-    for line in lines:
-        match = TOKEN_ASSIGNMENT.fullmatch(line)
-        if not match:
-            continue
-        try:
-            values = shlex.split(match.group("value"), comments=True, posix=True)
-        except ValueError as error:
-            raise RuntimeError(f"Invalid token assignment in {zshrc}: {error}") from error
-        if len(values) != 1 or not values[0]:
-            raise RuntimeError(f"Invalid token assignment in {zshrc}")
-        assignments[match.group("name")] = values[0]
-
-    for name in TOKEN_NAMES:
-        if token := assignments.get(name):
-            return token
-
-    raise RuntimeError(f"GitLab token is not set in the environment or {zshrc}")
+        data = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"glab api {endpoint} returned non-JSON output") from error
+    if not isinstance(data, dict):
+        raise RuntimeError(f"glab api {endpoint} returned {type(data).__name__}, expected an object")
+    return data
 
 
 def project_context(project: dict) -> dict:
@@ -96,7 +59,6 @@ def project_context(project: dict) -> dict:
 
 def main() -> int:
     args = parse_args()
-    token = load_token()
 
     parsed = urllib.parse.urlparse(args.mr_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -114,9 +76,10 @@ def main() -> int:
     project_id = urllib.parse.quote(project_path, safe="")
     iid = int(match.group("iid"))
 
-    mr = request_json(f"{api}/projects/{project_id}/merge_requests/{iid}", token)
-    source_project = request_json(f"{api}/projects/{mr['source_project_id']}", token)
-    target_project = request_json(f"{api}/projects/{mr['target_project_id']}", token)
+    host = parsed.netloc
+    mr = gitlab_get(host, f"projects/{project_id}/merge_requests/{iid}")
+    source_project = gitlab_get(host, f"projects/{mr['source_project_id']}")
+    target_project = gitlab_get(host, f"projects/{mr['target_project_id']}")
 
     result = {
         "gitlab_origin": origin,
