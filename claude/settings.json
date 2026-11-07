@@ -1,6 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "apiKeyHelper": "cat \"$HOME\"/.claude/secrets/cliproxy-api-key",
+  "cleanupPeriodDays": 90,
   "env": {
     "ANTHROPIC_BASE_URL": "https://new.tail354056.ts.net",
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
@@ -129,7 +130,7 @@
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "high",
-      "autoCompactWindow": 500000
+      "autoCompactWindow": 700000
     }
   },
   "promptSuggestionEnabled": false,
@@ -144,6 +145,5 @@
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoContinueAtUsageLimit": true,
-  "fileCheckpointingEnabled": false,
-  "cleanupPeriodDays": 90
+  "fileCheckpointingEnabled": false
 }
