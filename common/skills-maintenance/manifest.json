@@ -201,10 +201,11 @@
         "installed_hash": "8b43b23e8cdf8f099f5c1717938961c40757cd29a925697eb9569abf7db03f73"
       },
       "chrome-devtools": {
-        "tracking": "exact",
+        "tracking": "overlay",
         "repository": "chrome-devtools-mcp",
         "path": "skills/chrome-devtools",
-        "installed_hash": "d2f1cfd5f5b63512229266c1081540ebeddeec71b50bd78483a85c8afdea2ab0"
+        "overlay": "overlays/common/chrome-devtools.md",
+        "installed_hash": "f27779b2c8b8caaaf6923e02be562a6695d797373c3306fd626dc5d55b652789"
       },
       "cookie-debugging": {
         "tracking": "exact",
