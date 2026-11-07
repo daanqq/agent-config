@@ -15,6 +15,9 @@ in Pi. Write tools: `create_task`, `create_work`, `create_artifact`,
 `update_artifact`, `add_issue_comment`, `add_issue_tag`. Reading and
 `list_artifact_templates` are not writes. If the server is unavailable or
 unauthenticated, report the blocker; do not fall back to raw HTTP or the UI.
+Where the tools are deferred, load a tool's schema before its first call:
+argument names are not guessable (`update_artifact` takes `artifact_id`, not
+`artifact_sid`).
 
 ## Rules
 
