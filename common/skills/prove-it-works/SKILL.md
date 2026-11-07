@@ -57,6 +57,11 @@ bound each helper with its own `timeout`, wait only for the saved PIDs of the
 measured commands, and stop helpers by saved PID. `pkill -f` and `pgrep -f` also
 match the invoking shell's command line and can kill the measurement itself.
 
+A background command is finished only when its completion notification arrives
+with an exit status. A wait-registration reply, such as `matched` from
+`t3_background_wait`, only confirms the task ID. Until the notification, do not
+read its output as final, rerun it, or touch its files and directories.
+
 ## Guardrails
 
 - A successful build proves compilation, not product behavior.
