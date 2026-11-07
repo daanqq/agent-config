@@ -67,9 +67,14 @@ ask-first step.
 6. **Review.** First run [`blast-radius`](../blast-radius/SKILL.md) over the
    whole change against the base, for every task, and fix what it proves
    broken. Only then follow [`review-gpt`](../review-gpt/SKILL.md) with
-   `model=openai-codex/gpt-6.1-terra thinking=max mode=auto` over the whole
-   change, including those fixes: a regression found after the review sends
-   the reviewed code back. Repeat the step 5 checks that cover each fix.
+   `mode=auto` over the whole change, including those fixes: a regression
+   found after the review sends the reviewed code back. Repeat the step 5
+   checks that cover each fix. Run every round through the Codex provider,
+   not pi: use review-gpt's T3 Code route with
+   `target: {providerInstanceId: "codex", model: "gpt-6.1-terra", options: {reasoningEffort: "max"}}`.
+   Its brief, triage, and fix loop apply unchanged. Without `delegate_task` or
+   with Codex or the model missing from `orchestrator_capabilities`, ask under
+   "Asking"; never fall back to pi.
 7. **Publish** with [`mr-echat`](../mr-echat/SKILL.md). First stage exactly
    the task's files with `git add <paths>`, so its scope is `staged` and
    changes that existed before the task stay out of the commit. Its `notes.md` carries
