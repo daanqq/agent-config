@@ -45,7 +45,15 @@ Call `orchestrator_capabilities` once, then `delegate_task` with:
 - `target`: `{providerInstanceId: "pi", model: <model>, options: {thinking: <thinking>}}`;
 - `role: "review"`, `mode: "async"`, a new `clientRequestId` per round, `title: "review-gpt <ticket id> round <n>"`.
 
-The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. A timeout, error, or empty reply is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If pi or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
+The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. Before `task_cancel` or replacing any delegate, call `task_status`: if it is `completed`, read and triage its reply first; `task_cancel` on a finished task returns `completed` and discards nothing, but the reply stays unread. A timeout, error, or empty reply that is not a GPT quota stop is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If pi or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
+
+**GPT quota.** The quota is exhausted when a GPT child's result, error, or `task_status` contains `usage limit` (`You have hit your ChatGPT usage limit.`). A Codex child may report nothing: on 2026-11-05 it stopped after one tool call and its log holds no error. So also treat a child that is still `running` 5 minutes after its last progress as suspect and probe once (the probe only checks the quota; the review never runs through pi):
+
+```bash
+echo "Reply with the single word: ok" | timeout 120 pi --print --no-session --no-tools --no-context-files --no-skills --no-extensions --no-prompt-templates --no-approve --model openai-codex/<model>
+```
+
+Output with `usage limit` confirms the stop; `ok` means it is not the quota, so use the single retry above. On a confirmed stop with `mode=auto`, switch this and every later round to `target: {providerInstanceId: "claudeAgent", model: "claude-sonnet-5-5", options: {effort: "high"}}` without asking, with the same brief plus `Use the code-review skill for the review process and report format.`, and report the switch (rounds, model) in the final summary. Triage replies of already completed GPT children before the switch. Without `mode=auto`, report the quota stop as a blocker.
 
 ### CLI
 
