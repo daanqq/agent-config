@@ -155,12 +155,15 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "echo start\nnpm test 2>&1 | /usr/bin/grep -c passed",
             "mise exec -- npm run test:run 2>&1 | grep -E Tests",
             "cd tidy-client && mise x node@24 -- npx tsc --noEmit | head -20",
+            "npm run check 2>&1 | rg '^# (pass|fail)'; set -o pipefail; rg -n token . | head",
+            "npm test | grep x && set -euo pipefail",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
         self.check_pipes([
             "npm run test:run 2>&1 | tail -40",
             "set -o pipefail; npm run test:run | grep FAIL",
+            "cd x && set -euo pipefail && npm test | rg x",
             "npm run test:run | tee log; echo ${PIPESTATUS[0]}",
             "npm run test:run > log 2>&1; grep Errors log",
             "grep vitest package.json | head",

@@ -393,7 +393,7 @@ func pipeMessage(filter string) string {
 		"which keeps the status and the full log and prints the tail: "+
 		"python3 \"$HOME/.claude/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
 		"grep the printed log path if you need specific lines. Piping into tail or set -o pipefail "+
-		"is also accepted. The command was not executed or rewritten.\n", filter)
+		"before the pipe is also accepted. The command was not executed or rewritten.\n", filter)
 }
 
 func detect(source string) string {
@@ -401,10 +401,10 @@ func detect(source string) string {
 	if !supported {
 		return ""
 	}
+	// PIPESTATUS can read the status after the pipe; pipefail covers only later pipes.
 	pipefail := false
 	for _, part := range parts {
-		if text := string(part.word.text); strings.Contains(text, "pipefail") ||
-			strings.Contains(strings.ToUpper(text), "PIPESTATUS") {
+		if strings.Contains(strings.ToUpper(string(part.word.text)), "PIPESTATUS") {
 			pipefail = true
 		}
 	}
@@ -413,6 +413,9 @@ func detect(source string) string {
 	for _, part := range append(parts, token{operator: "\n"}) {
 		switch part.operator {
 		case "":
+			if strings.Contains(string(part.word.text), "pipefail") {
+				pipefail = true
+			}
 			if redirect {
 				redirect = false
 			} else {
