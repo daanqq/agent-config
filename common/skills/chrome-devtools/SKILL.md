@@ -28,6 +28,10 @@ Note: For `evaluate_script`, `pageId` is required when targeting pages. However,
 
 When a page requires a login and the project has no login script, request the credentials with the T3 `request_secret` tool (`delivery: "file"`, one call each for login and password). Fill the form with a script that reads those files, delete any generated script afterwards, and never echo the values. Do not ask the user to log in by hand.
 
+### Taking screenshots
+
+`take_screenshot` of a page that is not in the foreground hangs until `Page.captureScreenshot timed out` (about 3 minutes). Before a screenshot of a page you opened with `new_page`, or after working in another page, call `select_page` with that `pageId` and `bringToFront: true`. If a screenshot still times out, bring the page to the front before retrying; never repeat the same call as is.
+
 ### Efficient data retrieval
 
 - Use `filePath` parameter for large outputs (screenshots, snapshots, traces)

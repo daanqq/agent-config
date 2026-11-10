@@ -205,7 +205,7 @@
         "repository": "chrome-devtools-mcp",
         "path": "skills/chrome-devtools",
         "overlay": "overlays/common/chrome-devtools.md",
-        "installed_hash": "f27779b2c8b8caaaf6923e02be562a6695d797373c3306fd626dc5d55b652789"
+        "installed_hash": "75441dc03a3fc1202313bb31be7864a2dfad4c09f5ecef70bc380d1423856873"
       },
       "cookie-debugging": {
         "tracking": "exact",
