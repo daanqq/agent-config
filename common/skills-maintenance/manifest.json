@@ -156,10 +156,11 @@
         "installed_hash": "c0435b582f5a9bb97f492a65ad94c9cb5ade548ced0c3e911aae759ae434420d"
       },
       "teach": {
-        "tracking": "exact",
+        "tracking": "overlay",
         "repository": "mattpocock-skills",
         "path": "skills/productivity/teach",
-        "installed_hash": "56a99e2f75653c6397d1279881c80406f1b911eaeb0ee365b2c884ea8eec13a0"
+        "overlay": "overlays/common/teach.md",
+        "installed_hash": "0028e2a4ca60d9b401e4fa81d7386f2f1ac48515b04d8c705a9bd147dc2d69f8"
       },
       "thermo-nuclear-code-quality-review": {
         "tracking": "exact",

@@ -64,9 +64,11 @@ Each lesson should contain a reminder to ask followup questions to the agent. Th
 
 Lessons are built from reusable **components**, stored in `./assets/`: stylesheets, quiz widgets, simulators, diagram helpers, and anything else a second lesson could reuse.
 
-Reuse is the default, not the exception. Before authoring a lesson, read `./assets/` and build from the components already there. When a lesson needs something new and reusable, write it as a component in `./assets/` and link to it; never inline code a future lesson would duplicate.
+Reuse is the default, not the exception. Before authoring a lesson, read `./assets/` and build from the components already there. When a lesson needs something new and reusable, write it as a component in `./assets/`; never hand-write code a future lesson would duplicate.
 
-A shared stylesheet is the first component every workspace earns: every lesson links it, so the lessons look like one consistent course rather than a pile of one-offs. As the workspace grows, so should the component library.
+Components in `./assets/` are sources; every lesson and reference page you hand out carries embedded copies of them, because a viewer may open the HTML file alone without serving sibling files (the T3 Code file viewer does). Reference a component with `<link rel="stylesheet" href="../assets/X.css">` or `<script src="../assets/X.js"></script>`, then run `python3 -I <this skill's directory>/scripts/inline_assets.py <workspace-dir>`: it replaces those references with `data-asset` blocks and refreshes existing blocks from the sources on every run. After changing a component, run it again; never edit an embedded copy by hand. Check a page by opening that file on its own.
+
+A shared stylesheet is the first component every workspace earns: every lesson embeds it, so the lessons look like one consistent course rather than a pile of one-offs. As the workspace grows, so should the component library.
 
 ## The Mission
 
