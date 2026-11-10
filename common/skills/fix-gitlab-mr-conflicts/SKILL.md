@@ -1,13 +1,12 @@
 ---
 name: fix-gitlab-mr-conflicts
-description: Обновляет source-ветку GitLab MR до target-ветки в отдельном worktree, разрешает конфликты и проверяет результат.
-disable-model-invocation: true
+description: Обновляет source-ветку GitLab MR до target-ветки в отдельном worktree, разрешает конфликты, проверяет результат проверками CI и пушит merge. Use when asked to resolve or fix merge conflicts of a GitLab MR («реши конфликт», «разреши конфликты MR»).
 compatibility: Requires Git, Python 3.10+, zsh and glab logged in to the MR's GitLab host.
 ---
 
 # Fix GitLab MR conflicts
 
-Аргументом должен быть URL merge request. Выполни весь локальный flow без уточняющих вопросов. Запроси подтверждение только непосредственно перед push.
+Нужен URL merge request: из аргумента или из запроса пользователя. Выполни весь локальный flow без уточняющих вопросов. Подтверждение запроси только непосредственно перед push и только если пользователь не разрешил push в самом запросе (например, «реши конфликт и запушь»).
 
 ## Получение контекста
 
@@ -63,7 +62,11 @@ Completion criterion: unmerged-файлов и конфликтных марке
 
 ## Проверка и commit
 
-Определи команды из файлов репозитория, не угадывай их по привычке. Для Node.js используй package manager, указанный lock-файлом и `packageManager`.
+Определи команды из файлов репозитория, не угадывай их по привычке. Начни с CI target-ветки: прочитай `.gitlab-ci.yml` и все подключённые им локальные файлы (`include: local`) и выпиши script-команды проверок (typecheck, lint, тесты), включая jobs с `allow_failure: true`. Затем дополни их scripts из `package.json`. Для Node.js используй package manager, указанный lock-файлом и `packageManager`.
+
+Запускай проверку той же командой, что CI (например `yarn ts-check --affected`), а не прямым компилятором. Если прямой `tsc` или `eslint` выдаёт ошибки вне затронутого кода, ищи штатную обёртку проекта; фильтр вывода такую проверку не заменяет.
+
+Красная проверка считается регрессией merge, если на target-ветке и на исходном SHA source-ветки она зелёная: сверь по их последним пайплайнам через `glab api` или запуском на этих SHA. `allow_failure` её не оправдывает: пайплайн покажет `success`, но код в MR сломан.
 
 Выполни:
 
@@ -87,9 +90,11 @@ Completion criterion: merge-коммит создан, его сообщение
 
 ## Push
 
-Покажи пользователю source-проект, source-ветку, merge-коммит и результаты проверок. Запроси подтверждение на push этого commit в source-ветку MR.
+Не пушь, пока среди проверок есть регрессия merge, даже если push разрешён заранее: исправь её или остановись и сообщи.
 
-После подтверждения снова fetch source-ветки и убедись, что её SHA совпадает с исходным SHA. При расхождении остановись и сообщи, что ветка изменилась. При совпадении выполни обычный push без force:
+Если пользователь не разрешил push в запросе, покажи ему source-проект, source-ветку, merge-коммит и результаты проверок и запроси подтверждение на push этого commit в source-ветку MR.
+
+Перед push снова fetch source-ветки и убедись, что её SHA совпадает с исходным SHA. При расхождении остановись и сообщи, что ветка изменилась. При совпадении выполни обычный push без force:
 
 ```sh
 git push <source-remote> HEAD:refs/heads/<source-branch>
@@ -97,7 +102,7 @@ git push <source-remote> HEAD:refs/heads/<source-branch>
 
 Не создавай тегов и не используй force push. После push проверь через GitLab API, что `sha` source-ветки равен локальному `HEAD`.
 
-Completion criterion: либо пользователь получил готовый локальный merge-коммит и путь worktree, либо GitLab MR указывает на проверенный commit после подтверждённого push.
+Completion criterion: либо пользователь получил готовый локальный merge-коммит и путь worktree, либо GitLab MR указывает на проверенный commit после разрешённого push.
 
 ## Итог
 
@@ -106,5 +111,5 @@ Completion criterion: либо пользователь получил гото�
 - путь worktree;
 - merge-коммит;
 - разрешённые файлы и ключевые решения;
-- результаты compile, lint и тестов;
+- результаты compile, lint и тестов с именами CI jobs, которым они соответствуют;
 - статус push или причину остановки.
