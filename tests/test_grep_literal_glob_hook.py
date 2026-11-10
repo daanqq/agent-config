@@ -157,6 +157,12 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "cd tidy-client && mise x node@24 -- npx tsc --noEmit | head -20",
             "npm run check 2>&1 | rg '^# (pass|fail)'; set -o pipefail; rg -n token . | head",
             "npm test | grep x && set -euo pipefail",
+            "mise exec -- yarn tsc --noEmit -p . 2>&1 | grep -c 'error TS'",
+            "mise exec -- yarn ts-check --affected 2>&1 | grep error",
+            "yarn type-check | head",
+            "pnpm exec eslint src | rg error",
+            "npm exec vitest run | grep FAIL",
+            "bun x jest | head",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
@@ -176,6 +182,9 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "npm test",
             "mise exec -- npm run test:run 2>&1 | tail -40",
             "mise exec node@24 npm test | grep x",
+            "yarn add -D vitest | tail -3",
+            "pnpm exec prettier --check . | head",
+            "yarn ts-check --affected 2>&1 | tail -6",
         ], False)
 
     def test_quoted_substitutions_are_opaque_words(self):

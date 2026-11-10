@@ -312,7 +312,7 @@ func unsafeOption(words []word) string {
 
 var (
 	assignment  = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
-	checkScript = regexp.MustCompile(`^(test|typecheck|lint|check)(:|$)`)
+	checkScript = regexp.MustCompile(`^(test|typecheck|type-check|ts-check|lint|check)(:|$)`)
 	checkTools  = map[string]bool{"vitest": true, "tsc": true, "eslint": true, "oxlint": true, "jest": true}
 	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
 )
@@ -373,10 +373,11 @@ wrappers:
 				args = append(args, text)
 			}
 		}
-		if len(args) > 0 && (args[0] == "run" || args[0] == "run-script") {
+		if len(args) > 0 && (args[0] == "run" || args[0] == "run-script" || args[0] == "exec" || args[0] == "x" || args[0] == "dlx") {
 			args = args[1:]
 		}
-		return len(args) > 0 && (args[0] == "t" || checkScript.MatchString(args[0]))
+		// yarn tsc, pnpm exec eslint and the like run the tool directly.
+		return len(args) > 0 && (args[0] == "t" || checkScript.MatchString(args[0]) || checkTools[args[0]])
 	}
 	return false
 }
