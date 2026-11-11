@@ -411,7 +411,7 @@
     "claude": {
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "5af5866a424bf1f0afe25dea0ad8d0c41784c66d5efc99a5f0b1a92ea2083f92"
+        "installed_hash": "b7614f0de3a07da590dc03a8d371a5e8bc83a72ae5cd3c9e238b2c676b08c1c8"
       },
       "review-gpt": {
         "tracking": "local",

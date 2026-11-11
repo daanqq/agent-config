@@ -525,6 +525,26 @@ def with_related(description: str, related: str | None) -> str:
     return f"{body}\n\n{related}" if related else body
 
 
+CODE_SPAN_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
+MIXED_SCRIPT_WORD_RE = re.compile(r"\b(?=\w*[а-яё])(?=\w*[a-z])\w+\b", re.I)
+
+
+def text_warnings(model: str, title: str | None, description: str) -> list[str]:
+    """Cheap checks for defects the text model has produced; code spans are skipped."""
+    prose = CODE_SPAN_RE.sub(" ", "\n".join(filter(None, (title, description))))
+    warnings = []
+    if "\u2014" in prose:
+        warnings.append("Em dash in the text: replace it with a hyphen or rephrase.")
+    mixed = sorted(set(MIXED_SCRIPT_WORD_RE.findall(prose)))
+    if mixed:
+        warnings.append(f"Words mixing Cyrillic and Latin letters: {', '.join(mixed)}.")
+    if model == FALLBACK_MODEL:
+        warnings.append(
+            "Written by the fallback model: check every statement, especially about checks done or not done, against notes.md."
+        )
+    return warnings
+
+
 def generate(args: argparse.Namespace) -> dict[str, Any]:
     repo, state = load_state(args.state)
     workspace = Path(state["workspace"])
@@ -602,6 +622,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         "title_path": state["title_path"],
         "description": description,
         "description_path": state["description_path"],
+        "warnings": text_warnings(model, title, description),
     }
 
 

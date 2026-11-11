@@ -543,6 +543,31 @@ class GenerationFormatTests(unittest.TestCase):
                          [mr_echat.PI_MODEL, mr_echat.FALLBACK_MODEL, mr_echat.FALLBACK_MODEL])
         self.assertEqual(result["model"], mr_echat.FALLBACK_MODEL)
 
+    def test_generate_warns_about_text_defects_outside_code(self) -> None:
+        answer = (
+            "<title>fix rendering</title><description>Исправлен рендер \u2014 без эмоushen-стилей. "
+            "Код `useЭмодзи` и ```\nconst a = 'x\u2014y'\n``` не проверяются.</description>"
+        )
+        with patch.object(mr_echat, "ask_model", return_value=answer):
+            result = self.generate()
+        warnings = result["warnings"]
+        self.assertEqual(len(warnings), 2)
+        self.assertIn("Em dash", warnings[0])
+        self.assertIn("эмоushen", warnings[1])
+        self.assertNotIn("useЭмодзи", warnings[1])
+
+    def test_generate_clean_text_has_no_warnings(self) -> None:
+        with patch.object(mr_echat, "ask_model", return_value="<title>fix rendering</title><description>Исправлен рендер T-4247 в emotion.</description>"):
+            self.assertEqual(self.generate()["warnings"], [])
+
+    def test_fallback_text_asks_to_check_against_notes(self) -> None:
+        with patch.object(mr_echat, "ask_model", side_effect=[
+            mr_echat.WorkflowError("usage limit"), "<title>fix rendering</title><description>Text.</description>",
+        ]):
+            warnings = self.generate()["warnings"]
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("notes.md", warnings[0])
+
     def test_fallback_failure_propagates_without_third_model(self) -> None:
         with patch.object(mr_echat, "ask_model", side_effect=[
             mr_echat.WorkflowError("usage limit"), mr_echat.WorkflowError("openrouter: 402 insufficient credits"),
