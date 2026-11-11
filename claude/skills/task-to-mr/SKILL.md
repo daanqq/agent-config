@@ -71,7 +71,7 @@ ask-first step.
    found after the review sends the reviewed code back. Repeat the step 5
    checks that cover each fix. Run every round through the Codex provider,
    not pi: use review-gpt's T3 Code route with
-   `target: {providerInstanceId: "codex", model: "gpt-6.1-terra", options: {reasoningEffort: "max"}}`.
+   `target: {providerInstanceId: "codex", model: "gpt-6.1-sol", options: {reasoningEffort: "high"}}`.
    Its brief, triage, and fix loop apply unchanged. Without `delegate_task` or
    with Codex or the model missing from `orchestrator_capabilities`, ask under
    "Asking"; never fall back to pi. When the GPT quota is exhausted (the
