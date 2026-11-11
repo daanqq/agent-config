@@ -187,6 +187,25 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "yarn ts-check --affected 2>&1 | tail -6",
         ], False)
 
+    def test_rm_over_shared_run_check_logs(self):
+        for command, blocked in [
+            ("npx vitest run x; rm -rf /tmp/run-check-* /tmp/mr2770-s.txt 2>/dev/null; ls /tmp", True),
+            ("rm -rf /tmp/run-check-*/", True),
+            ('rm -r "$TMPDIR"/run-check-?*', True),
+            ("rm -rf /tmp/run-check-w_aze9r0", False),
+            ("rm -rf '/tmp/run-check-*'", False),
+            ("ls /tmp/run-check-* | head", False),
+            ("rm -rf /tmp/mr2770-*", False),
+        ]:
+            with self.subTest(command=command):
+                result = self.invoke(command)
+                self.assertEqual(result.returncode, 2 if blocked else 0, result.stderr)
+                if blocked:
+                    self.assertIn("other sessions", result.stderr)
+                    self.assertIn("not executed or rewritten", result.stderr)
+                else:
+                    self.assertEqual(result.stderr, "")
+
     def test_quoted_substitutions_are_opaque_words(self):
         self.check_commands([
             'grep --include=*.json "$(pwd)" .',

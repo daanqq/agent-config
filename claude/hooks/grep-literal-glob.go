@@ -2,6 +2,8 @@
 // It checks direct grep commands with literal include/exclude globs, and test,
 // typecheck or lint commands piped straight into grep, rg or head without
 // pipefail: the pipe drops the check's exit status and can hide error lines.
+// It also rejects rm with an unquoted glob over run-check log directories,
+// which are shared by parallel sessions in the system temporary directory.
 // Unsupported substitutions, grouping and malformed shell input fail open.
 // Contract: JSON stdin; silent exit 0 allows, exit 2 + stderr blocks PreToolUse.
 package main
@@ -397,6 +399,25 @@ func pipeMessage(filter string) string {
 		"before the pipe is also accepted. The command was not executed or rewritten.\n", filter)
 }
 
+// sharedLogGlob reports rm over run-check-* log directories by an unquoted
+// glob: run-check.py creates them in the shared temporary directory, so the
+// glob also matches logs of other sessions.
+func sharedLogGlob(words []word) bool {
+	if len(words) == 0 || name(words[0]) != "rm" {
+		return false
+	}
+	for _, w := range words[1:] {
+		if strings.Contains(string(w.text), "run-check-") && w.glob(0) {
+			return true
+		}
+	}
+	return false
+}
+
+const sharedLogMessage = "rm with a glob over run-check-* also removes logs of other sessions: " +
+	"run-check.py keeps them in the shared temporary directory. Remove only the directory " +
+	"of the Log: path that your own run printed. The command was not executed or rewritten.\n"
+
 func detect(source string) string {
 	parts, supported := tokens(source)
 	if !supported {
@@ -425,6 +446,9 @@ func detect(source string) string {
 		case ";", "&", "|", "&&", "||", "\n":
 			if found := unsafeOption(command); found != "" {
 				return grepMessage(found)
+			}
+			if sharedLogGlob(command) {
+				return sharedLogMessage
 			}
 			if fromCheck && !pipefail && len(command) > 0 && filters[name(command[0])] {
 				return pipeMessage(name(command[0]))

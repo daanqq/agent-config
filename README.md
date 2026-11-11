@@ -42,7 +42,8 @@ The Bash `PreToolUse` guard runs a native binary at
 `~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python. It
 blocks unquoted globs in grep `--include`/`--exclude`, and test, typecheck or
 lint commands piped straight into grep, rg or head without pipefail, pointing to
-`prove-it-works/scripts/run-check.py`.
+`prove-it-works/scripts/run-check.py`. It also blocks `rm` with an unquoted glob
+over `run-check-*` log directories, which parallel sessions share.
 `make install-hooks` builds and atomically replaces only this binary; a failed
 build retains the installed version. Run it after editing
 `claude/hooks/grep-literal-glob.go`. Tests build their own temporary binary.
