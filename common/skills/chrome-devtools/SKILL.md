@@ -32,6 +32,14 @@ When a page requires a login and the project has no login script, request the cr
 
 `take_screenshot` of a page that is not in the foreground hangs until `Page.captureScreenshot timed out` (about 3 minutes). Before a screenshot of a page you opened with `new_page`, or after working in another page, call `select_page` with that `pageId` and `bringToFront: true`. If a screenshot still times out, bring the page to the front before retrying; never repeat the same call as is.
 
+### Connecting to the user's own browser
+
+When the user asks you to look at their browser (a reproduction in their tabs, their session), the MCP server of this session cannot help: it runs with `--headless --isolated` and sees only its own empty Chrome. Do not change the MCP configuration. Instead:
+
+1. Ask the user not to reload or clear the reproducing tab, then to open `chrome://inspect/#remote-debugging` in the same Chrome and enable remote debugging. `~/.config/google-chrome/DevToolsActivePort` appears when it is on.
+2. Attach the CLI of the same package: `C="npx -y -p chrome-devtools-mcp@latest chrome-devtools"; $C start --autoConnect --no-usage-statistics`, then `$C list_pages`. Chrome may ask the user to allow the connection. Every MCP tool is a CLI command with the same arguments (`$C <tool> --help`); run each under `timeout`.
+3. Only read until the user allows changes such as reloading. Run `$C stop` when you are done.
+
 ### Efficient data retrieval
 
 - Use `filePath` parameter for large outputs (screenshots, snapshots, traces)
