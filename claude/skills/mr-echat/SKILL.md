@@ -1,8 +1,7 @@
 ---
 name: mr-echat
-description: Commit, push, and create or update one or several linked EChat GitLab merge requests from a natural-language request.
+description: Commit, push, and create or update one or several linked EChat GitLab merge requests (feature/T- or task/T- branches) from a natural-language request. Use when the user asks to publish changes as an EChat MR or update its text, or when task-to-mr reaches its publish step. Not for Space services (mr-space), a commit without an MR, or reviewing an MR.
 argument-hint: "<what to do, optionally including repository paths>"
-disable-model-invocation: true
 compatibility: Requires Git, Python 3.10+, glab, an authenticated GitLab account, and pi with the openai-codex provider.
 ---
 
@@ -81,7 +80,7 @@ Before commit, push, or GitLab modification, show the user:
 - target branch when known;
 - the generated MR description.
 
-Ask for one explicit confirmation covering commit, push, and MR create/update. The `/mr-echat` invocation authorizes preparation, but not these writes without this confirmation. Under [`task-to-mr`](../task-to-mr/SKILL.md), its invocation is this confirmation, for a batch too: check and correct the generated text as below, ship without asking, and list these items in its report. `needs-force-with-lease` still requires asking. If you find the generated text inaccurate, apply your corrections to `title_path` and `description_path` before showing it, and name what you changed: the confirmation must cover the exact text that ships, because a published commit title can only be fixed with a force push. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #T-<id>` title suffix, and show the result again.
+Ask for one explicit confirmation covering commit, push, and MR create/update. Invoking this skill, by the user or by the model, authorizes preparation, but not these writes without this confirmation. Under [`task-to-mr`](../task-to-mr/SKILL.md), its invocation is this confirmation, for a batch too: check and correct the generated text as below, ship without asking, and list these items in its report. `needs-force-with-lease` still requires asking. If you find the generated text inaccurate, apply your corrections to `title_path` and `description_path` before showing it, and name what you changed: the confirmation must cover the exact text that ships, because a published commit title can only be fixed with a force push. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly, keeping the ` #T-<id>` title suffix, and show the result again.
 
 ## Ship
 
