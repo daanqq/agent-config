@@ -317,6 +317,7 @@ var (
 	checkScript = regexp.MustCompile(`^(test|typecheck|type-check|ts-check|lint|check)(:|$)`)
 	checkTools  = map[string]bool{"vitest": true, "tsc": true, "eslint": true, "oxlint": true, "jest": true}
 	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
+	infoFlags   = map[string]bool{"--help": true, "--version": true, "--rules": true}
 )
 
 func name(w word) string {
@@ -364,6 +365,11 @@ wrappers:
 		return false
 	}
 	tool := name(words[i])
+	for _, w := range words[i+1:] {
+		if infoFlags[string(w.text)] {
+			return false // help, version or rule listings print text, not a check result
+		}
+	}
 	if checkTools[tool] {
 		return true
 	}

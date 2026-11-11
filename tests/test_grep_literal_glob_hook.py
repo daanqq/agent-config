@@ -185,6 +185,10 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "yarn add -D vitest | tail -3",
             "pnpm exec prettier --check . | head",
             "yarn ts-check --affected 2>&1 | tail -6",
+            "npx oxlint --rules | grep no-unused",
+            "npx eslint --help | grep -- --fix",
+            "mise exec -- npx tsc --version | head -1",
+            "npx vitest --help | rg shuffle",
         ], False)
 
     def test_rm_over_shared_run_check_logs(self):
