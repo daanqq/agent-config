@@ -1240,6 +1240,14 @@
     {
       "source": "pi/agent/zshrc",
       "target": ".pi/agent/zshrc"
+    },
+    {
+      "source": "pi/agent/AGENTS.md",
+      "target": ".codex/AGENTS.md"
+    },
+    {
+      "source": "codex/system-prompt.md",
+      "target": ".codex/system-prompt.md"
     }
   ]
 }

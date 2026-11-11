@@ -1,24 +1,24 @@
 ---
 name: review-gpt
-description: Get an independent second-opinion code review of the current task's changes from a GPT model via pi, in a T3 Code thread or the pi CLI. Use when the user invokes /review-gpt.
+description: Get an independent second-opinion code review of the current task's changes from a GPT model, through the Codex provider in a T3 Code thread or the pi CLI. Use when the user invokes /review-gpt.
 disable-model-invocation: true
-argument-hint: "[model=openai-codex/gpt-6.1-sol] [thinking=high] [mode=auto] [extra focus]"
+argument-hint: "[model=gpt-6.1-sol] [thinking=high] [mode=auto] [extra focus]"
 ---
 
-Run a read-only review through pi, then triage its findings. By default the output is a proposal for the user: never apply fixes from the review yourself. `mode=auto`, used by [`task-to-mr`](../task-to-mr/SKILL.md), replaces the stop after triage with the fix loop in section 5.
+Run a read-only review through Codex (pi on the CLI route), then triage its findings. By default the output is a proposal for the user: never apply fixes from the review yourself. `mode=auto`, used by [`task-to-mr`](../task-to-mr/SKILL.md), replaces the stop after triage with the fix loop in section 5.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `orchestrator_capabilities` (`search`) in T3 Code, otherwise `pi --list-models <search>`.
-- `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
+- `model=<id>`: default `gpt-6.1-sol`. The Codex provider takes the bare id; the CLI route prefixes it with `openai-codex/`. Check unknown ids with `orchestrator_capabilities` (`search`) in T3 Code, otherwise `pi --list-models <search>`.
+- `thinking=<level>`: default `high`. In T3 Code it is Codex `reasoningEffort` (`low|medium|high|xhigh|max|ultra`); pass it explicitly, because the Codex default is `low`. On the CLI it is pi `--thinking`.
 - `mode=auto`: run the fix loop in section 5.
 - Any remaining text is an extra review focus.
 
 ## 2. Write the brief
 
-The reviewer must load pi's `code-review` skill, which defines the review process and report format. How the brief starts depends on the route in section 3:
+The reviewer must load the `code-review` skill, which defines the review process and report format. How the brief starts depends on the route in section 3:
 
-- **T3 Code**: start with `Make a code review of the change below.` T3 does not pass the message to pi as typed, so a `/skill:` prefix arrives unexpanded; pi picks the skill by its description instead.
+- **T3 Code**: start with `$code-review Make a code review of the change below.` Codex selects a skill named after `$` in the message.
 - **CLI**: write the brief to a temp file (`mktemp /tmp/review-gpt.XXXXXX.md`) and start it with `/skill:code-review` followed by a space, not a line break (pi reads the skill name up to the first space).
 
 The reviewer sees nothing of this conversation, so the rest of the brief must stand alone:
@@ -42,25 +42,32 @@ Choose the route once per review: **T3 Code** when its `delegate_task` tool is a
 Call `orchestrator_capabilities` once, then `delegate_task` with:
 
 - `task`: the complete brief text;
-- `target`: `{providerInstanceId: "pi", model: <model>, options: {thinking: <thinking>}}`;
+- `target`: `{providerInstanceId: "codex", model: <model>, options: {reasoningEffort: <thinking>}}`;
 - `role: "review"`, `mode: "async"`, a new `clientRequestId` per round, `title: "review-gpt <ticket id> round <n>"`.
 
-The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. Before `task_cancel` or replacing any delegate, call `task_status`: if it is `completed`, read and triage its reply first; `task_cancel` on a finished task returns `completed` and discards nothing, but the reply stays unread. A timeout, error, or empty reply that is not a GPT quota stop is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If pi or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
+The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. Before `task_cancel` or replacing any delegate, call `task_status`: if it is `completed`, read and triage its reply first; `task_cancel` on a finished task returns `completed` and discards nothing, but the reply stays unread. A timeout, error, or empty reply that is not a GPT quota stop is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If Codex or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
 
-**GPT quota.** The quota is exhausted when a GPT child's result, error, or `task_status` contains `usage limit` (`You have hit your ChatGPT usage limit.`). A Codex child may report nothing: on 2026-11-05 it stopped after one tool call and its log holds no error. So also treat a child that is still `running` 5 minutes after its last progress as suspect and probe once (the probe only checks the quota; the review never runs through pi):
+**GPT quota.** A Codex child does not report an exhausted quota: on 2026-11-10 two children got HTTP 429 and waited silently for the retry time the server named (1-2 hours), with nothing in their log. So check the quota before every Codex round instead of waiting:
 
-```bash
-echo "Reply with the single word: ok" | timeout 120 pi --print --no-session --no-tools --no-context-files --no-skills --no-extensions --no-prompt-templates --no-approve --model openai-codex/<model>
-```
+1. Read `~/.cache/review-gpt/quota-until` (an ISO 8601 time written by any thread). If that time is in the future, the quota is exhausted; skip the probe.
+2. Otherwise probe once (the probe only checks the quota; the review never runs through pi):
 
-Output with `usage limit` confirms the stop; `ok` means it is not the quota, so use the single retry above. On a confirmed stop with `mode=auto`, switch this and every later round to `target: {providerInstanceId: "claudeAgent", model: "claude-sonnet-5-5", options: {effort: "high"}}` without asking, with the same brief plus `Use the code-review skill for the review process and report format.`, and report the switch (rounds, model) in the final summary. Triage replies of already completed GPT children before the switch. Without `mode=auto`, report the quota stop as a blocker.
+   ```bash
+   echo "Reply with the single word: ok" | timeout 120 pi --print --no-session --no-tools --no-context-files --no-skills --no-extensions --no-prompt-templates --no-approve --model openai-codex/<model>
+   ```
+
+   `ok` means the quota is available: start the round. Output with `usage limit` means it is exhausted: write the reset time to `~/.cache/review-gpt/quota-until` (from `try again at …` in the output, otherwise one hour from now; create the directory if needed) so that other threads skip Codex too. Any other failure is not a quota stop: start the round anyway.
+
+The quota is also exhausted when a child's result, error, or `task_status` contains `usage limit`; record it the same way. If a child you started is still `running` long after its last progress, probe as in step 2 before deciding anything.
+
+On an exhausted quota with `mode=auto`, run this and every later round with `target: {providerInstanceId: "claudeAgent", model: "claude-sonnet-5-5", options: {effort: "high"}}` without asking, with the same brief plus `Use the code-review skill for the review process and report format.`, and report the switch (rounds, model) in the final summary. Triage replies of already completed GPT children before the switch. Without `mode=auto`, report the quota stop as a blocker.
 
 ### CLI
 
 Run from the repository root with `run_in_background: true`:
 
 ```bash
-pi -p --no-session --model "$MODEL" --thinking "$THINKING" --tools read,bash < "$BRIEF"
+pi -p --no-session --model "openai-codex/$MODEL" --thinking "$THINKING" --tools read,bash < "$BRIEF"
 ```
 
 Pass the brief on stdin, not as `@"$BRIEF"`: pi expands `/skill:` only at the very start of the message, and `@file` wraps the content in a `<file>` tag. stdout contains only the agent's final answer.

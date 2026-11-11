@@ -8,7 +8,7 @@ compatibility: Requires an authenticated SpaceHub issues MCP server in the activ
 
 Use the SpaceHub MCP server's read-only `find_issues` and `get_issue` tools.
 Their names are `mcp__sph_issues__find_issues` and `mcp__sph_issues__get_issue`
-in Pi, `mcp__sph-issues__find_issues` and `mcp__sph-issues__get_issue` in
+in Pi and Codex, `mcp__sph-issues__find_issues` and `mcp__sph-issues__get_issue` in
 Claude Code; keyword tool search may return `get_image` instead. Only if these
 names are absent, discover them by filtering tool `name` fields for these
 suffixes, and use the discovered input schemas. If the server is unavailable or

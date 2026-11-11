@@ -10,6 +10,7 @@ skill directories to this checkout.
 - `common/skills-maintenance/`: one source lock, scoped inventory, checker, and semantic overlays.
 - `pi/`: Pi configuration, extensions, prompts, and client-specific skills.
 - `claude/`: Claude Code configuration, hooks, themes, local plugin source, and client-specific skills.
+- `codex/`: Codex system prompt (`~/.codex/system-prompt.md`). Codex shares the Pi global instructions (`~/.codex/AGENTS.md` links to `pi/agent/AGENTS.md`) and sees the shared skills through `~/.agents/skills`; it ignores `disable-model-invocation`, so such skills also carry `agents/openai.yaml` with `allow_implicit_invocation: false` (checked by `tests/test_codex_skill_policy.py`). `config.toml` stays local.
 - `scripts/install.py`: selective links, private backups, and conservative restore.
 
 Client skill directories contain repository-relative links to the shared

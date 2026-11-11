@@ -67,10 +67,11 @@
         "installed_hash": "d0af919cdf50512fdda0cc37bbde3d08e9bf1ee2a56cb870b7e7b296abf74ca9"
       },
       "bro": {
-        "tracking": "exact",
+        "tracking": "overlay",
         "repository": "cursor-plugins",
         "path": "pstack/skills/bro",
-        "installed_hash": "0b3491f66df14a912ee01683853ebbd45e72486b34eab6a82e446d9f19ff5421"
+        "installed_hash": "95d5ad18ed9716196f9aa02780084157c23bcabf3a296787d5fa7724b901b95f",
+        "overlay": "overlays/common/bro.md"
       },
       "codebase-design": {
         "tracking": "exact",
@@ -97,7 +98,7 @@
         "repository": "cursor-plugins",
         "path": "cursor-team-kit/skills/fix-merge-conflicts",
         "overlay": "overlays/common/fix-merge-conflicts.md",
-        "installed_hash": "be97726b992385fb07af2c1e68507f838317efab6a0cc921a215da9e66380768"
+        "installed_hash": "5876c8e9b20474b80ea122829ee3aee5cb4598bc6f0d1caa75a1fb810cac54d3"
       },
       "grill-me": {
         "tracking": "overlay",
@@ -122,7 +123,7 @@
       },
       "herdr-build": {
         "tracking": "local",
-        "installed_hash": "8bc24f58d76c8978ac377817ab5baa4ee04ebb33413a028fee26fd7acca048b4"
+        "installed_hash": "480f2d40f9e53a0c7992112a156d9dab1beab5b8bb0bb2ee15c7a6122cf89317"
       },
       "herdr": {
         "tracking": "overlay",
@@ -136,7 +137,7 @@
         "repository": "react-doctor",
         "path": "skills/improve-react",
         "overlay": "overlays/common/improve-react.md",
-        "installed_hash": "41f01a37ea99d7244ea90766715817ec92f539cefc4136949e613c8e3b43283b"
+        "installed_hash": "9f0c298af079b08dbdfbe40b8d0e77fa0280ae5fef2bb534088fddbdceaf7946"
       },
       "optimize-images": {
         "tracking": "local",
@@ -163,14 +164,15 @@
         "installed_hash": "0028e2a4ca60d9b401e4fa81d7386f2f1ac48515b04d8c705a9bd147dc2d69f8"
       },
       "thermo-nuclear-code-quality-review": {
-        "tracking": "exact",
+        "tracking": "overlay",
         "repository": "cursor-plugins",
         "path": "cursor-team-kit/skills/thermo-nuclear-code-quality-review",
-        "installed_hash": "c609b8fab7a583c41cf12eb34217048045a2cd5bbd2ec017577d6630e4a0b931"
+        "installed_hash": "5baf3be9684c5046093b3cd17d81e2920b2c43b6e8d797cc45e47eaf8966a27e",
+        "overlay": "overlays/common/thermo-nuclear-code-quality-review.md"
       },
       "unslop": {
         "tracking": "local",
-        "installed_hash": "43bdeaf30f1bdf686dbddc8c2d13a11a54d55e473616fc0cfd5bfb0f8927a228"
+        "installed_hash": "1e89e1bc7f7e70c7ba068d8a0aba036e387c6b41ee644585dc00a330902e0528"
       },
       "vercel-react-best-practices": {
         "tracking": "overlay",
@@ -181,7 +183,7 @@
       },
       "fetch-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "0f430d6afd9a08786b473eb0955b15f189ab4a15c5ccb824854b1a8b11ea3ad9"
+        "installed_hash": "f49f81c29dfe85eec375ab9e6f79f04b1591af2f94397614e9414698ca51b896"
       },
       "spacehub-write": {
         "tracking": "local",
@@ -193,7 +195,7 @@
       },
       "update-skills": {
         "tracking": "local",
-        "installed_hash": "f500165bc1c5a6347c7e04acc69fd1bc4a351dd7298bfc7de274b8862d783fc8"
+        "installed_hash": "2b30a09d74c835f10b0ed682a9eb0317fed9b261e905b4b5d445e4a4316fd1e1"
       },
       "a11y-debugging": {
         "tracking": "exact",
@@ -281,7 +283,7 @@
       },
       "fix-gitlab-mr-review": {
         "tracking": "local",
-        "installed_hash": "44770e980f56861970a49acd28c909153d7710bc2824179fe99bd647f16fd0cb"
+        "installed_hash": "c588d4b3de0e120042b088fdbbc1bc1bb06a1360b78dddae25f6aa055b62c854"
       },
       "gitlab-write": {
         "tracking": "local",
@@ -314,7 +316,7 @@
       },
       "mr-review": {
         "tracking": "local",
-        "installed_hash": "63e83605bb633434c1f9243e372493956beef33c1d256947c37e9160555038fa"
+        "installed_hash": "23a4fcd0c504fcd6bcf2dd86e11ef46f7c3848429392017043df242fef8d6f75"
       },
       "mr-space": {
         "tracking": "local",
@@ -348,19 +350,19 @@
       },
       "update-proxies": {
         "tracking": "local",
-        "installed_hash": "5f92cb13614355b17f4afd8d6a868889b2e126ceb2aabcd9d37ac11b2ead3b55"
+        "installed_hash": "765606181c58b00f48b499e1cf9fc02f7f6b786f9682e0c456c4d88220ae2df6"
       },
       "yeet": {
         "tracking": "local",
-        "installed_hash": "fca57c45f1618179a61b0ae237722fdd2d71000937e8421736fc1d9d9daa8b95"
+        "installed_hash": "50c9c7a41b39dc83dfe2a0d6b2d0affd974afbb7bdf02c94a47167483aae46cf"
       },
       "ambition": {
         "tracking": "local",
-        "installed_hash": "9af5b2e1027d85cd59a10c59bf19a838b75586af962534245e191288a8d72956"
+        "installed_hash": "e7e441e12097146c1b5778e8d1d2856b6b290c9a4d908fb575a3d396ad00735f"
       },
       "html-artifact": {
         "tracking": "local",
-        "installed_hash": "31420bc097fdd02dce76e902c16db7b3f8783e555a3a75927f24f6240503b0f1"
+        "installed_hash": "340a6af2388a9fdfe0f94bd4bef90b703eb3e6941cf525c5c88aecb017e6ccf3"
       },
       "publish-artifact-page": {
         "tracking": "exact",
@@ -415,7 +417,7 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "ac73a6bd6c528058d05f8bd7c108c98e522ff8e3d101a2b980e8ca84036178bb"
+        "installed_hash": "7e24b8939e51b70f9b2bb7036d6ee221291be0f73603a6bfde60397f2ba2aab3"
       },
       "review-plan-gpt": {
         "tracking": "local",
