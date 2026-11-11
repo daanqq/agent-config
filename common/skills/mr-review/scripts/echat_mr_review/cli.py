@@ -15,6 +15,7 @@ from .core import (
     extract_task_id,
     prepare_local,
     prepare_mr,
+    record_review,
     resolve_repo_override,
 )
 
@@ -70,6 +71,11 @@ def build_parser() -> ArgumentParser:
     cleanup = commands.add_parser("cleanup", help="safely remove a generated workspace and its worktrees")
     cleanup.add_argument("workspace", type=Path, help="workspace directory or manifest.json")
     cleanup.add_argument("--dry-run", action="store_true", help="validate and print the cleanup plan without deleting")
+
+    record = commands.add_parser("record", help="store the final report of the MR targets as their latest review")
+    record.add_argument("workspace", type=Path, help="workspace directory or manifest.json")
+    record.add_argument("--report", type=Path, required=True, help="UTF-8 file with the final report shown to the user")
+    record.add_argument("--target", action="append", default=[], metavar="URL", help="record only this MR URL; repeatable (default: all MR targets)")
     return parser
 
 
@@ -119,6 +125,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "cleanup":
             result = cleanup_workspace(args.workspace, dry_run=args.dry_run)
+        elif args.command == "record":
+            result = record_review(args.workspace, _read_optional_file(args.report, "report") or "", args.target)
         else:
             common = {
                 "output_root": args.output_root,

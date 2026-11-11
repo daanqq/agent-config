@@ -581,5 +581,187 @@ class MrDiscussionsTests(unittest.TestCase):
             self.assertTrue(any("discussions" in item and "boom" in item for item in context["warnings"]))
 
 
+class ReviewHistoryTests(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.history = self.root / "history"
+        patcher = patch.dict(os.environ, {"MR_REVIEW_HISTORY_DIR": str(self.history)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.clones, self.url = mr_fixture(self.root, {"app.txt": "mr\n"})
+        self.seed = self.root / "seed"
+        self.record_file = self.history / "git.example.test" / "group" / "project" / "7.json"
+
+    def invoke(self, argv: list[str]) -> tuple[int, str, str]:
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            code = main(argv)
+        return code, stdout.getvalue(), stderr.getvalue()
+
+    def prepare(self) -> tuple[dict, dict, str]:
+        metadata = self.root / "metadata.json"
+        metadata.write_text(json.dumps({"source_branch": "feature/T-78", "target_branch": "master"}), encoding="utf-8")
+        code, stdout, stderr = self.invoke(
+            [
+                "prepare", "mr", self.url, "--repo-root", str(self.clones), "--gitlab-metadata-file", str(metadata),
+                "--output-root", str(self.root / "jobs"), "--lock-root", str(self.root / "locks"),
+                "--offline", "--no-install-dependencies",
+            ]
+        )
+        self.assertEqual((code, stderr), (0, ""))
+        result = json.loads(stdout)
+        self.addCleanup(main, ["cleanup", result["manifest"]])
+        context = json.loads(Path(result["review_context_json"]).read_text(encoding="utf-8"))
+        return result, context, Path(result["review_context_markdown"]).read_text(encoding="utf-8")
+
+    def seed_head(self) -> str:
+        return run("git", "-C", str(self.seed), "rev-parse", "HEAD")
+
+    def write_record(self, head_sha: str, report: str = "- Major: old finding\n") -> None:
+        self.record_file.parent.mkdir(parents=True)
+        self.record_file.write_text(
+            json.dumps({"head_sha": head_sha, "reviewed_at": "2026-11-10T10:00:00+00:00", "report": report}),
+            encoding="utf-8",
+        )
+
+    def test_without_record_context_has_no_previous_review(self) -> None:
+        _, context, markdown = self.prepare()
+        target = context["targets"][0]
+        self.assertEqual(target["head_sha"], self.seed_head())
+        self.assertNotIn("previous_review", target)
+        self.assertNotIn("Previous review", markdown)
+
+    def test_same_head_is_reported_with_previous_report(self) -> None:
+        self.write_record(self.seed_head())
+        _, context, markdown = self.prepare()
+        previous = context["targets"][0]["previous_review"]
+        self.assertEqual(
+            (previous["same_head"], previous["head_reachable"], previous["reviewed_at"], previous["path"]),
+            (True, True, "2026-11-10T10:00:00+00:00", str(self.record_file)),
+        )
+        self.assertEqual(previous["report"], "- Major: old finding\n")
+        self.assertIn("## Previous review: project", markdown)
+        self.assertIn("- Same head: yes", markdown)
+        self.assertIn("> - Major: old finding", markdown)
+        self.assertNotIn("Incremental diff", markdown)
+
+    def test_new_head_with_reachable_old_head_gives_incremental_diff(self) -> None:
+        old_head = self.seed_head()
+        self.write_record(old_head)
+        (self.seed / "app.txt").write_text("mr 2\n", encoding="utf-8")
+        run("git", "-C", str(self.seed), "commit", "-am", "T-78 follow-up")
+        run("git", "-C", str(self.seed), "push", "-f", "origin", "HEAD:refs/merge-requests/7/head")
+        # A previous review fetched the old head, so it is in the clone's object store.
+        run("git", "-C", str(self.clones / "project"), "fetch", "origin", old_head)
+        _, context, markdown = self.prepare()
+        target = context["targets"][0]
+        self.assertEqual(target["head_sha"], self.seed_head())
+        self.assertEqual(
+            (target["previous_review"]["same_head"], target["previous_review"]["head_reachable"]), (False, True)
+        )
+        self.assertIn(f"diff --find-renames {old_head}..HEAD --", markdown)
+        self.assertIn(f"git -C '{target['path']}'", markdown)
+
+    def test_unreachable_old_head_gives_no_incremental_diff(self) -> None:
+        self.write_record("0" * 40)
+        _, context, markdown = self.prepare()
+        previous = context["targets"][0]["previous_review"]
+        self.assertEqual((previous["same_head"], previous["head_reachable"]), (False, False))
+        self.assertIn("- Previous head reachable in the worktree: no", markdown)
+        self.assertNotIn("Incremental diff", markdown)
+
+    def test_unusable_record_is_ignored_with_warning(self) -> None:
+        self.record_file.parent.mkdir(parents=True)
+        self.record_file.write_text("{broken", encoding="utf-8")
+        _, context, _ = self.prepare()
+        self.assertNotIn("previous_review", context["targets"][0])
+        self.assertTrue(any("previous review record is unusable" in item for item in context["warnings"]))
+
+    def test_record_writes_latest_review_and_next_prepare_sees_same_head(self) -> None:
+        result, context, _ = self.prepare()
+        report = self.root / "review-report.md"
+        report.write_text("# Review\n\n- Minor: first\n", encoding="utf-8")
+        code, stdout, stderr = self.invoke(["record", result["workspace"], "--report", str(report)])
+        self.assertEqual((code, stderr), (0, ""))
+        self.assertEqual(json.loads(stdout)["recorded"], [str(self.record_file)])
+        record = json.loads(self.record_file.read_text(encoding="utf-8"))
+        target = context["targets"][0]
+        self.assertEqual(
+            (record["head_sha"], record["target_branch"], record["merge_base"], record["report"]),
+            (target["head_sha"], "master", target["merge_base"], "# Review\n\n- Minor: first"),
+        )
+        self.assertRegex(record["reviewed_at"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00$")
+        self.assertEqual(sorted(path.name for path in self.record_file.parent.iterdir()), ["7.json"])
+
+        _, next_context, _ = self.prepare()
+        self.assertTrue(next_context["targets"][0]["previous_review"]["same_head"])
+        report.write_text("# Review\n\n- Major: second\n", encoding="utf-8")
+        self.assertEqual(self.invoke(["record", result["manifest"], "--report", str(report)])[0], 0)
+        self.assertIn("second", json.loads(self.record_file.read_text(encoding="utf-8"))["report"])
+
+    def test_record_target_filter(self) -> None:
+        result, _, _ = self.prepare()
+        report = self.root / "review-report.md"
+        report.write_text("report\n", encoding="utf-8")
+        other = "https://git.example.test/group/project/-/merge_requests/8"
+        code, _, stderr = self.invoke(["record", result["workspace"], "--report", str(report), "--target", other])
+        self.assertEqual(code, 2)
+        self.assertIn("Not MR targets", stderr)
+        self.assertFalse(self.record_file.exists())
+        code, _, _ = self.invoke(["record", result["workspace"], "--report", str(report), "--target", self.url])
+        self.assertEqual(code, 0)
+        self.assertTrue(self.record_file.is_file())
+
+    def test_record_refuses_foreign_workspace(self) -> None:
+        report = self.root / "review-report.md"
+        report.write_text("report\n", encoding="utf-8")
+        foreign = self.root / "foreign"
+        foreign.mkdir()
+        (foreign / "manifest.json").write_text(
+            json.dumps({"tool": "other", "schema_version": 1, "root": str(foreign)}), encoding="utf-8"
+        )
+        code, _, stderr = self.invoke(["record", str(foreign), "--report", str(report)])
+        self.assertEqual(code, 2)
+        self.assertIn("Not a echat-mr-review manifest", stderr)
+
+        result, _, _ = self.prepare()
+        (Path(result["workspace"]) / ".echat-mr-review-workspace").write_text("someone-else\n", encoding="utf-8")
+        code, _, stderr = self.invoke(["record", result["workspace"], "--report", str(report)])
+        self.assertEqual(code, 2)
+        self.assertIn("Unsafe workspace ownership data", stderr)
+        self.assertFalse(self.history.exists())
+
+    def test_record_refuses_local_workspace_and_empty_report(self) -> None:
+        repo = self.root / "local"
+        run("git", "init", "-b", "master", str(repo))
+        configure_repo(repo)
+        (repo / "a.txt").write_text("a\n", encoding="utf-8")
+        run("git", "-C", str(repo), "add", ".")
+        run("git", "-C", str(repo), "commit", "-m", "base")
+        code, stdout, _ = self.invoke(
+            [
+                "prepare", "local", str(repo), "--base", "master", "--output-root", str(self.root / "jobs"),
+                "--lock-root", str(self.root / "locks"), "--offline",
+            ]
+        )
+        self.assertEqual(code, 0)
+        local = json.loads(stdout)
+        self.addCleanup(main, ["cleanup", local["manifest"]])
+        report = self.root / "review-report.md"
+        report.write_text("report\n", encoding="utf-8")
+        code, _, stderr = self.invoke(["record", local["workspace"], "--report", str(report)])
+        self.assertEqual(code, 2)
+        self.assertIn("no MR targets", stderr)
+
+        result, _, _ = self.prepare()
+        report.write_text("  \n", encoding="utf-8")
+        code, _, stderr = self.invoke(["record", result["workspace"], "--report", str(report)])
+        self.assertEqual(code, 2)
+        self.assertIn("report is empty", stderr)
+        self.assertFalse(self.history.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

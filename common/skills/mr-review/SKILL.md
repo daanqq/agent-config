@@ -99,6 +99,16 @@ Completion criterion: every applicable item is checked against the actual diff
 and its immediate callers. Any finding must still be caused by an in-scope
 changed line or listed untracked file.
 
+## Previous review
+
+If a target has `previous_review` (see `## Previous review` in the context), this MR was already reviewed: continue that review instead of starting over, so that repeated reviews do not contradict each other.
+
+- `same_head` is true: re-verify each previous finding against the current code and report the same set with the same severities. Change a severity or drop a finding only on new evidence, and state that evidence next to the finding. Then add only new findings, caused by in-scope lines that the previous review missed, and mark them as new.
+- Heads differ: review the incremental diff from the context first (when `head_reachable` is false, there is no such diff, so check each previous finding against the whole scope). Mark each previous finding as fixed, still present, or no longer applicable, keeping the severity of those still present unless new evidence, stated in the report, changes it. Then review the rest of the scope.
+- Start the report by stating that it continues the review from `reviewed_at`.
+
+Local (non-MR) reviews have no history and are not recorded.
+
 ## Severity calibration
 
 For every finding, including Minor, name the real producer of the triggering input in the post-merge system (caller, writer, migration, or client). If no producer is shown, report a conditional compatibility risk, not a confirmed defect, or drop the finding per the reporting rules below.
@@ -125,6 +135,12 @@ Keep the prepared workspace until all file reads and checks are complete. Then c
 
 ```sh
 python3 "$SKILL_ROOT/scripts/review_prepare.py" cleanup <workspace-or-manifest-path>
+```
+
+Before cleanup, for MR targets, write the final report (the findings exactly as shown to the user) to `<workspace>/review-report.md` and record it, so that the next review of the same MR can continue from it. `record` must run before cleanup and stores the report under `~/.local/state/mr-review` (override with `MR_REVIEW_HISTORY_DIR`); `--target URL` limits it to chosen MRs:
+
+```sh
+python3 "$SKILL_ROOT/scripts/review_prepare.py" record <workspace-or-manifest-path> --report <workspace>/review-report.md
 ```
 
 Cleanup validates the ownership marker, removes only recorded isolated worktrees and private refs, prunes worktree metadata, and then removes the generated workspace. Never delete a workspace manually unless validated cleanup cannot run; report any cleanup failure.

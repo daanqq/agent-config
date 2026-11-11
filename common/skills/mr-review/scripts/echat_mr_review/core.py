@@ -211,6 +211,75 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
     temp.replace(path)
 
 
+def history_root() -> Path:
+    return Path(os.environ.get("MR_REVIEW_HISTORY_DIR") or Path.home() / ".local" / "state" / "mr-review")
+
+
+def history_path(ref: MrRef) -> Path:
+    root = history_root()
+    host = _safe_slug(ref.host.replace(":", "_"))
+    path = root.joinpath(host, *ref.project_path.split("/"), f"{ref.iid}.json")
+    if not _is_within(path, root):
+        raise ReviewError(f"Unsafe review history path for {ref.key}")
+    return path
+
+
+def load_previous_review(ref: MrRef, worktree: Path, head_sha: str) -> tuple[dict[str, Any] | None, str | None]:
+    """The latest recorded review of this MR with facts that tell how it relates to the current head."""
+    path = history_path(ref)
+    if not path.is_file():
+        return None, None
+    try:
+        record = _load_json(path)
+        if not isinstance(record, dict) or not isinstance(record.get("head_sha"), str) or not isinstance(record.get("report"), str):
+            raise ReviewError("unexpected record format")
+    except ReviewError as error:
+        return None, f"{ref.key}: previous review record is unusable and ignored ({error})"
+    old_head = record["head_sha"]
+    reachable = git(worktree, "cat-file", "-e", f"{old_head}^{{commit}}", check=False).returncode == 0
+    return {
+        "path": str(path),
+        "head_sha": old_head,
+        "reviewed_at": record.get("reviewed_at"),
+        "same_head": old_head == head_sha,
+        "head_reachable": reachable,
+        "report": record["report"],
+    }, None
+
+
+def record_review(workspace: Path, report: str, urls: Sequence[str] = ()) -> dict[str, Any]:
+    """Store the final report of each MR target of a prepared workspace as that MR's latest review."""
+    manifest, root = _validated_manifest(workspace)
+    context = _load_json(root / "review-context.json")
+    targets = [item for item in context.get("targets", []) if item.get("kind") == "mr"]
+    if urls:
+        unknown = [url for url in urls if url not in {item["mr"]["url"] for item in targets}]
+        if unknown:
+            raise ReviewError(f"Not MR targets of this workspace: {', '.join(unknown)}")
+        targets = [item for item in targets if item["mr"]["url"] in urls]
+    if not targets:
+        raise ReviewError("The workspace has no MR targets to record")
+    if not report.strip():
+        raise ReviewError("The review report is empty")
+    recorded: list[str] = []
+    for target in targets:
+        ref = parse_mr_url(target["mr"]["url"])
+        path = history_path(ref)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_json(
+            path,
+            {
+                "head_sha": target["head_sha"],
+                "target_branch": target["mr"]["target_branch"],
+                "merge_base": target["merge_base"],
+                "reviewed_at": utc_now(),
+                "report": report,
+            },
+        )
+        recorded.append(str(path))
+    return {"workspace": str(root), "recorded": recorded}
+
+
 class Workspace:
     def __init__(self, output_root: Path, kind: str, lock_root: Path):
         output_root = output_root.expanduser().resolve()
@@ -814,6 +883,10 @@ def prepare_mr(
                     git(source_repo, "update-ref", "-d", base_fetch_ref, check=False)
                     raise
             merge_base_sha = merge_base(worktree, "HEAD", base_fetch_ref)
+            head_sha = git_text(worktree, "rev-parse", "HEAD")
+            previous_review, history_warning = load_previous_review(ref, worktree, head_sha)
+            if history_warning:
+                warnings.append(history_warning)
             task_id = (
                 extract_task_id(source_branch)
                 or extract_task_id(str((metadata or {}).get("title") or ""))
@@ -830,6 +903,7 @@ def prepare_mr(
                     "source_branch": source_branch,
                     "base_ref": base_fetch_ref,
                     "head_ref": "HEAD",
+                    "head_sha": head_sha,
                     "merge_base": merge_base_sha,
                     "scope": "branch",
                     "status": state["status"],
@@ -855,6 +929,7 @@ def prepare_mr(
                         "web_url": (metadata or {}).get("web_url") or ref.url,
                         "discussions": discussions,
                     },
+                    **({"previous_review": previous_review} if previous_review else {}),
                 }
             )
         context = _build_context(workspace, "mr", targets, related_task_ids, additional_information, warnings)
@@ -954,6 +1029,8 @@ def render_context_markdown(context: dict[str, Any]) -> str:
     for target in targets:
         lines.extend(_render_discussions(target))
     for target in targets:
+        lines.extend(_render_previous_review(target))
+    for target in targets:
         lines.extend(_render_verification(target))
     if context.get("warnings"):
         lines.extend(["", "## Preparation warnings", "", *[f"- {warning}" for warning in context["warnings"]]])
@@ -979,6 +1056,31 @@ def _render_discussions(target: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _render_previous_review(target: dict[str, Any]) -> list[str]:
+    previous = target.get("previous_review")
+    if not previous:
+        return []
+    lines = [
+        "",
+        f"## Previous review: {target['repo']}",
+        "",
+        f"- Reviewed at: {previous['reviewed_at']}",
+        f"- Previous head: `{previous['head_sha']}`",
+        f"- Current head: `{target['head_sha']}`",
+        f"- Same head: {'yes' if previous['same_head'] else 'no'}",
+        f"- Previous head reachable in the worktree: {'yes' if previous['head_reachable'] else 'no'}",
+        f"- Record: `{previous['path']}`",
+    ]
+    if previous["head_reachable"] and not previous["same_head"]:
+        command = f"git -C {_shell_quote(target['path'])} diff --find-renames {previous['head_sha']}..HEAD --"
+        lines.extend(["", "Incremental diff since the previous review:", "```sh", command, "```"])
+    elif not previous["same_head"]:
+        lines.extend(["", "The previous head is not in the worktree: review the whole scope and check each previous finding against it."])
+    lines.extend(["", "Previous report:", ""])
+    lines.extend(f"> {line}" for line in previous["report"].splitlines() or [""])
+    return lines
+
+
 def _render_verification(target: dict[str, Any]) -> list[str]:
     verification = target.get("verification")
     if not verification:
@@ -999,7 +1101,7 @@ def _is_within(path: Path, parent: Path) -> bool:
         return False
 
 
-def cleanup_workspace(path: Path, *, dry_run: bool = False, ignore_errors: bool = False) -> dict[str, Any]:
+def _validated_manifest(path: Path) -> tuple[dict[str, Any], Path]:
     supplied = path.expanduser().resolve()
     manifest_path = supplied if supplied.name == "manifest.json" else supplied / "manifest.json"
     manifest = _load_json(manifest_path)
@@ -1015,6 +1117,11 @@ def cleanup_workspace(path: Path, *, dry_run: bool = False, ignore_errors: bool 
         raise ReviewError(f"Missing workspace ownership marker: {marker}") from error
     if marker_id != manifest.get("workspace_id") or root == Path(root.anchor) or len(root.parts) < 3:
         raise ReviewError(f"Unsafe workspace ownership data: {root}")
+    return manifest, root
+
+
+def cleanup_workspace(path: Path, *, dry_run: bool = False, ignore_errors: bool = False) -> dict[str, Any]:
+    manifest, root = _validated_manifest(path)
     plan = {"workspace": str(root), "worktrees": [item.get("path") for item in manifest.get("worktrees", [])]}
     if dry_run:
         return plan
