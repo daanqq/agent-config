@@ -68,6 +68,7 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - **Shallow Fix**: a special case layered on shared infrastructure to patch a symptom rather than its cause. → name the simpler, more general change to the underlying mechanism.
 - **Message Chains**: long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
 - **Middle Man**: a class or function that mostly just delegates onward. → cut it, call the real target direct.
+- **Restating Comment**: an added comment that retells the code (what the line does, a name or type, an obvious step) instead of a non-obvious reason, invariant, or external constraint. → delete it, or rename the code so it needs no comment.
 - **Refused Bequest**: a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 
 ### 4. Review every axis within the available budget

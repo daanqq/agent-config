@@ -24,6 +24,7 @@ Adapted from the Claude Code built-in `/code-review`:
 - A finding contract requiring axis-specific evidence: failure scenario, quoted rule or smell with concrete cost, or quoted spec line.
 - The running harness's global instructions (`~/.claude/CLAUDE.md` or `~/.pi/agent/AGENTS.md`) and the `CLAUDE.md` / `AGENTS.md` files governing the changed paths as standards sources, flagged only with an exact quoted rule.
 - `Reinvented Helper` and `Shallow Fix` in the smell baseline.
+- `Restating Comment` in the smell baseline: an added comment that retells the code.
 - A parent verification pass with CONFIRMED / PLAUSIBLE / REFUTED verdicts, then per-axis dedup, severity order, and a cap of 15.
 
 ## Acceptance
