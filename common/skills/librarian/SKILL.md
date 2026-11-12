@@ -26,6 +26,10 @@ Follow the active project instructions for read-only work and temporary artifact
 
 If the user explicitly forbids all writes, use available read-only content or explain the access limitation. Temporary cleanup follows the task-ownership checks in the active project instructions.
 
+## Single file or option
+
+To check one file or option at the latest revision of a branch, do not refresh a whole checkout: a full fetch of a large repository can take many minutes. Read the file through the host API (`gh api repos/<org>/<repo>/contents/<path>?ref=<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/files/<path>/raw?ref=<branch>` on GitLab) or run `git fetch --depth=1 origin <branch>` in an isolated temporary clone. Fetch full history only when the task needs history, and start it in the background before it is needed.
+
 ## Cache command
 
 Resolve `checkout.sh` relative to this `SKILL.md` as `<skill-dir>`. Use this command only for an authorized cache creation or refresh. `--path-only` controls output; it does not make the command read-only.
