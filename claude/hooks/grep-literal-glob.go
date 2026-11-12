@@ -318,6 +318,7 @@ var (
 	checkTools  = map[string]bool{"vitest": true, "tsc": true, "eslint": true, "oxlint": true, "jest": true}
 	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
 	infoFlags   = map[string]bool{"--help": true, "--version": true, "--rules": true}
+	python      = regexp.MustCompile(`^python[0-9.]*$`)
 )
 
 func name(w word) string {
@@ -334,6 +335,7 @@ func skipOptions(words []word, i int) int {
 
 // checkCommand reports a test, typecheck or lint run, also behind env
 // assignments and the npx, n exec, mise exec, timeout, time, nice, env or command wrappers.
+// Python counts only as python -m unittest.
 func checkCommand(words []word) bool {
 	i := 0
 wrappers:
@@ -372,6 +374,17 @@ wrappers:
 	}
 	if checkTools[tool] {
 		return true
+	}
+	if python.MatchString(tool) {
+		// python [interpreter options] -m unittest; a script path ends the options.
+		for j := i + 1; j < len(words); j++ {
+			if text := string(words[j].text); text == "-m" {
+				return j+1 < len(words) && string(words[j+1].text) == "unittest"
+			} else if !strings.HasPrefix(text, "-") {
+				return false
+			}
+		}
+		return false
 	}
 	switch tool {
 	case "npm", "pnpm", "yarn", "bun":

@@ -163,6 +163,9 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "pnpm exec eslint src | rg error",
             "npm exec vitest run | grep FAIL",
             "bun x jest | head",
+            "PYTHONPATH=. python3 -m unittest tests.test_quota_router 2>&1 | grep -E '^(FAIL|ERROR):'",
+            "python -m unittest discover -s tests | head -20",
+            "timeout 60 python3 -B -m unittest -q | rg FAIL",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
@@ -189,6 +192,11 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "npx eslint --help | grep -- --fix",
             "mise exec -- npx tsc --version | head -1",
             "npx vitest --help | rg shuffle",
+            "python3 -m unittest discover -s tests 2>&1 | tail -5",
+            "set -o pipefail; python3 -m unittest | grep FAIL",
+            "python3 -m json.tool data.json | head",
+            "python3 script.py -m unittest | grep x",
+            "python3 -m unittest --help | grep discover",
         ], False)
 
     def test_rm_over_shared_run_check_logs(self):
