@@ -27,6 +27,11 @@ gate in [`task-worktree`](../task-worktree/SKILL.md). For a confirmed child
 merges into that feature. For an explicit chain, pass `--target-branch task/T-<previous-id>`: the MR then targets the previous task branch and its diff holds only this link's commits. This publishing helper requires a native feature/task
 T-branch; do not rename historical branches just to invoke it.
 
+In a detached HEAD, such as a `fix-gitlab-mr-conflicts` worktree, pass the MR
+source branch as `--branch`: `prepare` moves that branch to HEAD and switches to
+it when HEAD contains `origin/<branch>` and the local branch, and the branch is
+not checked out in another worktree. Otherwise it stops with the reason.
+
 Resolve this skill directory as `SKILL_ROOT`, then run:
 
 ```bash

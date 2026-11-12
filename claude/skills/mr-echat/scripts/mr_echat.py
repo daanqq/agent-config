@@ -99,14 +99,41 @@ def resolve_repo(raw: str) -> Path:
 def current_branch(repo: Path) -> str:
     branch = git(repo, "branch", "--show-current").stdout.strip()
     if not branch:
-        raise WorkflowError("detached HEAD is not supported")
+        raise WorkflowError("detached HEAD: pass --branch with the MR source branch")
     return branch
 
 
+def attach_detached_head(repo: Path, requested: str) -> str:
+    """Put a detached HEAD, such as a fix-gitlab-mr-conflicts worktree, back on the MR branch it extends."""
+    if git(repo, "check-ref-format", "--branch", requested, check=False).returncode:
+        raise WorkflowError(f"invalid branch name: {requested}")
+    worktrees = git(repo, "worktree", "list", "--porcelain").stdout
+    holder = None
+    for block in worktrees.split("\n\n"):
+        lines = block.splitlines()
+        if f"branch refs/heads/{requested}" in lines:
+            holder = next((line.removeprefix("worktree ") for line in lines if line.startswith("worktree ")), "?")
+    if holder:
+        raise WorkflowError(f"detached HEAD: {requested} is checked out in another worktree: {holder}")
+    remote = f"refs/remotes/origin/{requested}"
+    if git(repo, "show-ref", "--verify", "--quiet", remote, check=False).returncode:
+        raise WorkflowError(f"detached HEAD: origin/{requested} is unknown; fetch it or switch to a branch")
+    # Moving the local branch to HEAD must not drop commits of the remote or local branch.
+    for ref in (remote, f"refs/heads/{requested}"):
+        if git(repo, "show-ref", "--verify", "--quiet", ref, check=False).returncode:
+            continue
+        if git(repo, "merge-base", "--is-ancestor", ref, "HEAD", check=False).returncode:
+            raise WorkflowError(f"detached HEAD does not contain {ref}; switch to the branch manually")
+    git(repo, "switch", "-C", requested)
+    return requested
+
+
 def select_branch(repo: Path, requested: str | None, target_branch: str | None) -> str:
-    branch = current_branch(repo)
     if requested:
         task_id_for(requested)
+    if requested and not git(repo, "branch", "--show-current").stdout.strip():
+        return attach_detached_head(repo, requested)
+    branch = current_branch(repo)
     if not requested or requested == branch:
         return branch
     if git(repo, "check-ref-format", "--branch", requested, check=False).returncode:

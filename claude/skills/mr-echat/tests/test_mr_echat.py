@@ -105,6 +105,50 @@ class MrEchatTests(unittest.TestCase):
             with self.assertRaisesRegex(mr_echat.WorkflowError, "ambiguous"):
                 mr_echat.select_parent_task_branch(repo, "task/T-11")
 
+    def test_detached_head_attaches_to_the_branch_it_extends(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory) / "repo"
+            other = Path(directory) / "other"
+            repo.mkdir()
+
+            def git(*args: str) -> str:
+                return subprocess.run(
+                    ["git", *args], cwd=repo, check=True, text=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                ).stdout.strip()
+
+            git("init", "-b", "master")
+            git("config", "user.name", "Test User")
+            git("config", "user.email", "test@example.com")
+            (repo / "file.txt").write_text("base\n", encoding="utf-8")
+            git("add", ".")
+            git("commit", "-m", "base")
+            base = git("rev-parse", "HEAD")
+            git("switch", "-c", "feature/T-10")
+            (repo / "file.txt").write_text("feature\n", encoding="utf-8")
+            git("commit", "-am", "feature")
+            git("update-ref", "refs/remotes/origin/feature/T-10", "HEAD")
+
+            git("switch", "--detach", base)
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "does not contain"):
+                mr_echat.select_branch(repo, "feature/T-10", None)
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "pass --branch"):
+                mr_echat.select_branch(repo, None, None)
+
+            git("switch", "--detach", "feature/T-10")
+            git("commit", "--allow-empty", "-m", "merge master")
+            merged = git("rev-parse", "HEAD")
+            git("worktree", "add", str(other), "feature/T-10")
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "another worktree"):
+                mr_echat.select_branch(repo, "feature/T-10", None)
+            git("worktree", "remove", str(other))
+
+            (repo / "file.txt").write_text("uncommitted\n", encoding="utf-8")
+            self.assertEqual(mr_echat.select_branch(repo, "feature/T-10", None), "feature/T-10")
+            self.assertEqual(git("branch", "--show-current"), "feature/T-10")
+            self.assertEqual(git("rev-parse", "HEAD"), merged)
+            self.assertEqual((repo / "file.txt").read_text(encoding="utf-8"), "uncommitted\n")
+
     def test_prepare_task_does_not_fall_back_to_integration_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
