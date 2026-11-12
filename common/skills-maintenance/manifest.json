@@ -183,7 +183,7 @@
       },
       "fetch-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "f49f81c29dfe85eec375ab9e6f79f04b1591af2f94397614e9414698ca51b896"
+        "installed_hash": "4e94ddc4b1c8aaeef8600d4e2a2a5e9c4406d279da005fd4cf67f1b32359e8a7"
       },
       "spacehub-write": {
         "tracking": "local",
@@ -316,7 +316,7 @@
       },
       "mr-review": {
         "tracking": "local",
-        "installed_hash": "23a4fcd0c504fcd6bcf2dd86e11ef46f7c3848429392017043df242fef8d6f75"
+        "installed_hash": "9d828516edfcb10aff4bc84c3379f41702d26e8d080910ebff0b6110ffbfd594"
       },
       "mr-space": {
         "tracking": "local",

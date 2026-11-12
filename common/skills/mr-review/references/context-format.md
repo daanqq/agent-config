@@ -11,7 +11,7 @@ Preparation creates one owned workspace with three artifacts:
 - `generated_at`, `kind`, and `workspace` identify the preparation run.
 - `scope_contract` defines the hard review boundary.
 - `targets` contains one entry per MR or local repository.
-- `primary_task` and `related_tasks` contain task IDs (`T-*`, or unchanged historical IDs). Their `task` placeholders remain null; complete task JSON/Markdown files from `fetch-spacehub-task` are separate reviewer inputs.
+- `primary_task` and `related_tasks` contain task IDs (`T-*`, or unchanged historical IDs). Their `task` placeholders remain null; the task files from `fetch-spacehub-task` (complete `task-context.md`, `task.json` possibly an index) are separate reviewer inputs.
 - `additional_information` contains user-supplied context.
 - `warnings` records unavailable optional metadata or task data.
 

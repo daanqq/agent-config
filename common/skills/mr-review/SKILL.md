@@ -41,8 +41,9 @@ Markdown, logs, commits, or findings.
 
 The CLI only discovers task IDs; it does not fetch task data. For every
 distinct `targets[].task_id` and explicitly requested `related_tasks` ID, use
-[`fetch-spacehub-task`](../fetch-spacehub-task/SKILL.md) and read its complete
-JSON/Markdown artifacts. Reuse the same context for targets with the same ID.
+[`fetch-spacehub-task`](../fetch-spacehub-task/SKILL.md) and read its
+`task-context.md`, the complete context; `task.json` may be its index. Reuse
+the same context for targets with the same ID.
 Keep these task files alongside the prepared Git context in reviewer inputs;
 the CLI task placeholders stay null and must not override fetched requirements.
 If MCP is unavailable, report missing spec coverage and continue correctness
