@@ -25,7 +25,8 @@ replaces the ask-first step of the workflows below for:
   through `echat-browser-check` / `echat-adm-browser-check` with the `local`
   profile, and local migrations through `echat-migrations`;
 - retrying one flaky CI job under `babysit-mr`;
-- adding MR links to the task's `Merge requests` artifact in SpaceHub.
+- creating the task's «Программирование» work when it has none;
+- adding MR links to the `Merge requests` artifact in SpaceHub.
 
 Outside the grant: merge, `container_build`, `deploy:*`, any force push,
 queries, migrations, or API checks against non-local databases, other SpaceHub
@@ -47,7 +48,9 @@ ask-first step.
    goes to the user under "Asking", all of them in one message. Settle the rest
    with the default closest to the task and current behavior, and record each
    as a decision.
-3. **Branch.** Fetch the base and follow
+3. **Branch.** If the task has no «Программирование» work, create it under
+   `spacehub-write` («Programming work») so step 8 links the MR there. Fetch
+   the base and follow
    [`task-worktree`](../task-worktree/SKILL.md): branch contract, hotfix base,
    isolation, and dependencies.
 4. **Implement** the smallest change that reaches the goal, under the
@@ -58,7 +61,9 @@ ask-first step.
      (read `.gitlab-ci.yml`) on the whole project, not only the changed files.
    - For a bug, reproduce the failure, then watch the same reproduction pass.
    - For UI, check the real page with `echat-browser-check`
-     (`echat-adm-browser-check` for `tidy-adm`).
+     (`echat-adm-browser-check` for `tidy-adm`). Keep the task stand running
+     afterwards: skip the wind-down of `echat-stand` step 5, so the user can
+     open the stand from the report.
    - Add one focused test only when the behavior has none and the repository
      has a test setup.
 
@@ -83,9 +88,9 @@ ask-first step.
    changes that existed before the task stay out of the commit. Its `notes.md` carries
    the intent, the step 2 decisions, the exact checks and results, and the
    review outcome. For several repositories use its batch and `link`.
-8. **Link the task.** Add each missing MR URL to the task's `Merge requests`
-   artifact following [`spacehub-write`](../spacehub-write/SKILL.md), then read
-   the task back to confirm.
+8. **Link the task.** Add each missing MR URL to the `Merge requests` artifact
+   following [`spacehub-write`](../spacehub-write/SKILL.md): it goes on the
+   programming work, or on the task without one. Read that issue back to confirm.
 9. **Pipeline.** Follow [`babysit-mr`](../babysit-mr/SKILL.md) with
    `--until pipeline` for every MR. Fix failures the diff caused, prove the
    fix, push, and wait again. Done when each head pipeline is `success` or
@@ -119,9 +124,12 @@ Write in the user's language and lead with the outcome:
 
 - MR links, head SHA, final pipeline status with its link;
 - proof: checks with results, reproduction, browser checks;
+- the task stand, after `echat-stand status <name>` shows it `running`: its
+  `web=` and `mobile=` URLs from the latest `READY`, the refs it serves, and
+  `echat-stand down <name>` to stop it;
 - review: rounds, model, fixed, declined, and disputed findings with both sides;
 - the `Merge requests` artifact update;
 - the decisions you made for the user;
 - unverified risks;
-- what remains for the user: `container_build`, deploys, colleague review, and
-  `needs user` findings.
+- what remains for the user: `container_build`, deploys, colleague review,
+  moving the programming work to review, and `needs user` findings.

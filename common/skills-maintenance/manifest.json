@@ -187,7 +187,7 @@
       },
       "spacehub-write": {
         "tracking": "local",
-        "installed_hash": "0316f142402d26972e00640fa7a1affe5e9152696a7aa3a828caffc425dc2817"
+        "installed_hash": "ef0812619123599f2f2cdf639c5685fe90d9786b2f133b55d11e89a87011b5d2"
       },
       "mars-logs": {
         "tracking": "local",
@@ -425,7 +425,7 @@
       },
       "task-to-mr": {
         "tracking": "local",
-        "installed_hash": "26bce5ea89cc2409f4becfd5db2cf30f3d78e725e76dce426e0512f37b8b1bf0"
+        "installed_hash": "79c674812e2c6fefca6eae8640aab6779c47ec82a34d72f6038e3fd6f7add15d"
       },
       "show-me-your-work": {
         "tracking": "overlay",
