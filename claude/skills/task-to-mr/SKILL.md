@@ -101,6 +101,13 @@ Stay active from step 3 to step 10. A final message before step 10 ends the
 work, because nobody prompts you again. Wait for the reviewer and `mr-wait`
 through their completion notifications.
 
+## Follow-up changes
+
+When the user asks for more changes after the report, take them through steps
+4-9. A follow-up that changes behavior gets `blast-radius` again and a
+review-gpt round under the step 6 rules, however small it is and even when its
+effect is already measured.
+
 ## Asking
 
 Ask only when you cannot continue alone:
@@ -130,6 +137,9 @@ Write in the user's language and lead with the outcome:
 - review: rounds, model, fixed, declined, and disputed findings with both sides;
 - the `Merge requests` artifact update;
 - the decisions you made for the user;
+- each problem found outside the task's scope: its cause, where it shows, the
+  size of the fix, and your recommendation, so the user can decide in one
+  answer;
 - unverified risks;
 - what remains for the user: `container_build`, deploys, colleague review,
   moving the programming work to review, and `needs user` findings.
