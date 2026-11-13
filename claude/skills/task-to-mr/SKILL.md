@@ -55,7 +55,9 @@ ask-first step.
    isolation, and dependencies.
 4. **Implement** the smallest change that reaches the goal, under the
    repository's coding standards. Fix the case the task describes, not every
-   case that could exist.
+   case that could exist. When the task's screenshot or text concerns only the
+   mobile app, change only the mobile build and say in the report how desktop
+   behaves.
 5. **Prove** under [`prove-it-works`](../prove-it-works/SKILL.md):
    - In every changed repository, run the commands its CI validate jobs run
      (read `.gitlab-ci.yml`) on the whole project, not only the changed files.
