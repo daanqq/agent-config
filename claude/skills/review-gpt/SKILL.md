@@ -1,7 +1,6 @@
 ---
 name: review-gpt
-description: Get an independent second-opinion code review of the current task's changes from a GPT model, through the Codex provider in a T3 Code thread or the pi CLI. Use when the user invokes /review-gpt.
-disable-model-invocation: true
+description: Independent GPT code review of a change through Codex (T3 Code thread or pi CLI), then triage of its findings. Use only when the user explicitly asks for a GPT or Codex review, or when task-to-mr reaches its review step. A plain request to review code is code-review, not this skill.
 argument-hint: "[model=gpt-6.1-sol] [thinking=high] [mode=auto] [extra focus]"
 ---
 
