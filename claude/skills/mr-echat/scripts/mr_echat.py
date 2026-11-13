@@ -794,6 +794,20 @@ def publish(args: argparse.Namespace) -> dict[str, Any]:
     return {"status": "created", "url": url, "target_branch": state.get("target_branch")}
 
 
+def require_cwd_outside(workspace: Path) -> None:
+    """Removing the workspace under the caller's cwd makes the caller's shell fail after a successful publish."""
+    try:
+        cwd = Path.cwd().resolve()
+    except FileNotFoundError:
+        return
+    if cwd == workspace.resolve() or workspace.resolve() in cwd.parents:
+        raise WorkflowError(
+            f"the current directory is inside the workspace that will be removed: {cwd}. "
+            "Nothing was committed or pushed. Run the command from the repository or another directory "
+            "and refer to workspace files by absolute path."
+        )
+
+
 def cleanup(args: argparse.Namespace) -> dict[str, Any]:
     _, state = load_state(args.state)
     state_path = Path(args.state).expanduser().resolve()
@@ -803,6 +817,7 @@ def cleanup(args: argparse.Namespace) -> dict[str, Any]:
         raise WorkflowError(f"refusing to remove unowned workspace: {workspace}")
     if state_path.parent != workspace or not state.get("published"):
         raise WorkflowError("refusing cleanup before successful publication")
+    require_cwd_outside(workspace)
     shutil.rmtree(workspace)
     return {"status": "cleaned", "workspace": str(workspace)}
 
@@ -838,6 +853,7 @@ def ship(args: argparse.Namespace) -> dict[str, Any]:
     _, state = load_state(args.state)
     if not state.get("description_path"):
         raise WorkflowError("no generated description; run generate first")
+    require_cwd_outside(Path(state["workspace"]))
     title_file = state.get("title_path")
     # A rerun after a failed push or publish must not create a second commit.
     if state["included_paths"] and not state.get("committed_sha"):

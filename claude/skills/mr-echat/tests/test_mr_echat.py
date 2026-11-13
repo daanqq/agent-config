@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import shutil
 import subprocess
 import tempfile
@@ -392,6 +393,43 @@ class MrEchatTests(unittest.TestCase):
                 generated = mr_echat.generate(SimpleNamespace(state=str(state_path), notes_file=None, title=None))
             self.assertNotIn("Связанные MR", ask_model.call_args.args[0])
             self.assertEqual(generated["description"], f"Новое.\n\n{block}")
+
+
+class WorkspaceCwdTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-1-", dir="/tmp"))
+        self.addCleanup(shutil.rmtree, self.workspace, ignore_errors=True)
+        (self.workspace / "nested").mkdir()
+        self.state_path = self.workspace / "state.json"
+        self.state = {
+            "workspace": str(self.workspace), "task_id": "T-1", "included_paths": ["a"],
+            "description_path": str(self.workspace / "description.md"), "published": True,
+        }
+        patcher = patch.object(mr_echat, "load_state", return_value=(self.workspace, self.state))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        previous = os.getcwd()
+        self.addCleanup(os.chdir, previous)
+
+    def test_ship_refuses_inside_the_workspace_before_any_write(self) -> None:
+        for inside in (self.workspace, self.workspace / "nested"):
+            os.chdir(inside)
+            with self.subTest(cwd=inside), patch.object(mr_echat, "commit") as commit, patch.object(mr_echat, "push") as push:
+                with self.assertRaisesRegex(mr_echat.WorkflowError, "inside the workspace"):
+                    mr_echat.ship(SimpleNamespace(state=str(self.state_path), force_with_lease=False))
+                commit.assert_not_called()
+                push.assert_not_called()
+
+    def test_cleanup_keeps_the_workspace_when_cwd_is_inside(self) -> None:
+        os.chdir(self.workspace / "nested")
+        with self.assertRaisesRegex(mr_echat.WorkflowError, "inside the workspace"):
+            mr_echat.cleanup(SimpleNamespace(state=str(self.state_path)))
+        self.assertTrue(self.workspace.exists())
+
+    def test_cleanup_removes_the_workspace_from_another_directory(self) -> None:
+        os.chdir("/")
+        self.assertEqual(mr_echat.cleanup(SimpleNamespace(state=str(self.state_path)))["status"], "cleaned")
+        self.assertFalse(self.workspace.exists())
 
 
 class TaskChainTargetTests(unittest.TestCase):
