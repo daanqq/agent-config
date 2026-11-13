@@ -110,6 +110,23 @@ When the user asks for more changes after the report, take them through steps
 review-gpt round under the step 6 rules, however small it is and even when its
 effect is already measured.
 
+## Screenshots on request
+
+The MR and the task carry no screenshots unless the user asks. When asked, use
+the step 5 PNGs:
+
+- Upload each with `curl -sS -H @"$H" -F "file=@<png>"
+  https://git.esoft.tech/api/v4/projects/<id>/uploads`, where `$H` is a
+  `umask 077` temporary file holding `PRIVATE-TOKEN: <glab config get token
+  --host git.esoft.tech>`, deleted afterwards. `glab api -F file=@...` returned
+  HTTP 400 there. The response's `markdown` is the image link.
+- Insert a «Скриншоты» section before `<!-- mr-echat:related -->` (or at the
+  end) through `glab api -X PUT projects/<id>/merge_requests/<iid>` with a JSON
+  `description`, then read the description back and compare it with the
+  expected text.
+- In SpaceHub, put the same links in an artifact on the programming work and
+  tell the user they render only for someone logged in to GitLab.
+
 ## Asking
 
 Ask only when you cannot continue alone:
