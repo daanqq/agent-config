@@ -37,7 +37,11 @@ For a new MR, start from `<template>` and preserve its mandatory section names a
 - <specific manual scenario or component>
 ```
 
-For an existing MR, start from `<current_description>`: preserve useful content and section order, reconcile it with the final change set instead of appending commit history, and remove or rewrite claims that are no longer true.
+For an existing MR, `<current_description>` is the base: edit it, do not write a new text from the diff. Keep every section, its order, and every statement that is still true for the final change set, and reconcile the rest instead of appending commit history. In particular:
+
+- keep the reason or cause of each earlier change, not only the fact of the change; add the reason of the new change next to it;
+- keep every check line of the current description with its result, and add the checks from `<notes>` after them; drop or rewrite a check only when the diff or `<notes>` show it is outdated or was rerun with a different result;
+- remove or rewrite a claim only when the final change set contradicts it.
 
 In both cases:
 
@@ -45,13 +49,14 @@ In both cases:
 - describe the final change set, not intermediate attempts;
 - when `<notes>` describe a revert, open the summary with what is reverted and what is intentionally kept, with the reason;
 - keep the platform and build scope as wide as the diff: a change to shared code is not limited to the build where the bug was reported;
-- take intent, implementation decisions, and executed checks only from `<notes>`;
+- take intent, implementation decisions, and executed checks from `<notes>`; for an existing MR the checks and reasons already written in `<current_description>` also count as supported;
 - include only facts supported by the diffs or `<notes>`;
 - name checks and their results precisely;
 - state explicitly that browser, device, or manual verification was not performed unless `<notes>` reports it;
 - do not list or reference related merge requests: links to them are added separately;
 - keep `Нет.` for migrations when there are none;
-- remove template comments and do not duplicate facts.
+- remove template comments and do not duplicate facts;
+- build sentences so that a long dash (U+2014) is never needed: write short sentences, put an explanation after a colon, start a separate sentence, or use a comma where it is natural; when a clause is an aside, make it its own sentence instead of setting it off with a dash. A hyphen inside a compound word is fine.
 
 ## Output
 

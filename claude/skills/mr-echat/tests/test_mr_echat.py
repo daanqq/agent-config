@@ -627,7 +627,7 @@ class GenerationFormatTests(unittest.TestCase):
 
     def test_generate_warns_about_text_defects_outside_code(self) -> None:
         answer = (
-            "<title>fix rendering</title><description>Исправлен рендер \u2014 без эмоushen-стилей. "
+            "<title>fix rendering</title><description>Исправлен рендер\u2014без эмоushen-стилей. "
             "Код `useЭмодзи` и ```\nconst a = 'x\u2014y'\n``` не проверяются.</description>"
         )
         with patch.object(mr_echat, "ask_model", return_value=answer):
@@ -637,6 +637,41 @@ class GenerationFormatTests(unittest.TestCase):
         self.assertIn("Em dash", warnings[0])
         self.assertIn("эмоushen", warnings[1])
         self.assertNotIn("useЭмодзи", warnings[1])
+
+    def test_spaced_em_dash_becomes_hyphen_outside_code_only(self) -> None:
+        answer = (
+            "<title>fix rendering \u2014 again</title><description>Рендер \u2014 исправлен. Код `a \u2014 b` и\n"
+            "```\nx \u2014 y\n```\nне меняются; слово\u2014слово остаётся.</description>"
+        )
+        with patch.object(mr_echat, "ask_model", return_value=answer):
+            result = self.generate()
+        self.assertEqual(result["title"], "fix rendering - again #T-1")
+        self.assertEqual(
+            result["description"],
+            "Рендер - исправлен. Код `a \u2014 b` и\n```\nx \u2014 y\n```\nне меняются; слово\u2014слово остаётся.",
+        )
+        self.assertEqual(len(result["warnings"]), 1)
+        self.assertIn("Em dash", result["warnings"][0])
+        self.assertEqual(Path(result["description_path"]).read_text(encoding="utf-8").count(" - "), 1)
+
+    def test_em_dash_replacement_leaves_clean_text_without_warnings(self) -> None:
+        with patch.object(mr_echat, "ask_model", return_value="<title>fix rendering</title><description>Исправлен \u2014 рендер.</description>"):
+            result = self.generate()
+        self.assertEqual(result["description"], "Исправлен - рендер.")
+        self.assertEqual(result["warnings"], [])
+
+    def test_update_prompt_carries_the_current_description_and_keep_rules(self) -> None:
+        current = "### Что нужно проверить\n\n- `npm test`: 692 теста пройдены.\n\nПричина: старая."
+        (self.workspace / "current-description.md").write_text(current, encoding="utf-8")
+        self.state["existing_mr"] = {"ref": "1"}
+        self.state["included_paths"] = []
+        with patch.object(mr_echat, "ask_model", return_value="<description>Новое.</description>") as ask:
+            self.generate()
+        prompt = ask.call_args.args[0]
+        self.assertIn(f"<current_description>\n{current}\n</current_description>", prompt)
+        self.assertIn("keep every check line of the current description", prompt)
+        self.assertIn("keep the reason or cause of each earlier change", prompt)
+        self.assertIn("never needed", prompt)
 
     def test_generate_clean_text_has_no_warnings(self) -> None:
         with patch.object(mr_echat, "ask_model", return_value="<title>fix rendering</title><description>Исправлен рендер T-4247 в emotion.</description>"):

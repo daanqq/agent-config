@@ -556,6 +556,12 @@ CODE_SPAN_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
 MIXED_SCRIPT_WORD_RE = re.compile(r"\b(?=\w*[а-яё])(?=\w*[a-z])\w+\b", re.I)
 
 
+def replace_spaced_em_dash(text: str) -> str:
+    """Turn a spaced em dash into a hyphen outside fenced blocks and inline code."""
+    parts = re.split(f"({CODE_SPAN_RE.pattern})", text, flags=CODE_SPAN_RE.flags)
+    return "".join(part if index % 2 else part.replace(" \u2014 ", " - ") for index, part in enumerate(parts))
+
+
 def text_warnings(model: str, title: str | None, description: str) -> list[str]:
     """Cheap checks for defects the text model has produced; code spans are skipped."""
     prose = CODE_SPAN_RE.sub(" ", "\n".join(filter(None, (title, description))))
@@ -633,10 +639,10 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
     title_path: Path | None = None
     title: str | None = None
     if state["included_paths"]:
-        title = normalized_title(raw_title, task_id)
+        title = normalized_title(replace_spaced_em_dash(raw_title), task_id)
         title_path = workspace / "title.txt"
         title_path.write_text(title + "\n", encoding="utf-8")
-    description = with_related(description, related)
+    description = with_related(replace_spaced_em_dash(description), related)
     description_path = workspace / "description.md"
     description_path.write_text(description + "\n", encoding="utf-8")
     state["title_path"] = str(title_path) if title_path else None

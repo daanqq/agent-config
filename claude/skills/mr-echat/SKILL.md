@@ -72,7 +72,7 @@ python3 "$SKILL_ROOT/scripts/mr_echat.py" generate \
   [--title "<user-supplied title>"]
 ```
 
-Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. For missing or empty required output tags, the helper saves the response in its workspace and makes one format-correction attempt. When the Codex quota is exhausted (`usage limit`), the helper itself repeats the request on `openrouter/anthropic/claude-haiku-5.5:low`; the `model` field of the result names the model that wrote the text, so report a fallback. Other errors are not retried. Stop and report the error if generation fails; do not compose the texts yourself. The result's `warnings` lists cheap text checks (em dash, words mixing Cyrillic and Latin, fallback model); fix every listed item in `title_path` or `description_path` before showing or shipping the text.
+Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>` once. For missing or empty required output tags, the helper saves the response in its workspace and makes one format-correction attempt. When the Codex quota is exhausted (`usage limit`), the helper itself repeats the request on `openrouter/anthropic/claude-haiku-5.5:low`; the `model` field of the result names the model that wrote the text, so report a fallback. Other errors are not retried. Stop and report the error if generation fails; do not compose the texts yourself. The result's `warnings` lists cheap text checks (an em dash that is not spaced or that remained after the helper replaced spaced ones outside code with a hyphen, words mixing Cyrillic and Latin, fallback model); fix every listed item in `title_path` or `description_path` before showing or shipping the text.
 
 ## Confirm once before writes
 
