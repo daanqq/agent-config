@@ -11,8 +11,8 @@ A comment goes out under the user's GitLab account and notifies colleagues. The
 
 ## Label
 
-The first line of every comment, reply, or amended note you write is the label,
-even when the user did not ask for it:
+By default the first line of every comment, reply, or amended note you write is
+the label, even when the user did not ask for it:
 
 ```
 > 🤖 Комментарий написал Claude <модель> в рамках ревью задачи <задача>.
@@ -29,13 +29,19 @@ even when the user did not ask for it:
   no signature at the end. The rest of the text is written in the first person
   of the agent.
 
-When amending a note the agent wrote, keep its label.
+Omit the label only when the user asks for it, for example "от моего лица" or
+"без приписки". Write that text in the user's voice, with no hint of the agent's
+authorship. The request covers only the comments it names; later comments get
+the label again.
+
+When amending a note, keep or omit its label as the original did, unless the
+user asks otherwise.
 
 ## Permission
 
 An instruction to publish authorizes posting. An instruction to write, draft, or
-reply authorizes a draft: show the exact text, label included, and wait for
-approval. Approval covers the text shown; any later change needs it again.
+reply authorizes a draft: show the exact text, with the label if it has one, and
+wait for approval. Approval covers the text shown; any later change needs it again.
 
 ## Text
 

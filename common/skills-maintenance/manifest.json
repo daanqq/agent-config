@@ -287,7 +287,7 @@
       },
       "gitlab-write": {
         "tracking": "local",
-        "installed_hash": "32ceaddfd976282375c96de2959423a3e148792e6306e72e4041dcf2b1f95f12"
+        "installed_hash": "c38628d055c1c493215d00353cd4869bda4a12567a19c7f0fdad5c40a9b1747a"
       },
       "improve-codebase-architecture": {
         "tracking": "overlay",
