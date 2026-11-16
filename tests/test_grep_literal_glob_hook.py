@@ -218,6 +218,28 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
                 else:
                     self.assertEqual(result.stderr, "")
 
+    def test_worktree_prune_without_dry_run(self):
+        for command, blocked in [
+            ("git worktree remove --force /tmp/t && git worktree prune && git worktree list", True),
+            ("git -C /home/user/echat/tidy-client worktree prune -v", True),
+            ("GIT_TRACE=1 git --no-pager worktree prune --expire now", True),
+            ("cd repo; /usr/bin/git worktree prune", True),
+            ("git worktree prune --dry-run", False),
+            ("git -C repo worktree prune -n -v", False),
+            ("git worktree remove /tmp/t", False),
+            ("git worktree list | grep prune", False),
+            ("echo git worktree prune", False),
+            ("git commit -m 'worktree prune'", False),
+        ]:
+            with self.subTest(command=command):
+                result = self.invoke(command)
+                self.assertEqual(result.returncode, 2 if blocked else 0, result.stderr)
+                if blocked:
+                    self.assertIn("git worktree remove <path>", result.stderr)
+                    self.assertIn("not executed or rewritten", result.stderr)
+                else:
+                    self.assertEqual(result.stderr, "")
+
     def test_quoted_substitutions_are_opaque_words(self):
         self.check_commands([
             'grep --include=*.json "$(pwd)" .',

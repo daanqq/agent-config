@@ -3,7 +3,9 @@
 // typecheck or lint commands piped straight into grep, rg or head without
 // pipefail: the pipe drops the check's exit status and can hide error lines.
 // It also rejects rm with an unquoted glob over run-check log directories,
-// which are shared by parallel sessions in the system temporary directory.
+// which are shared by parallel sessions in the system temporary directory,
+// and git worktree prune without --dry-run, which drops records of every
+// missing worktree of the repository, not only the agent's own.
 // Unsupported substitutions, grouping and malformed shell input fail open.
 // Contract: JSON stdin; silent exit 0 allows, exit 2 + stderr blocks PreToolUse.
 package main
@@ -437,6 +439,38 @@ const sharedLogMessage = "rm with a glob over run-check-* also removes logs of o
 	"run-check.py keeps them in the shared temporary directory. Remove only the directory " +
 	"of the Log: path that your own run printed. The command was not executed or rewritten.\n"
 
+// worktreePrune reports git [global options] worktree prune without -n or
+// --dry-run, also behind env assignments.
+func worktreePrune(words []word) bool {
+	i := 0
+	for i < len(words) && words[i].literal && assignment.MatchString(string(words[i].text)) {
+		i++
+	}
+	if i >= len(words) || name(words[i]) != "git" {
+		return false
+	}
+	for i++; i < len(words) && strings.HasPrefix(string(words[i].text), "-"); i++ {
+		switch string(words[i].text) {
+		case "-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path", "--config-env":
+			i++ // these global options take a separate value
+		}
+	}
+	if i+1 >= len(words) || string(words[i].text) != "worktree" || string(words[i+1].text) != "prune" {
+		return false
+	}
+	for _, w := range words[i+2:] {
+		if text := string(w.text); text == "-n" || text == "--dry-run" {
+			return false
+		}
+	}
+	return true
+}
+
+const worktreePruneMessage = "git worktree prune drops the records of every missing worktree " +
+	"of this repository, not only yours. Remove your own worktree with " +
+	"git worktree remove <path>, or run git worktree prune --dry-run and leave the cleanup " +
+	"to the user. The command was not executed or rewritten.\n"
+
 func detect(source string) string {
 	parts, supported := tokens(source)
 	if !supported {
@@ -468,6 +502,9 @@ func detect(source string) string {
 			}
 			if sharedLogGlob(command) {
 				return sharedLogMessage
+			}
+			if worktreePrune(command) {
+				return worktreePruneMessage
 			}
 			if fromCheck && !pipefail && len(command) > 0 && filters[name(command[0])] {
 				return pipeMessage(name(command[0]))
