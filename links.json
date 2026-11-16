@@ -1252,6 +1252,10 @@
     {
       "source": "codex/system-prompt.md",
       "target": ".codex/system-prompt.md"
+    },
+    {
+      "source": "codex/curl/.curlrc",
+      "target": ".config/codex-curl/.curlrc"
     }
   ]
 }
