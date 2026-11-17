@@ -301,7 +301,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/principle-prove-it-works",
         "overlay": "overlays/common/prove-it-works.md",
-        "installed_hash": "5eb31d1dd8a86a737a8bbdcca640a376288d042898417ee794623299aa3982f9"
+        "installed_hash": "6d76d3b3988de6c045b5f4c9ad3874f591c40a5713ea5afe349112142af1151c"
       },
       "solution-discovery": {
         "tracking": "local",

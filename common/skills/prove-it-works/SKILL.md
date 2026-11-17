@@ -62,6 +62,13 @@ with an exit status. A wait-registration reply, such as `matched` from
 `t3_background_wait`, only confirms the task ID. Until the notification, do not
 read its output as final, rerun it, or touch its files and directories.
 
+To prove that an intermittent failure is gone, repeat the narrowest scenario
+that failed, not the whole suite, and run the full suite once at the end. Run
+independent repetitions in parallel when they share no state. Before starting
+N repetitions in the background, check that N times the duration of one run
+fits within the command's `timeout`, or lower N: a run killed by its timeout
+gives no result. Report passes out of N.
+
 ## Guardrails
 
 - A successful build proves compilation, not product behavior.
