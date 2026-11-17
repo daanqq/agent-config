@@ -1,7 +1,8 @@
 // Advisory Claude PreToolUse guard, not a shell parser or security boundary.
 // It checks direct grep commands with literal include/exclude globs, and test,
 // typecheck or lint commands piped straight into grep, rg or head without
-// pipefail: the pipe drops the check's exit status and can hide error lines.
+// pipefail or a PIPESTATUS read in the very next command: the pipe drops the
+// check's exit status and can hide error lines.
 // It also rejects rm with an unquoted glob over run-check log directories,
 // which are shared by parallel sessions in the system temporary directory,
 // and git worktree prune without --dry-run, which drops records of every
@@ -321,7 +322,16 @@ var (
 	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
 	infoFlags   = map[string]bool{"--help": true, "--version": true, "--rules": true}
 	python      = regexp.MustCompile(`^python[0-9.]*$`)
+	testScript  = regexp.MustCompile(`(^|[/._-])tests?([/._-]|$)`)
+	shells      = map[string]bool{"bash": true, "sh": true, "zsh": true}
 )
+
+// shellTest reports a shell script whose path names it a test, such as
+// test/allocation.test.sh or scripts/run-tests.sh.
+func shellTest(w word) bool {
+	text := string(w.text)
+	return w.literal && strings.HasSuffix(text, ".sh") && testScript.MatchString(text)
+}
 
 func name(w word) string {
 	text := string(w.text)
@@ -337,7 +347,7 @@ func skipOptions(words []word, i int) int {
 
 // checkCommand reports a test, typecheck or lint run, also behind env
 // assignments and the npx, n exec, mise exec, timeout, time, nice, env or command wrappers.
-// Python counts only as python -m unittest.
+// Python counts only as python -m unittest, a shell script only by a test path.
 func checkCommand(words []word) bool {
 	i := 0
 wrappers:
@@ -374,8 +384,12 @@ wrappers:
 			return false // help, version or rule listings print text, not a check result
 		}
 	}
-	if checkTools[tool] {
+	if checkTools[tool] || shellTest(words[i]) {
 		return true
+	}
+	if shells[tool] {
+		j := skipOptions(words, i+1)
+		return j < len(words) && shellTest(words[j])
 	}
 	if python.MatchString(tool) {
 		// python [interpreter options] -m unittest; a script path ends the options.
@@ -416,8 +430,9 @@ func pipeMessage(filter string) string {
 		"and can drop error lines such as the Vitest Errors block. Run it through the runner, "+
 		"which keeps the status and the full log and prints the tail: "+
 		"python3 \"$HOME/.claude/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
-		"grep the printed log path if you need specific lines. Piping into tail or set -o pipefail "+
-		"before the pipe is also accepted. The command was not executed or rewritten.\n", filter)
+		"grep the printed log path if you need specific lines. Piping into tail, set -o pipefail "+
+		"before the pipe, or reading ${PIPESTATUS[0]} in the very next command is also accepted. "+
+		"The command was not executed or rewritten.\n", filter)
 }
 
 // sharedLogGlob reports rm over run-check-* log directories by an unquoted
@@ -476,15 +491,12 @@ func detect(source string) string {
 	if !supported {
 		return ""
 	}
-	// PIPESTATUS can read the status after the pipe; pipefail covers only later pipes.
+	// pipefail covers only later pipes. PIPESTATUS holds only the last pipeline,
+	// so it counts only in the command right after the filtered check pipeline.
 	pipefail := false
-	for _, part := range parts {
-		if strings.Contains(strings.ToUpper(string(part.word.text)), "PIPESTATUS") {
-			pipefail = true
-		}
-	}
 	var command []word
 	redirect, fromCheck := false, false
+	lost, awaiting := "", ""
 	for _, part := range append(parts, token{operator: "\n"}) {
 		switch part.operator {
 		case "":
@@ -497,6 +509,12 @@ func detect(source string) string {
 				command = append(command, part.word)
 			}
 		case ";", "&", "|", "&&", "||", "\n":
+			if awaiting != "" && len(command) > 0 {
+				if !readsPipestatus(command) {
+					return pipeMessage(awaiting)
+				}
+				awaiting = ""
+			}
 			if found := unsafeOption(command); found != "" {
 				return grepMessage(found)
 			}
@@ -507,7 +525,10 @@ func detect(source string) string {
 				return worktreePruneMessage
 			}
 			if fromCheck && !pipefail && len(command) > 0 && filters[name(command[0])] {
-				return pipeMessage(name(command[0]))
+				lost = name(command[0])
+			}
+			if part.operator != "|" && lost != "" {
+				awaiting, lost = lost, ""
 			}
 			fromCheck = part.operator == "|" && checkCommand(command)
 			command = nil
@@ -516,7 +537,19 @@ func detect(source string) string {
 			redirect = true
 		}
 	}
+	if awaiting != "" {
+		return pipeMessage(awaiting)
+	}
 	return ""
+}
+
+func readsPipestatus(command []word) bool {
+	for _, w := range command {
+		if strings.Contains(string(w.text), "PIPESTATUS") {
+			return true
+		}
+	}
+	return false
 }
 
 // encoding/json replaces lone surrogates with U+FFFD, which could close a

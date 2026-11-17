@@ -166,6 +166,12 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "PYTHONPATH=. python3 -m unittest tests.test_quota_router 2>&1 | grep -E '^(FAIL|ERROR):'",
             "python -m unittest discover -s tests | head -20",
             "timeout 60 python3 -B -m unittest -q | rg FAIL",
+            "npm test 2>&1 | grep passing; npm run build 2>&1 | tail -2; echo build=${PIPESTATUS[0]}",
+            'npm test | grep x; true; echo "${PIPESTATUS[0]}"',
+            "npm test | grep x && echo ok",
+            "bash test/allocation.test.sh 2>&1 | grep -E 'pass|FAIL'",
+            "sh -x tests/run.sh | head",
+            "./scripts/run-tests.sh | rg FAIL",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
@@ -197,6 +203,11 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "python3 -m json.tool data.json | head",
             "python3 script.py -m unittest | grep x",
             "python3 -m unittest --help | grep discover",
+            "npm test 2>&1 | grep passing; echo test=${PIPESTATUS[0]}",
+            'npm test | grep x | head\necho "${PIPESTATUS[@]}"',
+            "bash test/allocation.test.sh 2>&1 | tail -5",
+            "bash scripts/build.sh | grep error",
+            "bash latest.sh | grep x",
         ], False)
 
     def test_rm_over_shared_run_check_logs(self):
