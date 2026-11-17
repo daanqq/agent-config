@@ -1125,6 +1125,16 @@ def cleanup_workspace(path: Path, *, dry_run: bool = False, ignore_errors: bool 
     plan = {"workspace": str(root), "worktrees": [item.get("path") for item in manifest.get("worktrees", [])]}
     if dry_run:
         return plan
+    try:
+        cwd = Path.cwd()
+    except OSError:
+        cwd = None
+    # The calling shell would be left in a deleted directory and fail its next command.
+    if not ignore_errors and cwd is not None and _is_within(cwd, root):
+        raise ReviewError(
+            f"The current directory {cwd} is inside the workspace {root}; "
+            "run cleanup from another directory, for example after cd ~"
+        )
     warnings: list[str] = []
     lock_root = Path(str(manifest.get("lock_root"))).expanduser().resolve()
     for item in reversed(manifest.get("worktrees", [])):

@@ -245,6 +245,35 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual((cleanup_code, cleanup_stderr), (0, ""))
             self.assertFalse(Path(result["workspace"]).exists())
 
+    def test_cleanup_refuses_to_remove_the_current_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo = root / "repo"
+            run("git", "init", "-b", "master", str(repo))
+            configure_repo(repo)
+            (repo / "tracked.txt").write_text("base\n", encoding="utf-8")
+            run("git", "-C", str(repo), "add", "tracked.txt")
+            run("git", "-C", str(repo), "commit", "-m", "base")
+            code, stdout, stderr = self.invoke(
+                [
+                    "prepare", "local", str(repo), "--base", "master", "--scope", "all",
+                    "--output-root", str(root / "jobs"), "--lock-root", str(root / "locks"), "--offline",
+                ]
+            )
+            self.assertEqual((code, stderr), (0, ""))
+            workspace = Path(json.loads(stdout)["workspace"])
+            previous = os.getcwd()
+            os.chdir(workspace)
+            try:
+                code, _, stderr = self.invoke(["cleanup", str(workspace)])
+            finally:
+                os.chdir(previous)
+            self.assertNotEqual(code, 0)
+            self.assertIn("inside the workspace", stderr)
+            self.assertTrue(workspace.exists())
+            self.assertEqual(self.invoke(["cleanup", str(workspace)])[0], 0)
+            self.assertFalse(workspace.exists())
+
     def test_local_prepare_emits_verification_commands(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
