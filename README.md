@@ -42,8 +42,10 @@ runs from a staged snapshot without node_modules or dependency installation.
 
 The Bash `PreToolUse` guard runs a native binary at
 `~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python. It
-blocks unquoted globs in grep `--include`/`--exclude`, and test, typecheck or
-lint commands piped straight into grep, rg or head without pipefail, pointing to
+single-quotes unquoted globs in grep `--include`/`--exclude` through
+`updatedInput` (a partly quoted glob is blocked instead), and blocks test,
+typecheck or lint commands piped straight into grep, rg or head without pipefail
+or a `PIPESTATUS` read in the next command, pointing to
 `prove-it-works/scripts/run-check.py`. It also blocks `rm` with an unquoted glob
 over `run-check-*` log directories, which parallel sessions share.
 `make install-hooks` builds and atomically replaces only this binary; a failed

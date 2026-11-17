@@ -1,5 +1,6 @@
 // Advisory Claude PreToolUse guard, not a shell parser or security boundary.
-// It checks direct grep commands with literal include/exclude globs, and test,
+// It quotes unquoted literal include/exclude globs of direct grep commands
+// (blocking the command when a partly quoted glob cannot be quoted safely), and checks test,
 // typecheck or lint commands piped straight into grep, rg or head without
 // pipefail or a PIPESTATUS read in the very next command: the pipe drops the
 // check's exit status and can hide error lines.
@@ -8,7 +9,9 @@
 // and git worktree prune without --dry-run, which drops records of every
 // missing worktree of the repository, not only the agent's own.
 // Unsupported substitutions, grouping and malformed shell input fail open.
-// Contract: JSON stdin; silent exit 0 allows, exit 2 + stderr blocks PreToolUse.
+// Contract: JSON stdin; silent exit 0 allows, exit 0 + JSON stdout with
+// updatedInput and no permissionDecision rewrites the command and keeps the
+// normal permission flow, exit 2 + stderr blocks PreToolUse.
 package main
 
 import (
@@ -26,6 +29,8 @@ type word struct {
 	text    []rune
 	active  []bool
 	literal bool
+	// start and end are rune offsets of the word in the source command.
+	start, end int
 }
 
 func (w word) glob(start int) bool {
@@ -198,7 +203,7 @@ func tokens(command string) ([]token, bool) {
 			continue
 		}
 
-		value := word{literal: true}
+		value := word{literal: true, start: i}
 		var quote rune
 		for i < len(source) {
 			char = source[i]
@@ -259,6 +264,7 @@ func tokens(command string) ([]token, bool) {
 		if quote != 0 {
 			return nil, false
 		}
+		value.end = i
 		result = append(result, token{word: value})
 		if delimiter != "" {
 			if !value.literal {
@@ -273,14 +279,22 @@ func tokens(command string) ([]token, bool) {
 
 var shortOptionCluster = regexp.MustCompile(`^-[^-].*[efmABCdD]$`)
 
-func unsafeOption(words []word) string {
+type globOption struct {
+	option string
+	value  word
+	inline bool // --include=GLOB rather than --include GLOB
+}
+
+// unsafeOptions returns the literal include/exclude arguments with an active glob.
+func unsafeOptions(words []word) []globOption {
+	var found []globOption
 	if len(words) == 0 {
-		return ""
+		return nil
 	}
 	switch string(words[0].text) {
 	case "grep", "/bin/grep", "/usr/bin/grep":
 	default:
-		return ""
+		return nil
 	}
 	for i := 1; i < len(words); i++ {
 		value := words[i]
@@ -290,7 +304,7 @@ func unsafeOption(words []word) string {
 		text := string(value.text)
 		switch text {
 		case "--":
-			return ""
+			return found
 		case "-e", "-f", "--regexp", "--file", "-m", "--max-count",
 			"-A", "-B", "-C", "--after-context", "--before-context", "--context",
 			"-d", "-D", "--directories", "--devices", "--label", "--binary-files":
@@ -299,20 +313,56 @@ func unsafeOption(words []word) string {
 		}
 		// Unknown short-option clusters may consume the next argument (-ne, -rf).
 		if shortOptionCluster.MatchString(text) {
-			return ""
+			return nil
 		}
 		for _, option := range []string{"--include", "--exclude"} {
 			if text == option {
 				i++
 				if i < len(words) && words[i].literal && words[i].glob(0) {
-					return option
+					found = append(found, globOption{option, words[i], false})
 				}
 			} else if strings.HasPrefix(text, option+"=") && value.glob(len(option)+1) {
-				return option
+				found = append(found, globOption{option, value, true})
 			}
 		}
 	}
-	return ""
+	return found
+}
+
+type edit struct {
+	start, end int
+	text       string
+	option     string
+}
+
+// quoteEdit single-quotes the glob of a word written without any quotes or
+// escapes; a partly quoted word is left to the agent.
+func quoteEdit(found globOption) (edit, bool) {
+	w := found.value
+	if w.end-w.start != len(w.text) {
+		return edit{}, false
+	}
+	for _, active := range w.active {
+		if !active {
+			return edit{}, false
+		}
+	}
+	text := "'" + string(w.text) + "'"
+	if found.inline {
+		text = found.option + "='" + string(w.text[len(found.option)+1:]) + "'"
+	}
+	return edit{w.start, w.end, text, found.option}, true
+}
+
+func apply(source string, edits []edit) string {
+	runes := []rune(source)
+	var out []rune
+	last := 0
+	for _, e := range edits {
+		out = append(append(out, runes[last:e.start]...), []rune(e.text)...)
+		last = e.end
+	}
+	return string(append(out, runes[last:]...))
 }
 
 var (
@@ -486,11 +536,14 @@ const worktreePruneMessage = "git worktree prune drops the records of every miss
 	"git worktree remove <path>, or run git worktree prune --dry-run and leave the cleanup " +
 	"to the user. The command was not executed or rewritten.\n"
 
-func detect(source string) string {
+// detect returns a blocking message, or the edits that quote unquoted
+// include/exclude globs, in source order.
+func detect(source string) (string, []edit) {
 	parts, supported := tokens(source)
 	if !supported {
-		return ""
+		return "", nil
 	}
+	var edits []edit
 	// pipefail covers only later pipes. PIPESTATUS holds only the last pipeline,
 	// so it counts only in the command right after the filtered check pipeline.
 	pipefail := false
@@ -511,18 +564,22 @@ func detect(source string) string {
 		case ";", "&", "|", "&&", "||", "\n":
 			if awaiting != "" && len(command) > 0 {
 				if !readsPipestatus(command) {
-					return pipeMessage(awaiting)
+					return pipeMessage(awaiting), nil
 				}
 				awaiting = ""
 			}
-			if found := unsafeOption(command); found != "" {
-				return grepMessage(found)
+			for _, found := range unsafeOptions(command) {
+				fix, ok := quoteEdit(found)
+				if !ok {
+					return grepMessage(found.option), nil
+				}
+				edits = append(edits, fix)
 			}
 			if sharedLogGlob(command) {
-				return sharedLogMessage
+				return sharedLogMessage, nil
 			}
 			if worktreePrune(command) {
-				return worktreePruneMessage
+				return worktreePruneMessage, nil
 			}
 			if fromCheck && !pipefail && len(command) > 0 && filters[name(command[0])] {
 				lost = name(command[0])
@@ -538,9 +595,9 @@ func detect(source string) string {
 		}
 	}
 	if awaiting != "" {
-		return pipeMessage(awaiting)
+		return pipeMessage(awaiting), nil
 	}
-	return ""
+	return "", edits
 }
 
 func readsPipestatus(command []word) bool {
@@ -601,10 +658,32 @@ func run() int {
 		json.Unmarshal(input["command"], &command) != nil || !validUnicodeEscapes(input["command"]) {
 		return 0
 	}
-	if message := detect(command); message != "" {
+	message, edits := detect(command)
+	if message != "" {
 		fmt.Fprint(os.Stderr, message)
 		return 2
 	}
+	if len(edits) == 0 {
+		return 0
+	}
+	rewritten := apply(command, edits)
+	if again, more := detect(rewritten); again != "" || len(more) > 0 {
+		fmt.Fprint(os.Stderr, grepMessage(edits[0].option))
+		return 2
+	}
+	// updatedInput replaces the whole tool input, so the other fields are kept.
+	input["command"], _ = json.Marshal(rewritten)
+	output, err := json.Marshal(map[string]any{"hookSpecificOutput": map[string]any{
+		"hookEventName": "PreToolUse",
+		"updatedInput":  input,
+		"additionalContext": "The grep-literal-glob hook single-quoted the unquoted " + edits[0].option +
+			" glob before running the command (for example " + edits[0].option + "='*.json'). " +
+			"Quote such globs yourself next time.",
+	}})
+	if err != nil {
+		return 0
+	}
+	fmt.Println(string(output))
 	return 0
 }
 

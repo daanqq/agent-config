@@ -41,26 +41,51 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
                 else:
                     self.assertEqual(result.stderr, "")
 
-    def test_literal_option_globs_block(self):
+    def test_literal_option_globs_are_quoted(self):
+        for command, expected in [
+            ("grep -R --include=*.json foo .", "grep -R --include='*.json' foo ."),
+            ("grep --exclude *.md foo .", "grep --exclude '*.md' foo ."),
+            ("grep --include=foo?.tsx foo .", "grep --include='foo?.tsx' foo ."),
+            ("grep --include=файл?.tsx foo .", "grep --include='файл?.tsx' foo ."),
+            ("grep --include=😀*.json foo .", "grep --include='😀*.json' foo ."),
+            ("grep --exclude=[ab].txt foo .", "grep --exclude='[ab].txt' foo ."),
+            ("cd /tmp && grep --include=*.tsx foo . | head; true",
+             "cd /tmp && grep --include='*.tsx' foo . | head; true"),
+            ("echo ok; /usr/bin/grep --exclude=*.md foo .", "echo ok; /usr/bin/grep --exclude='*.md' foo ."),
+            ("grep \\\n --include=*.json foo .", "grep \\\n --include='*.json' foo ."),
+            ("grep --include=*.json foo . # comment", "grep --include='*.json' foo . # comment"),
+            ("grep --include foo#?.md foo .", "grep --include 'foo#?.md' foo ."),
+            ("grep --include=*.md foo <<'EOF'\ntext\nEOF\n", "grep --include='*.md' foo <<'EOF'\ntext\nEOF\n"),
+            ("cat <<EOF\nignored\nEOF\ngrep --include=*.md foo .", "cat <<EOF\nignored\nEOF\ngrep --include='*.md' foo ."),
+            ("cat <<A <<B\nignored\nA\nignored\nB\ngrep --include=*.json x",
+             "cat <<A <<B\nignored\nA\nignored\nB\ngrep --include='*.json' x"),
+            ("grep -rn --include=*.ts --include=*.tsx --exclude-dir=node_modules foo src",
+             "grep -rn --include='*.ts' --include='*.tsx' --exclude-dir=node_modules foo src"),
+        ]:
+            self.assert_quoted(command, expected)
+
+    def assert_quoted(self, command, expected):
+        with self.subTest(command=command):
+            result = self.invoke(command, tool_input={"command": command, "description": "d", "timeout": 5})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stderr, "")
+            output = json.loads(result.stdout)["hookSpecificOutput"]
+            self.assertEqual(output["hookEventName"], "PreToolUse")
+            self.assertNotIn("permissionDecision", output)
+            self.assertEqual(output["updatedInput"], {"command": expected, "description": "d", "timeout": 5})
+            self.assertIn("single-quoted", output["additionalContext"])
+
+    def test_partly_quoted_option_globs_block(self):
         self.check_commands([
-            "grep -R --include=*.json foo .",
-            "grep --exclude *.md foo .",
-            "grep --include=foo?.tsx foo .",
-            "grep --include=файл?.tsx foo .",
-            "grep --include=😀*.json foo .",
             r"grep --include=\ud800*.json foo .",
-            "grep --exclude=[ab].txt foo .",
             "grep --include='prefix'*.json foo .",
             "grep '--include='*.json foo .",
             "grep --exclude=\\**.md foo .",
-            "cd /tmp && grep --include=*.tsx foo . | head; true",
-            "echo ok; /usr/bin/grep --exclude=*.md foo .",
-            "grep \\\n --include=*.json foo .",
-            "grep --include=*.json foo . # comment",
-            "grep --include foo#?.md foo .",
-            "grep --include=*.md foo <<'EOF'\ntext\nEOF\n",
-            "cat <<EOF\nignored\nEOF\ngrep --include=*.md foo .",
+            "grep --include=*.md --include='a'*.ts foo .",
         ], True)
+        result = self.invoke("npm test | grep --include=*.ts x")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("run-check.py", result.stderr)
 
     def test_quotes_and_escapes_allow(self):
         self.check_commands([
@@ -110,9 +135,8 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "cat <<-EOF\n\tgrep --include=*.json\n\tEOF\n",
             "cat <<A <<'B'\ngrep --include=*.json\nA\ngrep --exclude=*.md\nB\n",
         ], False)
-        self.check_commands([
-            "cat <<A <<B\nignored\nA\nignored\nB\ngrep --include=*.json x",
-        ], True)
+        self.assert_quoted("cat <<A <<B\nignored\nA\nignored\nB\ngrep --include=*.json x",
+                           "cat <<A <<B\nignored\nA\nignored\nB\ngrep --include='*.json' x")
 
     def test_unsupported_or_dynamic_input_fails_open(self):
         self.check_commands([
@@ -252,10 +276,12 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
                     self.assertEqual(result.stderr, "")
 
     def test_quoted_substitutions_are_opaque_words(self):
-        self.check_commands([
-            'grep --include=*.json "$(pwd)" .',
-            'grep --include=*.json "${HOME}/x" .',
-        ], True)
+        for command, expected in [
+            ('grep --include=*.json "$(pwd)" .', 'grep --include=\'*.json\' "$(pwd)" .'),
+            ('grep --include=*.json "${HOME}/x" .', 'grep --include=\'*.json\' "${HOME}/x" .'),
+            ('grep "$(echo 😀)" --include=*.json .', 'grep "$(echo 😀)" --include=\'*.json\' .'),
+        ]:
+            self.assert_quoted(command, expected)
         self.check_commands([
             'echo "$(grep --include=*.md x)"',
             'echo "$(unbalanced"',
@@ -327,7 +353,7 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             before = binary.read_bytes()
             result = subprocess.run(HOOK_COMMAND, shell=True, env=env, input=json.dumps({
                 "hook_event_name": "PreToolUse", "tool_name": "Bash",
-                "tool_input": {"command": "grep --include=*.json x ."},
+                "tool_input": {"command": "grep --include='a'*.json x ."},
             }), capture_output=True, text=True, timeout=5)
             self.assertEqual(result.returncode, 2, result.stderr)
             tools = Path(directory) / "tools"
