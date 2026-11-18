@@ -22,7 +22,7 @@ Example:
 
 ## Permission boundary
 
-Follow the active project instructions for read-only work and temporary artifacts. In a read-only investigation, reuse an existing checkout without updating it when its current revision is sufficient. If fresh remote content is needed, use an isolated task-owned temporary clone outside working files rather than modifying a pre-existing shared checkout. Report the revision inspected. A request to cache or refresh the repository authorizes the reusable-cache workflow below; a reference URL alone does not authorize updating an existing checkout.
+Follow the active project instructions for read-only work and temporary artifacts. In a read-only investigation, reuse an existing checkout without updating it when its current revision is sufficient. If fresh remote content is needed, use an isolated task-owned temporary clone outside working files rather than modifying a pre-existing shared checkout. Report the revision inspected. Before concluding from an existing checkout that the repository does not do something, check its age: if its last commit (`git log -1 --format=%cs`) is older than 14 days, compare it with the remote branch head without updating the checkout (`gh api repos/<org>/<repo>/commits/<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/commits/<branch>` on GitLab) and report the drift with the conclusion. A request to cache or refresh the repository authorizes the reusable-cache workflow below; a reference URL alone does not authorize updating an existing checkout.
 
 If the user explicitly forbids all writes, use available read-only content or explain the access limitation. Temporary cleanup follows the task-ownership checks in the active project instructions.
 
