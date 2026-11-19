@@ -1256,6 +1256,218 @@
     {
       "source": "codex/curl/.curlrc",
       "target": ".config/codex-curl/.curlrc"
+    },
+    {
+      "source": "antigravity/GEMINI.md",
+      "target": ".gemini/GEMINI.md"
+    },
+    {
+      "source": "antigravity/GEMINI.md",
+      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/GEMINI.md"
+    },
+    {
+      "source": "antigravity/mcp_config.json",
+      "target": ".gemini/config/mcp_config.json"
+    },
+    {
+      "source": "antigravity/t3-mcp_config.json",
+      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/mcp_config.json"
+    },
+    {
+      "source": "antigravity/sph-issues-mcp.mjs",
+      "target": ".gemini/config/sph-issues-mcp.mjs"
+    },
+    {
+      "source": "antigravity/config.json",
+      "target": ".gemini/config/config.json"
+    },
+    {
+      "source": "antigravity/config.json",
+      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/config.json"
+    },
+    {
+      "source": "antigravity/t3-skills.json",
+      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/skills.json"
+    },
+    {
+      "source": "claude/skills/ambition",
+      "target": ".gemini/config/skills/ambition"
+    },
+    {
+      "source": "claude/skills/analyze-spacehub-task",
+      "target": ".gemini/config/skills/analyze-spacehub-task"
+    },
+    {
+      "source": "claude/skills/babysit-mr",
+      "target": ".gemini/config/skills/babysit-mr"
+    },
+    {
+      "source": "claude/skills/blast-radius",
+      "target": ".gemini/config/skills/blast-radius"
+    },
+    {
+      "source": "claude/skills/bro",
+      "target": ".gemini/config/skills/bro"
+    },
+    {
+      "source": "claude/skills/chrome-devtools",
+      "target": ".gemini/config/skills/chrome-devtools"
+    },
+    {
+      "source": "claude/skills/code-review",
+      "target": ".gemini/config/skills/code-review"
+    },
+    {
+      "source": "claude/skills/diagnosing-bugs",
+      "target": ".gemini/config/skills/diagnosing-bugs"
+    },
+    {
+      "source": "claude/skills/fetch-spacehub-task",
+      "target": ".gemini/config/skills/fetch-spacehub-task"
+    },
+    {
+      "source": "claude/skills/fix-gitlab-mr-conflicts",
+      "target": ".gemini/config/skills/fix-gitlab-mr-conflicts"
+    },
+    {
+      "source": "claude/skills/fix-gitlab-mr-review",
+      "target": ".gemini/config/skills/fix-gitlab-mr-review"
+    },
+    {
+      "source": "claude/skills/gitlab-write",
+      "target": ".gemini/config/skills/gitlab-write"
+    },
+    {
+      "source": "claude/skills/grill-me",
+      "target": ".gemini/config/skills/grill-me"
+    },
+    {
+      "source": "claude/skills/handoff",
+      "target": ".gemini/config/skills/handoff"
+    },
+    {
+      "source": "claude/skills/herdr",
+      "target": ".gemini/config/skills/herdr"
+    },
+    {
+      "source": "claude/skills/herdr-build",
+      "target": ".gemini/config/skills/herdr-build"
+    },
+    {
+      "source": "claude/skills/how",
+      "target": ".gemini/config/skills/how"
+    },
+    {
+      "source": "claude/skills/html-artifact",
+      "target": ".gemini/config/skills/html-artifact"
+    },
+    {
+      "source": "claude/skills/improve-codebase-architecture",
+      "target": ".gemini/config/skills/improve-codebase-architecture"
+    },
+    {
+      "source": "claude/skills/improve-react",
+      "target": ".gemini/config/skills/improve-react"
+    },
+    {
+      "source": "claude/skills/librarian",
+      "target": ".gemini/config/skills/librarian"
+    },
+    {
+      "source": "claude/skills/mars-logs",
+      "target": ".gemini/config/skills/mars-logs"
+    },
+    {
+      "source": "claude/skills/mr-echat",
+      "target": ".gemini/config/skills/mr-echat"
+    },
+    {
+      "source": "claude/skills/mr-review",
+      "target": ".gemini/config/skills/mr-review"
+    },
+    {
+      "source": "claude/skills/mr-space",
+      "target": ".gemini/config/skills/mr-space"
+    },
+    {
+      "source": "claude/skills/prototype",
+      "target": ".gemini/config/skills/prototype"
+    },
+    {
+      "source": "claude/skills/prove-it-works",
+      "target": ".gemini/config/skills/prove-it-works"
+    },
+    {
+      "source": "claude/skills/publish-artifact-page",
+      "target": ".gemini/config/skills/publish-artifact-page"
+    },
+    {
+      "source": "claude/skills/retro",
+      "target": ".gemini/config/skills/retro"
+    },
+    {
+      "source": "claude/skills/review-gpt",
+      "target": ".gemini/config/skills/review-gpt"
+    },
+    {
+      "source": "claude/skills/review-plan-gpt",
+      "target": ".gemini/config/skills/review-plan-gpt"
+    },
+    {
+      "source": "claude/skills/solution-discovery",
+      "target": ".gemini/config/skills/solution-discovery"
+    },
+    {
+      "source": "claude/skills/spacehub-write",
+      "target": ".gemini/config/skills/spacehub-write"
+    },
+    {
+      "source": "claude/skills/task-to-mr",
+      "target": ".gemini/config/skills/task-to-mr"
+    },
+    {
+      "source": "claude/skills/task-worktree",
+      "target": ".gemini/config/skills/task-worktree"
+    },
+    {
+      "source": "claude/skills/task-worktree-transfer",
+      "target": ".gemini/config/skills/task-worktree-transfer"
+    },
+    {
+      "source": "claude/skills/teach",
+      "target": ".gemini/config/skills/teach"
+    },
+    {
+      "source": "claude/skills/thermo-nuclear-code-quality-review",
+      "target": ".gemini/config/skills/thermo-nuclear-code-quality-review"
+    },
+    {
+      "source": "claude/skills/typescript-best-practices",
+      "target": ".gemini/config/skills/typescript-best-practices"
+    },
+    {
+      "source": "claude/skills/unslop",
+      "target": ".gemini/config/skills/unslop"
+    },
+    {
+      "source": "claude/skills/update-proxies",
+      "target": ".gemini/config/skills/update-proxies"
+    },
+    {
+      "source": "claude/skills/update-skills",
+      "target": ".gemini/config/skills/update-skills"
+    },
+    {
+      "source": "claude/skills/vercel-react-best-practices",
+      "target": ".gemini/config/skills/vercel-react-best-practices"
+    },
+    {
+      "source": "claude/skills/writing-for-agents",
+      "target": ".gemini/config/skills/writing-for-agents"
+    },
+    {
+      "source": "claude/skills/yeet",
+      "target": ".gemini/config/skills/yeet"
     }
   ]
 }

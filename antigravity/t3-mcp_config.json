@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "fff": {
+      "command": "/home/user/.local/bin/fff-mcp",
+      "args": [],
+      "tools": {
+        "find_files": {
+          "eager": true
+        },
+        "grep": {
+          "eager": true
+        },
+        "multi_grep": {
+          "eager": true
+        }
+      }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.13.0",
+        "--headless",
+        "--isolated",
+        "--chromeArg=--window-size=1920,1080",
+        "--chromeArg=--remote-debugging-port=0"
+      ]
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "sph-issues": {
+      "command": "node",
+      "args": [
+        "/home/user/.gemini/config/sph-issues-mcp.mjs"
+      ],
+      "tools": {
+        "get_issue": {
+          "eager": true
+        },
+        "find_issues": {
+          "eager": true
+        }
+      }
+    }
+  }
+}
