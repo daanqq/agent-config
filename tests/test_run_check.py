@@ -95,6 +95,9 @@ class RunCheckTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "posix" and Path("/dev/full").exists(), "requires Linux /dev/full")
     def test_report_flush_failure_does_not_replace_command_status(self):
+        # Buffered stdout is required so /dev/full fails on the final flush.
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONUNBUFFERED"}
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
         for expected_status in (0, 7):
             with self.subTest(expected_status=expected_status), open("/dev/full", "wb") as full:
                 result = subprocess.run(
@@ -109,7 +112,7 @@ class RunCheckTests(unittest.TestCase):
                     stdout=full,
                     stderr=subprocess.PIPE,
                     text=True,
-                    env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+                    env=env,
                     check=False,
                 )
 
