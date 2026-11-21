@@ -5,6 +5,7 @@ import {
   type ExtensionAPI,
   type SessionEntry,
 } from "@earendil-works/pi-coding-agent";
+import { withCodexGpt62Instructions } from "./codex-gpt62-prompt/index.ts";
 
 const DETAILS_KIND = "openai-codex-native";
 const MARKER = "[openai-codex-native-checkpoint";
@@ -82,7 +83,7 @@ export default function (pi: ExtensionAPI) {
           sessionId: ctx.sessionManager.getSessionId(),
           headers: { [BETA_HEADER]: BETA_FEATURE },
           onPayload: (payload: unknown) => {
-            const body = payload as Item;
+            const body = withCodexGpt62Instructions(payload) ?? (payload as Item);
             return { ...body, input: [...withCheckpoint(body.input, previous), { type: "compaction_trigger" }] };
           },
           onProviderStreamEvent: (data: unknown) => {

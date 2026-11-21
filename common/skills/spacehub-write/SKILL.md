@@ -22,7 +22,7 @@ argument names are not guessable (`update_artifact` takes `artifact_id`, not
 ## Rules
 
 - **Epic.** `create_task` requires `epic_id`. For EChat choose it from the table
-  in `~/echat/AGENTS.md`, section «Оформление задач в SpaceHub» → «Выбор эпика».
+  in `~/echat/docs/agent/spacehub-epics.md`.
 - **Works.** `create_work` limits works per task; see the constraints in
   [`task-worktree`](../task-worktree/SKILL.md).
 - **Status.** No tool changes the state of an existing task or work. Set `state`

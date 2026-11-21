@@ -4,13 +4,13 @@ description: Get an independent second-opinion code review of the current task's
 disable-model-invocation: true
 ---
 
-Run a read-only review through a Pi subagent, then triage its findings for the user. Never apply fixes from the review yourself: the output of this skill is a proposal.
+Run a read-only review through a Pi child agent, then triage its findings for the user. Never apply fixes from the review yourself: the output of this skill is a proposal.
 
-Invoke with `/skill:review-gpt [model=<id>] [thinking=<level>] [extra focus]`, or `$review-gpt` with the same options through the local skill-dollar extension. Parse options from the user request accompanying the loaded skill.
+Invoke with `/skill:review-gpt [model=<id>] [thinking=<level>] [extra focus]`, or `$review-gpt` with the same options in T3 Code. Parse options from the user request accompanying the loaded skill.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `pi --list-models <search>`.
+- `model=<id>`: default `openai-codex/gpt-6.2-sol`. Check unknown ids with `pi --list-models <search>`.
 - `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
 - Any remaining text is an extra review focus.
 
@@ -18,7 +18,7 @@ Read `../subagents/SKILL.md` before spawning. This skill's explicit model and th
 
 ## 2. Build the reviewer prompt
 
-Start the prompt with `/skill:code-review` followed by a space, not a line break, so the reviewer loads its `code-review` skill, which defines the review process and report format. Pi expands the command only at the very start of the prompt and reads the skill name up to the first space. The reviewer sees nothing of this conversation, so the rest of the prompt must stand alone:
+Start the prompt with `/skill:code-review` followed by a space, not a line break, so the reviewer loads its `code-review` skill, which defines the review process and report format. Pi expands the command only at the very start of the prompt and reads the skill name up to the first space. On the T3 Code route start with `$code-review` instead: T3 prepends a role line to the task, and the T3 Code bridge expands `$code-review` anywhere in the message. The reviewer sees nothing of this conversation, so the rest of the prompt must stand alone:
 
 - Repository path(s) and the review scope in `code-review` terms: `branch` with its fixed point, `working-tree`, or `all`. For multiple repositories, list each.
 - Goal of the change: ticket id and its requirement, in your own summary. This is the spec for the Spec axis.
@@ -30,7 +30,17 @@ Done when a reader with only the prompt and the repository could review the chan
 
 ## 3. Spawn the reviewer
 
-Call `subagent_spawn` once with:
+Use the route chosen in `../subagents/SKILL.md`. The reviewer runs in the background: do not poll or immediately wait, and continue useful read-only parent work, such as inspecting the changed code for later triage.
+
+**T3 Code.** Call `delegate_task` once with:
+
+- `task`: the complete reviewer prompt.
+- `title`: `review-gpt`; `role`: `review`; `mode`: `async`.
+- `target`: `{providerInstanceId: "pi", model: <parsed model id>, options: {thinking: <parsed thinking level>}}`.
+
+The child works in this thread's checkout and is not restricted to read-only tools, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. Read the reply with `task_status` after the completion notification.
+
+**Subagents extension.** Call `subagent_spawn` once with:
 
 - `prompt`: the complete reviewer prompt.
 - `name`: `review-gpt`.
@@ -39,7 +49,7 @@ Call `subagent_spawn` once with:
 - `model`: the parsed model id.
 - `reasoning_effort`: the parsed thinking level.
 
-Results arrive automatically. Do not poll or immediately wait. Continue useful read-only parent work, such as inspecting the changed code for later triage. Call `subagent_wait({ ids: [id] })` only when you cannot proceed without the result, using the id returned by the spawn.
+Call `subagent_wait({ ids: [id] })` only when you cannot proceed without the result, using the id returned by the spawn.
 
 ## 4. Triage
 

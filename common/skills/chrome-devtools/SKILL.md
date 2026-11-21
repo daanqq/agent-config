@@ -80,6 +80,15 @@ You can send multiple tool calls in parallel, but maintain correct order: naviga
 4. **Verify Service Worker**: Use `evaluate_script` with `serviceWorkerId` (omitting `pageId` and `args`) to check extension state or trigger background actions. When evaluating in a page, pass `pageId` (omitting `serviceWorkerId`).
 5. **Verify Page Behavior**: Navigate to a page where the extension operates and use `take_snapshot` to check if content scripts injected elements or modified the page correctly.
 
+## Specialized workflows
+
+These skills are hidden from automatic selection in Claude Code; read the matching `SKILL.md` and follow it when the task is:
+
+- 401/403, login redirects, sessions, `Cookie`/`Set-Cookie`, SameSite or consent banners: [`cookie-debugging`](../cookie-debugging/SKILL.md).
+- slow page load, LCP or Core Web Vitals: [`debug-optimize-lcp`](../debug-optimize-lcp/SKILL.md).
+- memory growth, OOM or heap snapshots: [`memory-leak-debugging`](../memory-leak-debugging/SKILL.md).
+- accessibility: semantics, ARIA, focus, keyboard, contrast, tap targets: [`a11y-debugging`](../a11y-debugging/SKILL.md).
+
 ## Troubleshooting
 
 If `chrome-devtools-mcp` is insufficient, guide users to use Chrome DevTools UI:

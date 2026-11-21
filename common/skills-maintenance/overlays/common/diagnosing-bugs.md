@@ -2,6 +2,7 @@
 
 ## Preserve
 
+- Keep the Russian symptom phrases in `description`: the user reports bugs in Russian, and without them Claude did not select the skill.
 - A diagnosis request is read-only unless the user authorizes a fix.
 - Start from the exact symptom and nearest owning code, then choose the cheapest check that distinguishes the leading hypothesis from a plausible alternative.
 - Runtime reproduction is preferred when safe and available, but source analysis may proceed without it; clearly separate observations, hypotheses, reproduction, and verification.

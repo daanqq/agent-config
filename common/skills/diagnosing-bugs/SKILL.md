@@ -1,6 +1,6 @@
 ---
 name: diagnosing-bugs
-description: Diagnose bugs and performance regressions from symptoms, code, and focused checks. Use for debugging requests or reports of broken, failing, or slow behavior.
+description: Diagnose bugs and performance regressions from symptoms, code, and focused checks. Use for debugging requests or reports of broken, failing, or slow behavior, including Russian ones («баг», «не работает», «упало», «почему не получается», «тормозит»).
 ---
 
 # Diagnosing bugs

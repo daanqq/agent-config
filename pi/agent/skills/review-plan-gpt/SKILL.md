@@ -4,13 +4,13 @@ description: Get an independent cold second-opinion review of the current implem
 disable-model-invocation: true
 ---
 
-Run a read-only plan review through a Pi subagent, then triage its remarks for the user. Never revise the plan from the review yourself: the output of this skill is a proposal.
+Run a read-only plan review through a Pi child agent, then triage its remarks for the user. Never revise the plan from the review yourself: the output of this skill is a proposal.
 
-Invoke with `/skill:review-plan-gpt [model=<id>] [thinking=<level>] [extra focus]`, or `$review-plan-gpt` with the same options through the local skill-dollar extension. Parse options from the user request accompanying the loaded skill.
+Invoke with `/skill:review-plan-gpt [model=<id>] [thinking=<level>] [extra focus]`, or `$review-plan-gpt` with the same options in T3 Code. Parse options from the user request accompanying the loaded skill.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `openai-codex/gpt-6.1-sol`. Check unknown ids with `pi --list-models <search>`.
+- `model=<id>`: default `openai-codex/gpt-6.2-sol`. Check unknown ids with `pi --list-models <search>`.
 - `thinking=<level>`: default `high` (`off|minimal|low|medium|high|xhigh|max`).
 - Any remaining text is an extra review focus.
 
@@ -37,7 +37,17 @@ Done when a reader with only the prompt and the repository could judge the plan 
 
 ## 3. Spawn the reviewer
 
-Call `subagent_spawn` once with:
+Use the route chosen in `../subagents/SKILL.md`. The reviewer runs in the background: do not poll or immediately wait, and continue useful read-only parent work, such as checking the plan against the private success criteria without passing those criteria to the reviewer.
+
+**T3 Code.** Call `delegate_task` once with:
+
+- `task`: the complete reviewer prompt.
+- `title`: `review-plan-gpt`; `role`: `review`; `mode`: `async`.
+- `target`: `{providerInstanceId: "pi", model: <parsed model id>, options: {thinking: <parsed thinking level>}}`.
+
+The child works in this thread's checkout and is not restricted to read-only tools, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. Read the reply with `task_status` after the completion notification.
+
+**Subagents extension.** Call `subagent_spawn` once with:
 
 - `prompt`: the complete reviewer prompt.
 - `name`: `review-plan-gpt`.
@@ -46,7 +56,7 @@ Call `subagent_spawn` once with:
 - `model`: the parsed model id.
 - `reasoning_effort`: the parsed thinking level.
 
-Results arrive automatically. Do not poll or immediately wait. Continue useful read-only parent work, such as checking the plan against the private success criteria without passing those criteria to the reviewer. Call `subagent_wait({ ids: [id] })` only when you cannot proceed without the result, using the id returned by the spawn.
+Call `subagent_wait({ ids: [id] })` only when you cannot proceed without the result, using the id returned by the spawn.
 
 ## 4. Triage
 

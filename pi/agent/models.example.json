@@ -2,7 +2,7 @@
   "providers": {
     "openai-codex": {
       "baseUrl": "https://new.tail354056.ts.net/backend-api",
-      "apiKey": "${CLIPROXY_API_KEY}",
+      "apiKey": "cliproxy.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9hY2NvdW50X2lkIjoiY2xpcHJveHktcGxhY2Vob2xkZXIifX0.placeholder",
       "headers": {
         "X-Api-Key": "$CLIPROXY_API_KEY"
       }

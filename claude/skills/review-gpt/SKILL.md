@@ -1,14 +1,14 @@
 ---
 name: review-gpt
 description: Independent GPT code review of a change through Codex (T3 Code thread or pi CLI), then triage of its findings. Use only when the user explicitly asks for a GPT or Codex review, or when task-to-mr reaches its review step. A plain request to review code is code-review, not this skill.
-argument-hint: "[model=gpt-6.1-sol] [thinking=high] [mode=auto] [extra focus]"
+argument-hint: "[model=gpt-6.2-sol] [thinking=high] [mode=auto] [extra focus]"
 ---
 
 Run a read-only review through Codex (pi on the CLI route), then triage its findings. By default the output is a proposal for the user: never apply fixes from the review yourself. `mode=auto`, used by [`task-to-mr`](../task-to-mr/SKILL.md), replaces the stop after triage with the fix loop in section 5.
 
 ## 1. Parse arguments
 
-- `model=<id>`: default `gpt-6.1-sol`. The Codex provider takes the bare id; the CLI route prefixes it with `openai-codex/`. Check unknown ids with `orchestrator_capabilities` (`search`) in T3 Code, otherwise `pi --list-models <search>`.
+- `model=<id>`: default `gpt-6.2-sol`. The Codex provider takes the bare id; the CLI route prefixes it with `openai-codex/`. Check unknown ids with `orchestrator_capabilities` (`search`) in T3 Code, otherwise `pi --list-models <search>`.
 - `thinking=<level>`: default `high`. In T3 Code it is Codex `reasoningEffort` (`low|medium|high|xhigh|max|ultra`); pass it explicitly, because the Codex default is `low`. On the CLI it is pi `--thinking`.
 - `mode=auto`: run the fix loop in section 5.
 - Any remaining text is an extra review focus.

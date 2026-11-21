@@ -65,6 +65,17 @@
     "loop": "off",
     "claude-api": "off",
     "coding-discipline": "off",
+    "a11y-debugging": "user-invocable-only",
+    "code-simplification": "user-invocable-only",
+    "cookie-debugging": "user-invocable-only",
+    "debug-optimize-lcp": "user-invocable-only",
+    "grilling": "user-invocable-only",
+    "memory-leak-debugging": "user-invocable-only",
+    "optimize-images": "user-invocable-only",
+    "session-screenshot": "user-invocable-only",
+    "show-me-your-work": "user-invocable-only",
+    "tdd": "user-invocable-only",
+    "trade-offs": "user-invocable-only",
     "init": "user-invocable-only",
     "security-review": "user-invocable-only"
   },
@@ -114,9 +125,7 @@
     "command": "bash ~/.claude/statusline-command.sh",
     "refreshInterval": 30
   },
-  "enabledPlugins": {
-    "plannotator@plannotator": false
-  },
+  "enabledPlugins": {},
   "extraKnownMarketplaces": {
     "plannotator": {
       "source": {

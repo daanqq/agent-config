@@ -87,18 +87,11 @@
       },
       "task-worktree": {
         "tracking": "local",
-        "installed_hash": "d6f2094825cfb5c9478f6bfcf5caa8b850192d752b76835f86133e69db8a19bc"
+        "installed_hash": "57de2950045651d6a1fb262f60ccb1402b206edacc8a29443cd62ab202284122"
       },
       "task-worktree-transfer": {
         "tracking": "local",
-        "installed_hash": "01caf03f672ebd7089a6afd62b8bf2ee6474b77c7f7adcfbcad778a3c7f155cd"
-      },
-      "fix-merge-conflicts": {
-        "tracking": "overlay",
-        "repository": "cursor-plugins",
-        "path": "cursor-team-kit/skills/fix-merge-conflicts",
-        "overlay": "overlays/common/fix-merge-conflicts.md",
-        "installed_hash": "5876c8e9b20474b80ea122829ee3aee5cb4598bc6f0d1caa75a1fb810cac54d3"
+        "installed_hash": "94c0b2d7e7b97b50031663c6468d954061502a57df1f48797a17f5f32e58f943"
       },
       "grill-me": {
         "tracking": "overlay",
@@ -149,13 +142,6 @@
         "path": "skills/engineering/prototype",
         "installed_hash": "30e1ce1ac7544a84c00181812fa376b7f39b9932a706551289759215fb029674"
       },
-      "show-me": {
-        "tracking": "overlay",
-        "repository": "humanlayer-skills",
-        "path": "plugins/show-me/skills/show-me",
-        "overlay": "overlays/common/show-me.md",
-        "installed_hash": "c0435b582f5a9bb97f492a65ad94c9cb5ade548ced0c3e911aae759ae434420d"
-      },
       "teach": {
         "tracking": "overlay",
         "repository": "mattpocock-skills",
@@ -187,7 +173,7 @@
       },
       "spacehub-write": {
         "tracking": "local",
-        "installed_hash": "ef0812619123599f2f2cdf639c5685fe90d9786b2f133b55d11e89a87011b5d2"
+        "installed_hash": "4c3364d8fe7e2d287367ce1e660c74f30dc0cae2ff67e1c391c6f12788ecaa12"
       },
       "mars-logs": {
         "tracking": "local",
@@ -208,7 +194,7 @@
         "repository": "chrome-devtools-mcp",
         "path": "skills/chrome-devtools",
         "overlay": "overlays/common/chrome-devtools.md",
-        "installed_hash": "b29ea75e0c55faa4fd9d9a32bce836a5be05c666456a00426e10b7ba7959d280"
+        "installed_hash": "5161947064d90779f4add6a0b77977380ca33bdf73ced74c2910fea1daf33b49"
       },
       "cookie-debugging": {
         "tracking": "exact",
@@ -279,7 +265,7 @@
         "repository": "mattpocock-skills",
         "path": "skills/engineering/diagnosing-bugs",
         "overlay": "overlays/common/diagnosing-bugs.md",
-        "installed_hash": "2dfd233eaeb330343009a4b4f0e61e784faec2b8bc91178a278e791b056bc2fe"
+        "installed_hash": "5734fab5ecb4f73b4ef6115b8b3b9c1dcc5c5a7236a573d8bc8bb7c8ca356b03"
       },
       "fix-gitlab-mr-review": {
         "tracking": "local",
@@ -388,7 +374,7 @@
       },
       "subagents": {
         "tracking": "local",
-        "installed_hash": "99b70726d431cc2ff84b713bd2573f41b738b8547d1539e8a67a9135fedc4065"
+        "installed_hash": "3577eee15972b0747f3e4edea3961c9f473e05ec0bfec24e483f6e2a80d7521a"
       },
       "why": {
         "tracking": "overlay",
@@ -403,11 +389,11 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "61c871e4d0ff1744ef768654aabc601c98ca2e9d3e8c7525c4b0676c1920fb9c"
+        "installed_hash": "cc207e5e71a76b69ef457653f111e6f580b2e329de058846ea21c237c13ae998"
       },
       "review-plan-gpt": {
         "tracking": "local",
-        "installed_hash": "7a90e59c49fcb06b9e8f986edfba44c7682320ef3d8b88bdf25d4aac0fb68735"
+        "installed_hash": "678f26981def0b51bd10bc50fb7093bab00f241f8b5fbf77533246f1bb69fa37"
       }
     },
     "claude": {
@@ -417,15 +403,15 @@
       },
       "review-gpt": {
         "tracking": "local",
-        "installed_hash": "5edcaded2907ba029d24ea93612ea2486920279541ba889fd684dcfc4813ca90"
+        "installed_hash": "9091d5323c9b61d6f7cd049433baab6e276c160e761654a080b09cafc17f5462"
       },
       "review-plan-gpt": {
         "tracking": "local",
-        "installed_hash": "c8646fd5cc96e74eebf4fb15fc978eddd175b784dca941ada5008b03ad821893"
+        "installed_hash": "b04cdc635c026a1a6c746cda428224ba6299402d2217d48616c9a484ce5c2a44"
       },
       "task-to-mr": {
         "tracking": "local",
-        "installed_hash": "26a9d7322ae59cf059a646c4e0732a0e203ed923bccb9c0d847510358a4167af"
+        "installed_hash": "c2c58ab0f4ef96958c10cd0bda542526fb883495da61cd2bc927b633d1b85e2b"
       },
       "show-me-your-work": {
         "tracking": "overlay",

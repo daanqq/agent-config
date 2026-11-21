@@ -20,7 +20,8 @@ existing installer-owned skills such as Plannotator are not replaced.
 `retro` stays client-specific even though its text matches: it depends on the
 client-specific `writing-for-agents` skill. `mr-echat` remains a Pi extension;
 the Claude skill stays in `claude/skills` and is linked into `~/.claude/skills`
-and `~/.agents/skills`, so Codex can run it too.
+and `~/.agents/skills`, so Codex can run it too. `task-to-mr` and its
+`review-gpt` dependency are linked into `~/.agents/skills` the same way.
 
 ## Prepare and check
 
@@ -137,11 +138,11 @@ caches, history, or the old repositories' `.git` directories. The original
 checkouts and their uncommitted changes remain available until you explicitly
 retire them. No history was rewritten and no remote was configured.
 
-The existing Pi `models.json` contains a literal API key and is deliberately not
-linked or copied into this repository. `pi/agent/models.example.json` uses
-`${CLIPROXY_API_KEY}` instead. Existing local `~/.pi/agent/models.json` continues
-to work; on another machine, copy the example there and configure the variable
-privately. The installer does not perform that copy.
+On another machine, copy `pi/agent/models.example.json` to
+`~/.pi/agent/models.json` and set `CLIPROXY_API_KEY` privately. Pi sends that
+key to CLIProxyAPI in `X-Api-Key`. The `apiKey` field contains a public
+placeholder from which Pi's Codex client reads the account ID. The installer
+does not perform that copy.
 
 Claude and the Pi example use CLIProxyAPI through Tailscale at
 `https://new.tail354056.ts.net`; connect Tailscale with MagicDNS enabled before

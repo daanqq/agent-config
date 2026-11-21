@@ -19,6 +19,6 @@ the active workspace for that ticket. A later implementation request for the
 same ticket must continue there unless the user explicitly requests a new
 worktree or the checkout now contains unrelated user changes.
 
-If switching, applying, or restoring cannot finish without conflicts, preserve the backup, stop this workflow, and explicitly propose continuing with the [`fix-merge-conflicts`](../fix-merge-conflicts/SKILL.md) skill. Do not resolve conflicts ad hoc.
+If switching, applying, or restoring cannot finish without conflicts, preserve the backup, stop this workflow, and explicitly propose continuing with the [`fix-gitlab-mr-conflicts`](../fix-gitlab-mr-conflicts/SKILL.md) skill when the branch has a GitLab MR; otherwise list the conflicting files and ask the user. Do not resolve conflicts ad hoc.
 
 Complete only when every affected original checkout is on the original task branch and contains all tracked and untracked task changes.

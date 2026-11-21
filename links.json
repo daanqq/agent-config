@@ -58,10 +58,6 @@
       "target": ".agents/skills/gitlab-write"
     },
     {
-      "source": "common/skills/fix-merge-conflicts",
-      "target": ".agents/skills/fix-merge-conflicts"
-    },
-    {
       "source": "common/skills/grill-me",
       "target": ".agents/skills/grill-me"
     },
@@ -96,10 +92,6 @@
     {
       "source": "common/skills/prototype",
       "target": ".agents/skills/prototype"
-    },
-    {
-      "source": "common/skills/show-me",
-      "target": ".agents/skills/show-me"
     },
     {
       "source": "common/skills/teach",
@@ -176,6 +168,14 @@
     {
       "source": "claude/skills/mr-echat",
       "target": ".agents/skills/mr-echat"
+    },
+    {
+      "source": "claude/skills/task-to-mr",
+      "target": ".agents/skills/task-to-mr"
+    },
+    {
+      "source": "claude/skills/review-gpt",
+      "target": ".agents/skills/review-gpt"
     },
     {
       "source": "common/skills/ambition",
@@ -306,14 +306,6 @@
       "target": ".claude/skills/dnd-kit-implementation"
     },
     {
-      "source": "claude/skills/effort-cycle",
-      "target": ".claude/skills/effort-cycle"
-    },
-    {
-      "source": "claude/skills/task-link",
-      "target": ".claude/skills/task-link"
-    },
-    {
       "source": "claude/skills/task-worktree",
       "target": ".claude/skills/task-worktree"
     },
@@ -352,10 +344,6 @@
     {
       "source": "claude/skills/fix-gitlab-mr-review",
       "target": ".claude/skills/fix-gitlab-mr-review"
-    },
-    {
-      "source": "claude/skills/fix-merge-conflicts",
-      "target": ".claude/skills/fix-merge-conflicts"
     },
     {
       "source": "claude/skills/grill-me",
@@ -452,10 +440,6 @@
     {
       "source": "claude/skills/task-to-mr",
       "target": ".claude/skills/task-to-mr"
-    },
-    {
-      "source": "claude/skills/show-me",
-      "target": ".claude/skills/show-me"
     },
     {
       "source": "claude/skills/show-me-your-work",
@@ -712,6 +696,18 @@
     {
       "source": "pi/agent/extensions/cliproxy-quota/windows.ts",
       "target": ".pi/agent/extensions/cliproxy-quota/windows.ts"
+    },
+    {
+      "source": "pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-astra.md",
+      "target": ".pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-astra.md"
+    },
+    {
+      "source": "pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-sol.md",
+      "target": ".pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-sol.md"
+    },
+    {
+      "source": "pi/agent/extensions/codex-gpt62-prompt/index.ts",
+      "target": ".pi/agent/extensions/codex-gpt62-prompt/index.ts"
     },
     {
       "source": "pi/agent/extensions/codex-native-compaction.ts",
@@ -1074,10 +1070,6 @@
       "target": ".pi/agent/skills/fix-gitlab-mr-review"
     },
     {
-      "source": "pi/agent/skills/fix-merge-conflicts",
-      "target": ".pi/agent/skills/fix-merge-conflicts"
-    },
-    {
       "source": "pi/agent/skills/frontend-design",
       "target": ".pi/agent/skills/frontend-design"
     },
@@ -1168,10 +1160,6 @@
     {
       "source": "pi/agent/skills/review-plan-gpt",
       "target": ".pi/agent/skills/review-plan-gpt"
-    },
-    {
-      "source": "pi/agent/skills/show-me",
-      "target": ".pi/agent/skills/show-me"
     },
     {
       "source": "pi/agent/skills/show-me-your-work",
@@ -1266,12 +1254,20 @@
       "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/GEMINI.md"
     },
     {
+      "source": "antigravity/GEMINI.md",
+      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/GEMINI.md"
+    },
+    {
       "source": "antigravity/mcp_config.json",
       "target": ".gemini/config/mcp_config.json"
     },
     {
       "source": "antigravity/t3-mcp_config.json",
       "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/mcp_config.json"
+    },
+    {
+      "source": "antigravity/t3-mcp_config.json",
+      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/mcp_config.json"
     },
     {
       "source": "antigravity/sph-issues-mcp.mjs",
@@ -1286,8 +1282,16 @@
       "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/config.json"
     },
     {
+      "source": "antigravity/config.json",
+      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/config.json"
+    },
+    {
       "source": "antigravity/t3-skills.json",
       "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/skills.json"
+    },
+    {
+      "source": "antigravity/t3-skills.json",
+      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/skills.json"
     },
     {
       "source": "claude/skills/ambition",

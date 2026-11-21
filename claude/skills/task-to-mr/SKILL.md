@@ -54,11 +54,12 @@ ask-first step.
    [`task-worktree`](../task-worktree/SKILL.md): branch contract, hotfix base,
    isolation, and dependencies.
 4. **Implement** the smallest change that reaches the goal, under the
-   repository's coding standards. Fix the case the task describes, not every
+   repository's coding standards and, for `.ts`/`.tsx`,
+   [`typescript-best-practices`](../typescript-best-practices/SKILL.md). Fix the case the task describes, not every
    case that could exist. When the task's screenshot or text concerns only the
    mobile app, change only the mobile build and say in the report how desktop
    behaves.
-5. **Prove** under [`prove-it-works`](../prove-it-works/SKILL.md):
+5. **Prove**:
    - In every changed repository, run the commands its CI validate jobs run
      (read `.gitlab-ci.yml`) on the whole project, not only the changed files.
    - For a bug, reproduce the failure, then watch the same reproduction pass.
@@ -78,7 +79,7 @@ ask-first step.
    found after the review sends the reviewed code back. Repeat the step 5
    checks that cover each fix. Run every round through the Codex provider,
    not pi: use review-gpt's T3 Code route with
-   `target: {providerInstanceId: "codex", model: "gpt-6.1-sol", options: {reasoningEffort: "high"}}`.
+   `target: {providerInstanceId: "codex", model: "gpt-6.2-sol", options: {reasoningEffort: "high"}}`.
    Its brief, triage, and fix loop apply unchanged. Without `delegate_task` or
    with Codex or the model missing from `orchestrator_capabilities`, ask under
    "Asking"; never fall back to pi. When the GPT quota is exhausted (the

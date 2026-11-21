@@ -11,6 +11,12 @@
         "--chromeArg=--window-size=1920,1080"
       ],
       "directTools": false
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp",
+      "oauth": {
+        "clientName": "Claude Code"
+      }
     }
   }
 }

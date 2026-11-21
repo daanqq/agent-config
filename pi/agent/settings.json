@@ -1,13 +1,11 @@
 {
-  "lastChangelogVersion": "1.3.0",
+  "lastChangelogVersion": "1.5.2",
   "defaultThinkingLevel": "high",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.1-sol",
+  "defaultModel": "gpt-6.2-sol",
   "packages": [
     "npm:@ff-labs/pi-fff",
-    "npm:@plannotator/pi-extension",
-    "npm:pi-context-view",
-    "npm:pi-system-prompt"
+    "npm:@plannotator/pi-extension"
   ],
   "skills": [
     "-skills/plannotator/SKILL.md"
@@ -19,12 +17,13 @@
     "enabled": true
   },
   "enabledModels": [
-    "openai-codex/gpt-6.1-sol",
+    "openai-codex/gpt-6.2-sol",
+    "openai-codex/gpt-6.2-astra",
     "openai-codex/gpt-5.6-luna",
     "openrouter/xiaomi/mimo-v2.6-pro"
   ],
   "externalEditor": "code --wait",
-  "transport": "websocket-cached",
+  "transport": "sse",
   "collapseChangelog": true,
   "treeFilterMode": "no-tools",
   "steeringMode": "all",
@@ -65,9 +64,25 @@
   "fullscreenCopyOnSelect": true,
   "extensions": [
     "-extensions/apply-patch/index.ts",
+    "-extensions/cliproxy-quota/index.ts",
     "-extensions/video-analysis/index.ts",
     "-extensions/web-access.ts",
-    "-extensions/00-ui-header.ts"
+    "-extensions/00-ui-header.ts",
+    "-extensions/00-ui-00-transition.ts",
+    "-extensions/00-ui-editor.ts",
+    "-extensions/00-ui-footer.ts",
+    "-extensions/agent-pulse.ts",
+    "-extensions/auto-session-name/index.ts",
+    "-extensions/balance.ts",
+    "-extensions/codex-ws-diagnostics/index.ts",
+    "-extensions/context-limit-warning.ts",
+    "-extensions/herdr-agent-state.ts",
+    "-extensions/herdr-pi-session-name.ts",
+    "-extensions/orca-agent-status.ts",
+    "-extensions/pi-paste.ts",
+    "-extensions/token-efficiency.ts",
+    "-extensions/subagents/index.ts",
+    "-extensions/skill-dollar.ts"
   ],
   "cacheWarming": "idle",
   "fullscreenWheelScrollLines": "auto"

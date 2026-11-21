@@ -11,13 +11,14 @@ prompt with paths, constraints, and the expected report.
 
 ## Delegation policy
 
-- Use the `pi` harness unless the user requests another harness.
+- Run children on Pi (`providerInstanceId: "pi"` in T3 Code, `harness: "pi"` otherwise)
+  unless the user requests another provider.
 - Do not use more than 2 subagents simultaneously.
 
 ## Model selection
 
 For Pi and Codex subagents, choose between
-`openai-codex/gpt-5.6-luna` (Luna) and `openai-codex/gpt-6.1-sol` (Sol).
+`openai-codex/gpt-5.6-luna` (Luna) and `openai-codex/gpt-6.2-sol` (Sol).
 
 | Model | Speed | Intellect | Price efficiency |
 |:------|:-----:|:---------:|:----------------:|
@@ -34,21 +35,47 @@ Higher price efficiency means lower cost.
   or an excessively broad scope; refine or split the task instead.
 - An explicit user model or reasoning choice overrides these defaults.
 
-## Pi Harness
+## Route
+
+Choose the route once per task:
+
+- **T3 Code** when `delegate_task` is available (load it through `tool_search` if it is deferred).
+- **Subagents extension** when `subagent_spawn` is available. Pi loads that extension only when
+  started with `--extension ~/.pi/agent/extensions/subagents/index.ts`, as the agent retro does.
+
+If neither tool is available, do the work yourself and tell the user that delegation was unavailable.
+
+## T3 Code
+
+Call `orchestrator_capabilities` once per thread, then `delegate_task` with a complete `task`,
+a short `title`, a `role`, and a `target`:
+
+- Pi: `{providerInstanceId: "pi", model: "<provider/model-id>", options: {thinking: "<level>"}}`.
+- Codex: `{providerInstanceId: "codex", model: "<model-id>", options: {reasoningEffort: "<level>"}}`.
+  Pass the effort explicitly, because the Codex default is `low`.
+
+Take model ids and accepted option values from `orchestrator_capabilities`; values differ per model.
+Each child is a separate T3 thread in the parent checkout unless `isolation: "worktree"` is set.
+Follow the `next` field of each result instead of polling, read the reply with `task_status`,
+and stop a child you no longer need with `task_cancel`.
+
+## Subagents Extension
+
+### Pi Harness
 
 **Harness:** `pi`
 **Prompt nicknames:** “pi”, “pi agent”, “pi coding agent”, “pi subagent”
 It inherits the parent model and thinking level when `model` or `reasoning_effort` is omitted.
 
 For an explicit model selection, check only the chosen models, for example
-`pi --list-models | rg '^openai-codex.*(gpt-5.6-luna|gpt-6.1-sol)'`: the full
+`pi --list-models | rg '^openai-codex.*(gpt-5.6-luna|gpt-6.2-sol)'`: the full
 catalog is long enough to truncate other output. Prefer `provider/model-id`;
 a bare model id only works when unambiguous.
 
 **Thinking budgets:** `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`.
 These map directly to pi thinking levels.
 
-## Codex Harness
+### Codex Harness
 
 **Harness:** `codex`
 **Prompt nicknames:** “codex”, “Codex CLI”, “codex agent”, “codex subagent”
@@ -61,7 +88,7 @@ Do not translate a Pi provider alias into a Codex model name by guesswork.
 
 Requires the Codex CLI to be installed and authenticated.
 
-## Spawn and Manage
+### Spawn and Manage
 
 Call `subagent_spawn` with a complete `prompt`, short `name`, chosen `harness`,
 and optional `working_dir`, `model`, and `reasoning_effort`.

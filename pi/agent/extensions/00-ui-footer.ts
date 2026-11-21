@@ -7,7 +7,7 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 const RIGHT_STATUS_ORDER = ["generation-stats", "cliproxy-quota", "deepseek-balance", "openrouter-balance"] as const;
 const HIDDEN_STATUS_IDS = new Set<string>([...RIGHT_STATUS_ORDER, "ponytail"]);
 const MODEL_ALIASES: Readonly<Record<string, string>> = {
-  "gpt-6.1-sol": "sol6.1",
+  "gpt-6.2-sol": "sol6.2",
   "gpt-5.6-sol": "sol5.6",
   "gpt-5.6-luna": "luna5.6",
 };

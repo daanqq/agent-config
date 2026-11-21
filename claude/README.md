@@ -1,7 +1,7 @@
 # Claude Code
 
 Claude Code configuration: instructions, settings, keybindings, skills, hooks,
-statusline, theme, and the local `effort-cycle` and `task-link` plugin sources.
+statusline, and theme.
 
 ## Dependencies
 
@@ -16,8 +16,7 @@ skill directories from this directory into `~/.claude` according to
 `links.json`; see the repository [README](../README.md) for the dry run,
 backups, and restore.
 
-Runtime state, credentials, and the skills installed by the Plannotator plugin
-stay in `~/.claude` and are not tracked here.
+Runtime state and credentials stay in `~/.claude` and are not tracked here.
 
 Claude Code has no user-level local settings file: `settings.local.json` is
 read only from a project's `.claude/` directory.

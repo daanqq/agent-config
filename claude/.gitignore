@@ -33,7 +33,3 @@ plugins/marketplaces/
 plugins/plugin-catalog-cache.json
 .last-*
 plugins/.last_inuse_sweep
-
-# Skills installed by the plannotator plugin
-skills/plannotator/
-skills/plannotator-*/
