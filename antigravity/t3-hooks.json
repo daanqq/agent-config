@@ -1,0 +1,36 @@
+{
+  "disabled-tools": {
+    "PreToolUse": [
+      {
+        "matcher": "^(invoke_subagent|define_subagent|manage_subagents|send_message)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"Built-in Antigravity subagent tools are disabled in T3 Code due to ACP permission timeouts. Use T3 delegate_task (via acp-mcp-call delegate_task) instead.\"}'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^schedule$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"Built-in schedule tool is disabled in T3 Code. Use T3 schedule_task instead when scheduling is requested.\"}'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^ask_question$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"ask_question is disabled by user policy. Ask the user directly in plain text instead.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

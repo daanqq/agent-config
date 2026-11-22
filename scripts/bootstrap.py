@@ -57,6 +57,7 @@ def link_t3_antigravity(repo, home, apply=False, backup_existing=False):
         mappings = [
             (repo / "antigravity/GEMINI.md", instance / "GEMINI.md", False),
             (repo / "antigravity/config.json", instance / "config/config.json", False),
+            (repo / "antigravity/t3-hooks.json", instance / "config/hooks.json", False),
             (repo / "antigravity/t3-mcp_config.json", instance / "config/mcp_config.json", False),
         ]
         if os.path.lexists(gemini_skills):
@@ -194,6 +195,13 @@ def run_bootstrap(repo, home, apply=False, backup_existing=False, claude_bin=Non
             home,
             apply=apply,
             expand_home=False,
+        ),
+        "antigravity_cli_settings": seed_file(
+            repo / "antigravity/cli-settings.base.json",
+            home / ".gemini/antigravity-cli/settings.json",
+            home,
+            apply=apply,
+            expand_home=True,
         ),
     }
     t3_links = link_t3_antigravity(repo, home, apply=apply, backup_existing=backup_existing)

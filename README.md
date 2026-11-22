@@ -114,7 +114,8 @@ make bootstrap
 when you need per-extension `devDependencies` (`tsc`, `@effect/tsgo`, Pi types)
 for local extension development. `make bootstrap` runs `install-hooks`, `dep`,
 `install`, and `scripts/bootstrap.py --backup-existing --apply` (seeds missing
-`~/.codex/config.toml` and `~/.t3/userdata/{settings,keybindings}.json`, links
+`~/.codex/config.toml`, `~/.t3/userdata/{settings,keybindings}.json`, and
+`~/.gemini/antigravity-cli/settings.json`, links
 active T3 Antigravity provider instances dynamically, and registers missing
 global Claude MCP servers from `claude/mcp.json`). Existing local configs are
 never overwritten.

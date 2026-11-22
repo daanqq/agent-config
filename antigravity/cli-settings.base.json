@@ -1,0 +1,18 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/settings.json",
+  "allowNonWorkspaceAccess": true,
+  "altScreenMode": "always",
+  "artifactReviewPolicy": "always-proceed",
+  "colorScheme": "terminal",
+  "editor": "code --wait",
+  "model": "Gemini 4 Neon (High)",
+  "notifications": true,
+  "runningLightSpeed": "off",
+  "showFeedbackSurvey": false,
+  "showTips": false,
+  "statusLine": {
+    "command": "bash ~/.gemini/antigravity-cli/statusline-command.sh",
+    "type": "command"
+  },
+  "toolPermission": "always-proceed"
+}

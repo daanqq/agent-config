@@ -33,6 +33,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(result["seeded"]["codex_config"], "planned")
         self.assertEqual(result["seeded"]["t3_settings"], "planned")
         self.assertEqual(result["seeded"]["t3_keybindings"], "planned")
+        self.assertEqual(result["seeded"]["antigravity_cli_settings"], "planned")
         self.assertEqual(list(self.home.iterdir()), [])
 
     def test_clean_home_seeds_templates_with_expanded_home_and_no_overwrite(self):
@@ -40,6 +41,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(result["seeded"]["codex_config"], "seeded")
         self.assertEqual(result["seeded"]["t3_settings"], "seeded")
         self.assertEqual(result["seeded"]["t3_keybindings"], "seeded")
+        self.assertEqual(result["seeded"]["antigravity_cli_settings"], "seeded")
 
         codex_cfg = (self.home / ".codex/config.toml").read_text(encoding="utf-8")
         self.assertIn(f'CURL_HOME = "{self.home}/.config/codex-curl"', codex_cfg)
@@ -54,12 +56,21 @@ class BootstrapTests(unittest.TestCase):
         for src in t3_settings.get("usageLimitSources", {}).values():
             self.assertEqual(src.get("managementKey", ""), "")
 
+        ag_cli_settings = json.loads((self.home / ".gemini/antigravity-cli/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(ag_cli_settings["editor"], "code --wait")
+        self.assertEqual(ag_cli_settings["runningLightSpeed"], "off")
+        self.assertEqual(ag_cli_settings["colorScheme"], "terminal")
+        self.assertTrue(ag_cli_settings["notifications"])
+        self.assertTrue(ag_cli_settings["allowNonWorkspaceAccess"])
+        self.assertNotIn("trustedWorkspaces", ag_cli_settings)
+
         # Existing files must never be overwritten on repeated runs.
         (self.home / ".codex/config.toml").write_text("custom = true\n", encoding="utf-8")
         second = bootstrap.run_bootstrap(ROOT, self.home, apply=True, claude_bin="")
         self.assertEqual(second["seeded"]["codex_config"], "skipped")
         self.assertEqual(second["seeded"]["t3_settings"], "skipped")
         self.assertEqual(second["seeded"]["t3_keybindings"], "skipped")
+        self.assertEqual(second["seeded"]["antigravity_cli_settings"], "skipped")
         self.assertEqual((self.home / ".codex/config.toml").read_text(encoding="utf-8"), "custom = true\n")
 
     def test_dynamic_t3_antigravity_linking_and_backup(self):
@@ -73,15 +84,16 @@ class BootstrapTests(unittest.TestCase):
             bootstrap.link_t3_antigravity(ROOT, self.home, apply=True, backup_existing=False)
 
         summary = bootstrap.link_t3_antigravity(ROOT, self.home, apply=True, backup_existing=True)
-        self.assertEqual(summary, {"linked": 4, "unchanged": 0, "instances": 1})
+        self.assertEqual(summary, {"linked": 5, "unchanged": 0, "instances": 1})
         self.assertEqual((instance / "GEMINI.md").resolve(), (ROOT / "antigravity/GEMINI.md").resolve())
         self.assertEqual((instance / "config/config.json").resolve(), (ROOT / "antigravity/config.json").resolve())
+        self.assertEqual((instance / "config/hooks.json").resolve(), (ROOT / "antigravity/t3-hooks.json").resolve())
         self.assertEqual((instance / "config/mcp_config.json").resolve(), (ROOT / "antigravity/t3-mcp_config.json").resolve())
         self.assertEqual((instance / "config/skills").resolve(), gemini_skills.resolve())
 
         # Second run is a no-op.
         repeat = bootstrap.link_t3_antigravity(ROOT, self.home, apply=True, backup_existing=True)
-        self.assertEqual(repeat, {"linked": 0, "unchanged": 4, "instances": 1})
+        self.assertEqual(repeat, {"linked": 0, "unchanged": 5, "instances": 1})
 
     def test_claude_mcp_sync_registers_only_missing_servers(self):
         (self.home / ".claude.json").write_text(
