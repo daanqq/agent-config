@@ -10,8 +10,10 @@ skill directories to this checkout.
 - `common/skills-maintenance/`: one source lock, scoped inventory, checker, and semantic overlays.
 - `pi/`: Pi configuration, extensions, prompts, and client-specific skills.
 - `claude/`: Claude Code configuration, hooks, themes, local plugin source, and client-specific skills.
-- `codex/`: Codex system prompt (`~/.codex/system-prompt.md`). Codex shares the Pi global instructions (`~/.codex/AGENTS.md` links to `pi/agent/AGENTS.md`) and sees the shared skills through `~/.agents/skills`; it ignores `disable-model-invocation`, so such skills also carry `agents/openai.yaml` with `allow_implicit_invocation: false` (checked by `tests/test_codex_skill_policy.py`). `config.toml` stays local; it sets `CURL_HOME=/home/user/.config/codex-curl` in `[shell_environment_policy.set]`, so agent shells read `codex/curl/.curlrc` (connect and total curl timeouts) instead of the user's `~/.curlrc`.
+- `codex/`: Codex system prompt (`~/.codex/system-prompt.md`), portable base template (`config.base.toml`), curl timeout config (`codex/curl/.curlrc`), and shell shim helper (`codex/shell/bash-env.sh` linked to `~/.config/codex-shell/bash-env.sh`). Codex shares the Pi global instructions (`~/.codex/AGENTS.md` links to `pi/agent/AGENTS.md`) and sees the shared skills through `~/.agents/skills`; it ignores `disable-model-invocation`, so such skills also carry `agents/openai.yaml` with `allow_implicit_invocation: false` (checked by `tests/test_codex_skill_policy.py`). `config.toml` stays local and is seeded once on a clean machine by `make bootstrap`.
+- `t3/`: sanitized portable templates (`settings.base.json`, `keybindings.json`) seeded once by `make bootstrap` when absent.
 - `scripts/install.py`: selective links, private backups, and conservative restore.
+- `scripts/bootstrap.py`: idempotent post-link bootstrap (template seeding, dynamic T3 Antigravity provider linking, and global Claude MCP registration from `claude/mcp.json`).
 
 Client skill directories contain repository-relative links to the shared
 skills. HOME receives individual shared skill links in `.agents/skills/` too;
@@ -40,6 +42,9 @@ python3 scripts/install.py --backup-existing
 `make check-extensions` runs the dependency-free TypeScript regression tests
 without starting Pi, Herdr or model calls. It is included in `make check` and
 runs from a staged snapshot without node_modules or dependency installation.
+When editing Pi extensions or `pi/agent/scripts/install-dependencies.mjs`, also
+run `make dep-dev && make check-extensions-dev` to execute per-extension test
+suites (`firecrawl-search`, `background-terminals`) that rely on `devDependencies`.
 
 The Bash `PreToolUse` guard runs a native binary at
 `~/.local/libexec/agent-config/grep-literal-glob`, not `go run` or Python. It
@@ -100,18 +105,27 @@ to avoid concurrent settings writes. Install the existing locked extension
 dependencies in the new checkout first:
 
 ```bash
-make dep
-make install
+make bootstrap-plan
+make bootstrap
 ```
 
+`make dep` installs only the consolidated runtime extension dependencies in
+`pi/agent/extensions` (`npm ci --omit=dev --ignore-scripts`). Use `make dep-dev`
+when you need per-extension `devDependencies` (`tsc`, `@effect/tsgo`, Pi types)
+for local extension development. `make bootstrap` runs `install-hooks`, `dep`,
+`install`, and `scripts/bootstrap.py --backup-existing --apply` (seeds missing
+`~/.codex/config.toml` and `~/.t3/userdata/{settings,keybindings}.json`, links
+active T3 Antigravity provider instances dynamically, and registers missing
+global Claude MCP servers from `claude/mcp.json`). Existing local configs are
+never overwritten.
+
 Dependencies are not copied from the old clients, and `make dep` needs network
-access. The installer also links each declared Pi extension package's
-`node_modules` into HOME so the extension loader can resolve dependencies from
-the linked files. These directories stay local and untracked; existing HOME
-dependency directories are backed up and can be restored like configuration.
-Installing links before `make dep` is supported: dependency links remain dangling
-until npm creates the directories. Afterwards start new client sessions, or
-reload Pi's resources.
+access. The installer also links `pi/agent/extensions/node_modules` into HOME so
+the extension loader can resolve runtime dependencies from the linked files.
+These directories stay local and untracked; existing HOME dependency directories
+are backed up and can be restored like configuration. Installing links before
+`make dep` is supported: dependency links remain dangling until npm creates the
+directories. Afterwards start new client sessions, or reload Pi's resources.
 
 Existing files and skill directories are moved, not deleted, into a private run
 directory under `~/.local/state/agent-config/backups/`. The installer prints its

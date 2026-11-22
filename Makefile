@@ -1,4 +1,4 @@
-.PHONY: check check-extensions dep plan install install-hooks
+.PHONY: check check-extensions check-extensions-dev dep dep-dev plan install install-hooks bootstrap-plan bootstrap
 
 check:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests --buffer
@@ -8,17 +8,35 @@ check:
 	PYTHONDONTWRITEBYTECODE=1 python3 common/skills-maintenance/check.py
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/check-skill-links.py
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/install.py --backup-existing > /dev/null
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/bootstrap.py --backup-existing > /dev/null
 	$(MAKE) check-extensions
 	git diff --check
 
 check-extensions:
 	node --test --experimental-strip-types pi/agent/extensions/tests/00-ui-transition.test.ts pi/agent/extensions/tests/herdr-pi-session-name.test.ts
 
+check-extensions-dev:
+	@for dir in pi/agent/extensions/firecrawl-search pi/agent/extensions/background-terminals; do \
+		if [ ! -d "$$dir/node_modules" ]; then \
+			echo "Missing $$dir/node_modules: run 'make dep-dev' first." >&2; \
+			exit 1; \
+		fi; \
+	done
+	npm --prefix pi/agent/extensions/firecrawl-search test
+	npm --prefix pi/agent/extensions/background-terminals test
+
 dep:
 	node pi/agent/scripts/install-dependencies.mjs
 
+dep-dev:
+	node pi/agent/scripts/install-dependencies.mjs --dev
+
 plan:
 	python3 scripts/install.py --backup-existing
+
+bootstrap-plan:
+	python3 scripts/install.py --backup-existing
+	python3 scripts/bootstrap.py --backup-existing
 
 hooks := grep-literal-glob reply-language
 
@@ -38,3 +56,6 @@ install-hooks:
 
 install: install-hooks
 	python3 scripts/install.py --backup-existing --apply
+
+bootstrap: install-hooks dep install
+	python3 scripts/bootstrap.py --backup-existing --apply

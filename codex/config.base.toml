@@ -1,0 +1,90 @@
+mcp_oauth_credentials_store = "file"
+model = "gpt-6.1-terra"
+model_provider = "cliproxy"
+# Moved here from ~/.codex/AGENTS.md, which now links to the shared pi instructions in agent-config.
+model_reasoning_effort = "high"
+personality = "pragmatic"
+plan_mode_reasoning_effort = "medium"
+suppress_unstable_features_warning = true
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+developer_instructions = "For local `exec_command` calls, set the `shell` argument to `/usr/bin/bash`."
+
+[model_providers.cliproxy]
+name = "CLIProxyAPI"
+base_url = "https://new.tail354056.ts.net/v1"
+wire_api = "responses"
+supports_websockets = false
+
+[model_providers.cliproxy.auth]
+command = "cat"
+args = ["{{HOME}}/.claude/secrets/cliproxy-api-key"]
+
+[features]
+hooks = true
+memories = false
+multi_agent = true
+prevent_idle_sleep = true
+js_repl = true
+terminal_resize_reflow = true
+goals = true
+apps = true
+image_generation = true
+
+[memories]
+use_memories = true
+generate_memories = true
+disable_on_external_context = true
+extract_model = "gpt-5.4-mini"
+consolidation_model = "gpt-5.4-mini"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest", "--headless", "--userDataDir={{HOME}}/.cache/chrome-devtools-mcp/chrome-profile", "--chromeArg=--window-size=1920,1080"]
+
+[plugins."figma@openai-curated"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = false
+
+[tui]
+status_line = [
+  "model-with-reasoning",
+  "current-dir",
+  "five-hour-limit",
+  "context-used",
+  "weekly-limit",
+  "total-input-tokens",
+  "total-output-tokens",
+]
+theme = "Alabaster"
+session_picker_view = "dense"
+screen_reader_detection_done = true
+
+[notice]
+fast_default_opt_out = true
+
+# SpaceHub for mr-review and fix-gitlab-mr-review threads (spacehub-inbox); the token comes from
+# the environment (chezmoi secrets in a terminal, or the codex provider environment in T3 Code).
+[mcp_servers.sph-issues]
+url = "https://spacehub.esoft.tech/api/user-mcp/sph/v1/issues"
+bearer_token_env_var = "SPACEHUB_MCP_TOKEN"
+
+# Agent shells read curl timeouts from codex/curl/.curlrc in ~/agent-config (linked to this directory).
+# BASH_ENV puts the mise shims first in PATH, so node follows the repository .nvmrc (see the file).
+[shell_environment_policy.set]
+CURL_HOME = "{{HOME}}/.config/codex-curl"
+BASH_ENV = "{{HOME}}/.config/codex-shell/bash-env.sh"
+
+[otel]
+exporter = { otlp-http = { endpoint = "http://127.0.0.1:4318/v1/logs", protocol = "binary" } }
+log_user_prompt = false
+log_agent_responses = false
+log_sse_deltas = false
+
+[otel.tool_result]
+max_bytes = 0

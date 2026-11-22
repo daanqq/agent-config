@@ -433,7 +433,7 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     if target:
         ensure_target_exists(repo, str(target))
 
-    workspace = Path(tempfile.mkdtemp(prefix=f"claude-mr-echat-{task_id.lower()}-", dir="/tmp"))
+    workspace = Path(tempfile.mkdtemp(prefix=f"claude-mr-echat-{task_id.lower()}-"))
     workspace.chmod(0o700)
     model_diff_path = workspace / "model.diff"
     if staged:

@@ -206,6 +206,10 @@
       "target": ".agents/skills/writing-for-agents"
     },
     {
+      "source": "common/skills/prompt-audit",
+      "target": ".agents/skills/prompt-audit"
+    },
+    {
       "source": "common/skills/librarian",
       "target": ".agents/skills/librarian"
     },
@@ -494,6 +498,10 @@
       "target": ".claude/skills/writing-for-agents"
     },
     {
+      "source": "claude/skills/prompt-audit",
+      "target": ".claude/skills/prompt-audit"
+    },
+    {
       "source": "claude/skills/yeet",
       "target": ".claude/skills/yeet"
     },
@@ -538,224 +546,52 @@
       "target": ".pi/agent/extensions/agent-pulse.ts"
     },
     {
-      "source": "pi/agent/extensions/apply-patch/bin/darwin-arm64/apply_patch",
-      "target": ".pi/agent/extensions/apply-patch/bin/darwin-arm64/apply_patch"
+      "source": "pi/agent/extensions/apply-patch",
+      "target": ".pi/agent/extensions/apply-patch"
     },
     {
-      "source": "pi/agent/extensions/apply-patch/bin/darwin-x64/apply_patch",
-      "target": ".pi/agent/extensions/apply-patch/bin/darwin-x64/apply_patch"
+      "source": "pi/agent/extensions/auto-session-name",
+      "target": ".pi/agent/extensions/auto-session-name"
     },
     {
-      "source": "pi/agent/extensions/apply-patch/bin/linux-arm64/apply_patch",
-      "target": ".pi/agent/extensions/apply-patch/bin/linux-arm64/apply_patch"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/bin/linux-x64/apply_patch",
-      "target": ".pi/agent/extensions/apply-patch/bin/linux-x64/apply_patch"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/bin/win32-arm64/apply_patch.exe",
-      "target": ".pi/agent/extensions/apply-patch/bin/win32-arm64/apply_patch.exe"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/bin/win32-x64/apply_patch.exe",
-      "target": ".pi/agent/extensions/apply-patch/bin/win32-x64/apply_patch.exe"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/diff-lines.test.ts",
-      "target": ".pi/agent/extensions/apply-patch/diff-lines.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/diff-lines.ts",
-      "target": ".pi/agent/extensions/apply-patch/diff-lines.ts"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/index.ts",
-      "target": ".pi/agent/extensions/apply-patch/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/patch-actions.test.ts",
-      "target": ".pi/agent/extensions/apply-patch/patch-actions.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/patch-actions.ts",
-      "target": ".pi/agent/extensions/apply-patch/patch-actions.ts"
-    },
-    {
-      "source": "pi/agent/extensions/apply-patch/preview-budget.ts",
-      "target": ".pi/agent/extensions/apply-patch/preview-budget.ts"
-    },
-    {
-      "source": "pi/agent/extensions/auto-session-name/index.test.ts",
-      "target": ".pi/agent/extensions/auto-session-name/index.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/auto-session-name/index.ts",
-      "target": ".pi/agent/extensions/auto-session-name/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/LICENSE",
-      "target": ".pi/agent/extensions/background-terminals/LICENSE"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/README.md",
-      "target": ".pi/agent/extensions/background-terminals/README.md"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/docs/implementation-guide.md",
-      "target": ".pi/agent/extensions/background-terminals/docs/implementation-guide.md"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/index.ts",
-      "target": ".pi/agent/extensions/background-terminals/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/manager.test.ts",
-      "target": ".pi/agent/extensions/background-terminals/manager.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/output.test.ts",
-      "target": ".pi/agent/extensions/background-terminals/output.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/package-lock.json",
-      "target": ".pi/agent/extensions/background-terminals/package-lock.json"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/package.json",
-      "target": ".pi/agent/extensions/background-terminals/package.json"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/prompt.test.ts",
-      "target": ".pi/agent/extensions/background-terminals/prompt.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/ps.test.ts",
-      "target": ".pi/agent/extensions/background-terminals/ps.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/result-delivery.test.ts",
-      "target": ".pi/agent/extensions/background-terminals/result-delivery.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/domain.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/domain.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/manager.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/manager.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/output.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/output.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/prompt.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/prompt.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/result-delivery.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/result-delivery.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/runtime.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/runtime.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/ui/output-view.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/ui/output-view.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/src/ui/ps.ts",
-      "target": ".pi/agent/extensions/background-terminals/src/ui/ps.ts"
-    },
-    {
-      "source": "pi/agent/extensions/background-terminals/tsconfig.json",
-      "target": ".pi/agent/extensions/background-terminals/tsconfig.json"
+      "source": "pi/agent/extensions/background-terminals",
+      "target": ".pi/agent/extensions/background-terminals"
     },
     {
       "source": "pi/agent/extensions/balance.ts",
       "target": ".pi/agent/extensions/balance.ts"
     },
     {
-      "source": "pi/agent/extensions/cliproxy-quota/README.md",
-      "target": ".pi/agent/extensions/cliproxy-quota/README.md"
+      "source": "pi/agent/extensions/cliproxy-quota",
+      "target": ".pi/agent/extensions/cliproxy-quota"
     },
     {
-      "source": "pi/agent/extensions/cliproxy-quota/index.ts",
-      "target": ".pi/agent/extensions/cliproxy-quota/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/cliproxy-quota/quota.test.ts",
-      "target": ".pi/agent/extensions/cliproxy-quota/quota.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/cliproxy-quota/quota.ts",
-      "target": ".pi/agent/extensions/cliproxy-quota/quota.ts"
-    },
-    {
-      "source": "pi/agent/extensions/cliproxy-quota/windows.ts",
-      "target": ".pi/agent/extensions/cliproxy-quota/windows.ts"
-    },
-    {
-      "source": "pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-astra.md",
-      "target": ".pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-astra.md"
-    },
-    {
-      "source": "pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-sol.md",
-      "target": ".pi/agent/extensions/codex-gpt62-prompt/gpt-6.2-sol.md"
-    },
-    {
-      "source": "pi/agent/extensions/codex-gpt62-prompt/index.ts",
-      "target": ".pi/agent/extensions/codex-gpt62-prompt/index.ts"
+      "source": "pi/agent/extensions/codex-gpt62-prompt",
+      "target": ".pi/agent/extensions/codex-gpt62-prompt"
     },
     {
       "source": "pi/agent/extensions/codex-native-compaction.ts",
       "target": ".pi/agent/extensions/codex-native-compaction.ts"
     },
     {
-      "source": "pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts",
-      "target": ".pi/agent/extensions/codex-ws-diagnostics/diagnostics.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/codex-ws-diagnostics/diagnostics.ts",
-      "target": ".pi/agent/extensions/codex-ws-diagnostics/diagnostics.ts"
-    },
-    {
-      "source": "pi/agent/extensions/codex-ws-diagnostics/index.ts",
-      "target": ".pi/agent/extensions/codex-ws-diagnostics/index.ts"
+      "source": "pi/agent/extensions/codex-ws-diagnostics",
+      "target": ".pi/agent/extensions/codex-ws-diagnostics"
     },
     {
       "source": "pi/agent/extensions/context-limit-warning.ts",
       "target": ".pi/agent/extensions/context-limit-warning.ts"
     },
     {
-      "source": "pi/agent/extensions/firecrawl-search/index.test.ts",
-      "target": ".pi/agent/extensions/firecrawl-search/index.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/firecrawl-search/index.ts",
-      "target": ".pi/agent/extensions/firecrawl-search/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/firecrawl-search/package-lock.json",
-      "target": ".pi/agent/extensions/firecrawl-search/package-lock.json"
-    },
-    {
-      "source": "pi/agent/extensions/firecrawl-search/package.json",
-      "target": ".pi/agent/extensions/firecrawl-search/package.json"
-    },
-    {
-      "source": "pi/agent/extensions/firecrawl-search/prompt.ts",
-      "target": ".pi/agent/extensions/firecrawl-search/prompt.ts"
-    },
-    {
-      "source": "pi/agent/extensions/firecrawl-search/tsconfig.json",
-      "target": ".pi/agent/extensions/firecrawl-search/tsconfig.json"
+      "source": "pi/agent/extensions/firecrawl-search",
+      "target": ".pi/agent/extensions/firecrawl-search"
     },
     {
       "source": "pi/agent/extensions/herdr-agent-state.ts",
       "target": ".pi/agent/extensions/herdr-agent-state.ts"
+    },
+    {
+      "source": "pi/agent/extensions/herdr-pi-session-name.ts",
+      "target": ".pi/agent/extensions/herdr-pi-session-name.ts"
     },
     {
       "source": "pi/agent/extensions/mr-echat.ts",
@@ -786,148 +622,16 @@
       "target": ".pi/agent/extensions/shake.ts"
     },
     {
-      "source": "pi/agent/extensions/shared/mr-echat-panel.ts",
-      "target": ".pi/agent/extensions/shared/mr-echat-panel.ts"
-    },
-    {
-      "source": "pi/agent/extensions/shared/text-stream-metrics.test.ts",
-      "target": ".pi/agent/extensions/shared/text-stream-metrics.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/shared/text-stream-metrics.ts",
-      "target": ".pi/agent/extensions/shared/text-stream-metrics.ts"
-    },
-    {
-      "source": "pi/agent/extensions/shared/tool-call-timeout.test.ts",
-      "target": ".pi/agent/extensions/shared/tool-call-timeout.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/shared/tool-call-timeout.ts",
-      "target": ".pi/agent/extensions/shared/tool-call-timeout.ts"
+      "source": "pi/agent/extensions/shared",
+      "target": ".pi/agent/extensions/shared"
     },
     {
       "source": "pi/agent/extensions/skill-dollar.ts",
       "target": ".pi/agent/extensions/skill-dollar.ts"
     },
     {
-      "source": "pi/agent/extensions/subagents/.npmrc",
-      "target": ".pi/agent/extensions/subagents/.npmrc"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/by-the-way.test.ts",
-      "target": ".pi/agent/extensions/subagents/by-the-way.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/codex.test.ts",
-      "target": ".pi/agent/extensions/subagents/codex.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/context-usage.test.ts",
-      "target": ".pi/agent/extensions/subagents/context-usage.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/docs/design-plan.md",
-      "target": ".pi/agent/extensions/subagents/docs/design-plan.md"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/docs/effect-v4-extension-guide.md",
-      "target": ".pi/agent/extensions/subagents/docs/effect-v4-extension-guide.md"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/docs/effect-v4-notes.md",
-      "target": ".pi/agent/extensions/subagents/docs/effect-v4-notes.md"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/format.test.ts",
-      "target": ".pi/agent/extensions/subagents/format.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/index.ts",
-      "target": ".pi/agent/extensions/subagents/index.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/manager.test.ts",
-      "target": ".pi/agent/extensions/subagents/manager.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/native-resume.test.ts",
-      "target": ".pi/agent/extensions/subagents/native-resume.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/package-lock.json",
-      "target": ".pi/agent/extensions/subagents/package-lock.json"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/package.json",
-      "target": ".pi/agent/extensions/subagents/package.json"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/performance.test.ts",
-      "target": ".pi/agent/extensions/subagents/performance.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/result-delivery.test.ts",
-      "target": ".pi/agent/extensions/subagents/result-delivery.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/backend.ts",
-      "target": ".pi/agent/extensions/subagents/src/backend.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/backends/codex.ts",
-      "target": ".pi/agent/extensions/subagents/src/backends/codex.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/backends/pi.ts",
-      "target": ".pi/agent/extensions/subagents/src/backends/pi.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/backends/stub.ts",
-      "target": ".pi/agent/extensions/subagents/src/backends/stub.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/by-the-way.ts",
-      "target": ".pi/agent/extensions/subagents/src/by-the-way.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/domain.ts",
-      "target": ".pi/agent/extensions/subagents/src/domain.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/format.ts",
-      "target": ".pi/agent/extensions/subagents/src/format.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/manager.ts",
-      "target": ".pi/agent/extensions/subagents/src/manager.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/prompt.ts",
-      "target": ".pi/agent/extensions/subagents/src/prompt.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/result-delivery.ts",
-      "target": ".pi/agent/extensions/subagents/src/result-delivery.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/runtime.ts",
-      "target": ".pi/agent/extensions/subagents/src/runtime.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/ui/takeover.ts",
-      "target": ".pi/agent/extensions/subagents/src/ui/takeover.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/src/ui/transcript.ts",
-      "target": ".pi/agent/extensions/subagents/src/ui/transcript.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/takeover.test.ts",
-      "target": ".pi/agent/extensions/subagents/takeover.test.ts"
-    },
-    {
-      "source": "pi/agent/extensions/subagents/tsconfig.json",
-      "target": ".pi/agent/extensions/subagents/tsconfig.json"
+      "source": "pi/agent/extensions/subagents",
+      "target": ".pi/agent/extensions/subagents"
     },
     {
       "source": "pi/agent/extensions/system-info.ts",
@@ -1210,6 +914,10 @@
       "target": ".pi/agent/skills/writing-for-agents"
     },
     {
+      "source": "pi/agent/skills/prompt-audit",
+      "target": ".pi/agent/skills/prompt-audit"
+    },
+    {
       "source": "pi/agent/skills/telegram-send",
       "target": ".pi/agent/skills/telegram-send"
     },
@@ -1246,28 +954,16 @@
       "target": ".config/codex-curl/.curlrc"
     },
     {
+      "source": "codex/shell/bash-env.sh",
+      "target": ".config/codex-shell/bash-env.sh"
+    },
+    {
       "source": "antigravity/GEMINI.md",
       "target": ".gemini/GEMINI.md"
     },
     {
-      "source": "antigravity/GEMINI.md",
-      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/GEMINI.md"
-    },
-    {
-      "source": "antigravity/GEMINI.md",
-      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/GEMINI.md"
-    },
-    {
       "source": "antigravity/mcp_config.json",
       "target": ".gemini/config/mcp_config.json"
-    },
-    {
-      "source": "antigravity/t3-mcp_config.json",
-      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/mcp_config.json"
-    },
-    {
-      "source": "antigravity/t3-mcp_config.json",
-      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/mcp_config.json"
     },
     {
       "source": "antigravity/sph-issues-mcp.mjs",
@@ -1276,22 +972,6 @@
     {
       "source": "antigravity/config.json",
       "target": ".gemini/config/config.json"
-    },
-    {
-      "source": "antigravity/config.json",
-      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/config.json"
-    },
-    {
-      "source": "antigravity/config.json",
-      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/config.json"
-    },
-    {
-      "source": "antigravity/t3-skills.json",
-      "target": ".t3/userdata/providers/antigravity/ac0a3dfd6dddb20962cecff6ee5fe65e19d3923be20e52c5ab52ff877f7e4c32/config/skills.json"
-    },
-    {
-      "source": "antigravity/t3-skills.json",
-      "target": ".t3/userdata/providers/antigravity/bf33cf4fbebc8ffbcef81fb01aa745fcfab7143064b7e3c9cec136339f87e905/config/skills.json"
     },
     {
       "source": "claude/skills/ambition",
@@ -1468,6 +1148,10 @@
     {
       "source": "claude/skills/writing-for-agents",
       "target": ".gemini/config/skills/writing-for-agents"
+    },
+    {
+      "source": "claude/skills/prompt-audit",
+      "target": ".gemini/config/skills/prompt-audit"
     },
     {
       "source": "claude/skills/yeet",

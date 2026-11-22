@@ -43,6 +43,8 @@ def relative_path(value):
 
 def safe_source(path, repo):
     # Inspect names and metadata only, never credential contents.
+    extensions_root = (repo / "pi/agent/extensions").resolve()
+    allow_nested_node_modules = path.is_dir() and within(path.resolve(), extensions_root)
     pending = [path]
     seen = set()
     while pending:
@@ -50,6 +52,9 @@ def safe_source(path, repo):
         resolved = item.resolve()
         if not within(resolved, repo) or not item.exists():
             raise InstallError(f"Missing or escaping source: {item}")
+        if allow_nested_node_modules and item != path and item.name == "node_modules" and item.is_dir():
+            # Optional devDependencies installed via `make dep-dev` live inside extension dirs.
+            continue
         for part in (*item.relative_to(repo).parts, *resolved.relative_to(repo).parts):
             name = part.lower()
             if (name in FORBIDDEN or name.startswith(".env")

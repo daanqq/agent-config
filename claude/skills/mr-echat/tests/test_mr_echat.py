@@ -397,7 +397,7 @@ class MrEchatTests(unittest.TestCase):
 
 class WorkspaceCwdTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-1-", dir="/tmp"))
+        self.workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-1-"))
         self.addCleanup(shutil.rmtree, self.workspace, ignore_errors=True)
         (self.workspace / "nested").mkdir()
         self.state_path = self.workspace / "state.json"
@@ -430,6 +430,23 @@ class WorkspaceCwdTests(unittest.TestCase):
         os.chdir("/")
         self.assertEqual(mr_echat.cleanup(SimpleNamespace(state=str(self.state_path)))["status"], "cleaned")
         self.assertFalse(self.workspace.exists())
+
+    def test_cleanup_accepts_workspace_created_under_custom_tmpdir(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="custom-tmpdir-") as custom_tmp:
+            previous_tempdir = tempfile.tempdir
+            tempfile.tempdir = None
+            try:
+                with patch.dict(os.environ, {"TMPDIR": custom_tmp}):
+                    workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-99-"))
+                    self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+                    state_path = workspace / "state.json"
+                    state = {"workspace": str(workspace), "published": True}
+                    with patch.object(mr_echat, "load_state", return_value=(workspace, state)):
+                        os.chdir("/")
+                        self.assertEqual(mr_echat.cleanup(SimpleNamespace(state=str(state_path)))["status"], "cleaned")
+                        self.assertFalse(workspace.exists())
+            finally:
+                tempfile.tempdir = previous_tempdir
 
 
 class TaskChainTargetTests(unittest.TestCase):

@@ -188,6 +188,16 @@ class InstallTests(unittest.TestCase):
             self.install(apply=True)
         self.assertEqual(list(self.home.iterdir()), [])
 
+    def test_nested_dev_node_modules_inside_pi_extension_dir_is_allowed(self):
+        ext = self.repo / "pi/agent/extensions/sample-ext"
+        (ext / "node_modules/pkg").mkdir(parents=True)
+        (ext / "index.ts").write_text("export default function () {}\n")
+        (ext / "node_modules/pkg/index.js").write_text("module.exports = 1;\n")
+        self.mappings = [{"source": "pi/agent/extensions/sample-ext", "target": ".pi/agent/extensions/sample-ext"}]
+        self.write_manifest()
+        self.install(apply=True)
+        self.assertTrue((self.home / ".pi/agent/extensions/sample-ext").is_symlink())
+
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for module resolution")
     def test_dependencies_resolve_from_home_extension_paths(self):
         packages = self.extension_packages()

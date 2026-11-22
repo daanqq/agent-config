@@ -4,7 +4,7 @@
 set -euo pipefail
 
 if [[ -z "${TELEGRAM_BOT_TOKEN:-}" || -z "${TELEGRAM_CHAT_ID:-}" ]]; then
-  secrets="$HOME/.config/zsh/secrets.zsh"
+  secrets="$HOME/.config/zsh/conf.d/10-secrets.zsh"
   # shellcheck source=/dev/null
   [[ -r "$secrets" ]] && source "$secrets"
 fi

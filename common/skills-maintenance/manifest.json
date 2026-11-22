@@ -315,6 +315,10 @@
         "overlay": "overlays/common/writing-for-agents.md",
         "installed_hash": "7ae63ee676d4069727f05d2a011235550d60a56f746420161469b93f8ba38787"
       },
+      "prompt-audit": {
+        "tracking": "local",
+        "installed_hash": "59d292443de9c9e26d808b689e3f7779afec749535f65629c4d6e265efa06c80"
+      },
       "librarian": {
         "tracking": "local",
         "installed_hash": "ec5fb4c5d3e00c59b9c5c4961cddfaa4ce303725861303befe5a171ca8bbe94a"
@@ -332,7 +336,7 @@
       },
       "telegram-send": {
         "tracking": "local",
-        "installed_hash": "67c4011a99cdfdb23b50b2e88ae334c822aa802ea36787b7071d8c44f87c3757"
+        "installed_hash": "ee4cb310e5ee816ca6c68fbb4315db7005ff77749746c1a3fc99f4c560bd30bc"
       },
       "update-proxies": {
         "tracking": "local",
@@ -399,7 +403,7 @@
     "claude": {
       "mr-echat": {
         "tracking": "local",
-        "installed_hash": "b281fbe00e3a53a84b9235ab9960a0c615b4c6a50cfd7f20509a2a0f4de1065b"
+        "installed_hash": "c51d9b5bf7f4668264e3e67aea54a1d9821ce3bd86e8ffbe605e15d51d72fdbb"
       },
       "review-gpt": {
         "tracking": "local",

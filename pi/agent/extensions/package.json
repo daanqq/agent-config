@@ -2,6 +2,8 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
+    "effect": "4.0.0-rc.117",
+    "firecrawl": "4.41.0",
     "undici": "8.9.0"
   }
 }
