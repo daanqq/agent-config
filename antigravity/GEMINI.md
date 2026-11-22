@@ -45,9 +45,11 @@
 - **Чтение больших файлов по секциям**: файлы длиннее 200 строк не читай целиком без `StartLine`/`EndLine`. Сначала найди номера строк через `fff` (`grep`/`multi_grep`) или `rg -n`, затем читай нужный диапазон по мере необходимости (≤ 200 строк за один вызов `read_file`).
 - **Ограничение вывода команд**: при запуске `rg`, `find`, `git diff`, `ls` через `run_command` по умолчанию добавляй `| head -n 60` или `-l`, чтобы не упираться в лимит обрезки (10KB) и не вызывать повторное чтение фоновых логов.
 
-## Subagents
+## T3 Code MCP and subagents
 
-В T3 Code не используй встроенный `invoke_subagent` для задач с поиском и командами: у его дочерних сессий запросы разрешений на `fff` и `run_command` в ACP уходят в таймаут 60 с. Запускай дочерних агентов через `delegate_task` (инструмент T3 Code или ACP fallback `acp-mcp-call delegate_task`, если инструмент не объявлен в схеме).
+В T3 Code не используй встроенный `invoke_subagent` для задач с поиском и командами: у его дочерних сессий запросы разрешений на `fff` и `run_command` в ACP уходят в таймаут 60 с. Запускай дочерних агентов через `delegate_task`.
+
+Если нужного инструмента `t3-code` (`delegate_task`, `schedule_task`, `t3_thread_launch`, `html_render`, `preview_open`, `preview_act`, `t3_project_update` и др.) нет в `<mcp_servers>`, не вызывай его через `call_mcp_tool` (даже если `<tool>.json` лежит в `mcp/t3-code/`): сразу используй ACP fallback `acp-mcp-call <tool>` из `<t3_code_instructions>`, читая схему параметров из `<tool>.json`.
 
 # Output
 
