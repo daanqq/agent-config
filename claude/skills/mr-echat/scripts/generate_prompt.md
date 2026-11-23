@@ -6,7 +6,7 @@ The final change set is `<branch_diff>` (already committed on the branch against
 
 ## Commit title
 
-Write it only when `<title_required>` is `yes`. It names the pending commit, not the whole branch.
+Write it only when `<title_required>` is `yes`. It names the pending commit, not the whole branch. When `<pending_paths>` is `(none)`, it is the merge request title for `<branch_diff>`.
 
 - English, lowercase, imperative mood;
 - start with `add`, `fix`, `make`, `update`, `remove`, or `revert` when one fits;

@@ -53,7 +53,12 @@ Stop if the branch has no unambiguous T-ID, a task branch has no parent feature
 target, the repository/template is invalid, `glab` cannot inspect GitLab, or the
 requested operation conflicts with the prepared state.
 
-When `included_paths` is empty, an existing MR is updated without a commit: no title is generated, and `ship` pushes once only to verify that the source branch is synchronized.
+When `included_paths` is empty:
+
+- if an open MR already exists, it is updated without a commit: no title is generated, and `ship` pushes once only to verify that the source branch is synchronized;
+- if no open MR exists and the branch already has commits ahead of the target branch (`scope: "commits"`), `prepare` builds `branch.diff` without touching `HEAD` or the index, `generate` writes the MR title and description from `branch.diff`, and `ship` pushes and creates the MR without creating a new commit (do not run `git reset` to force a commit).
+
+If the repository has no `.gitlab/merge_request_templates/Default.md`, `prepare` falls back to a built-in minimal template with the SpaceHub task link and reports it in `warnings` (both `prepare` and `generate`).
 
 ## Generate the title and description
 
@@ -79,8 +84,8 @@ Pass `--title` only when the user supplied a title; the helper appends ` #T-<id>
 Before commit, push, or GitLab modification, show the user:
 
 - repository and branch;
-- exact scope (`staged` or `all`) and included paths;
-- commit title when a commit will be created;
+- exact scope (`staged`, `all`, or `commits`) and included paths;
+- commit or MR title when a commit or a new MR will be created;
 - whether the workflow will create or update an MR;
 - target branch when known;
 - the generated MR description.

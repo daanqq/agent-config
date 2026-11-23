@@ -730,16 +730,39 @@ class GenerationFormatTests(unittest.TestCase):
         self.assertEqual(saved.read_text(), "<fix>wrong</fix>")
         self.assertEqual(self.state_path.read_text(), "{}\n")
 
-    def test_title_not_required_with_user_title_or_no_pending_commit(self) -> None:
-        for title, paths in (("fix supplied title", ["file.txt"]), (None, [])):
-            with self.subTest(title=title):
+    def test_title_not_required_with_user_title_or_existing_mr_without_pending_commit(self) -> None:
+        (self.workspace / "current-description.md").write_text("Current.\n", encoding="utf-8")
+        for title, paths, existing_mr in (
+            ("fix supplied title", ["file.txt"], None),
+            (None, [], {"ref": "1"}),
+        ):
+            with self.subTest(title=title, existing_mr=bool(existing_mr)):
                 self.state["included_paths"] = paths
+                self.state["existing_mr"] = existing_mr
                 with patch.object(mr_echat, "ask_model", return_value=(
                     "<description>Text.</description>"
                 )) as ask:
                     result = self.generate(title)
                 self.assertEqual(ask.call_count, 1)
                 self.assertEqual(result["title"], f"{title} #T-1" if title else None)
+
+    def test_title_required_for_clean_committed_branch_without_mr(self) -> None:
+        self.state["included_paths"] = []
+        self.state["existing_mr"] = None
+        with patch.object(mr_echat, "ask_model", return_value=(
+            "<title>update agent docs</title><description>Text.</description>"
+        )) as ask:
+            result = self.generate()
+        self.assertEqual(ask.call_count, 1)
+        self.assertIn("<title_required>\nyes\n</title_required>", ask.call_args.args[0])
+        self.assertEqual(result["title"], "update agent docs #T-1")
+        self.assertTrue(Path(result["title_path"]).is_file())
+
+    def test_generate_warns_when_fallback_template_was_used(self) -> None:
+        self.state["template_fallback"] = True
+        with patch.object(mr_echat, "ask_model", return_value="<title>fix docs</title><description>Text.</description>"):
+            warnings = self.generate()["warnings"]
+        self.assertIn(mr_echat.FALLBACK_TEMPLATE_WARNING, warnings)
 
     def test_semantically_empty_title_is_not_a_format_retry(self) -> None:
         with patch.object(mr_echat, "ask_model", return_value=(
@@ -748,6 +771,106 @@ class GenerationFormatTests(unittest.TestCase):
             with self.assertRaisesRegex(mr_echat.WorkflowError, "commit title is empty"):
                 self.generate()
         self.assertEqual(ask.call_count, 1)
+
+
+class CommittedBranchAndFallbackTemplateTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        root = Path(self.directory.name)
+        self.remote = root / "remote.git"
+        self.repo = root / "repo"
+        subprocess.run(["git", "init", "--bare", "--initial-branch=main", self.remote], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(["git", "clone", str(self.remote), str(self.repo)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.git("config", "user.name", "Test User")
+        self.git("config", "user.email", "test@example.com")
+        self.commit_file("base.txt", "base")
+        self.git("push", "-u", "origin", "main")
+        self.git("switch", "-c", "feature/T-5509")
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=self.repo, check=True, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        ).stdout.strip()
+
+    def commit_file(self, name: str, content: str, message: str | None = None) -> str:
+        (self.repo / name).write_text(content + "\n", encoding="utf-8")
+        self.git("add", name)
+        self.git("commit", "-m", message or content)
+        return self.git("rev-parse", "HEAD")
+
+    def test_clean_committed_branch_without_mr_prepares_and_ships_without_new_commit(self) -> None:
+        template = self.repo / ".gitlab" / "merge_request_templates" / "Default.md"
+        template.parent.mkdir(parents=True)
+        template.write_text("https://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
+        self.git("add", ".gitlab/merge_request_templates/Default.md")
+        head_before = self.commit_file("AGENTS.md", "updated docs", "update docs #T-5509")
+        index_before = self.git("write-tree")
+
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            prepared = mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=None, target_branch=None))
+        self.addCleanup(shutil.rmtree, prepared["workspace"], ignore_errors=True)
+
+        self.assertEqual(prepared["scope"], "commits")
+        self.assertEqual(prepared["included_paths"], [])
+        self.assertEqual(prepared["target_branch"], "main")
+        self.assertEqual(prepared["warnings"], [])
+        self.assertIn("updated docs", Path(prepared["branch_diff_path"]).read_text(encoding="utf-8"))
+        self.assertEqual(self.git("rev-parse", "HEAD"), head_before)
+        self.assertEqual(self.git("write-tree"), index_before)
+
+        with patch.object(mr_echat, "ask_model", return_value="<title>update docs</title><description>Обновлена документация.</description>"):
+            generated = mr_echat.generate(SimpleNamespace(state=prepared["state_path"], notes_file=None, title=None))
+        self.assertEqual(generated["title"], "update docs #T-5509")
+        self.assertTrue(Path(generated["title_path"]).is_file())
+
+        def fake_glab(_repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+            if args[:2] == ("api", "user"):
+                return subprocess.CompletedProcess(args=args, returncode=0, stdout='{"username":"dev"}', stderr="")
+            if args[:2] == ("mr", "create"):
+                return subprocess.CompletedProcess(
+                    args=args, returncode=0, stdout="https://gitlab.example.test/group/repo/-/merge_requests/42\n", stderr=""
+                )
+            raise AssertionError(f"unexpected glab call: {args}")
+
+        with (
+            patch.object(mr_echat, "existing_mr", side_effect=[None, {"ref": "42", "url": "https://gitlab.example.test/group/repo/-/merge_requests/42", "target_branch": "main"}]),
+            patch.object(mr_echat, "glab", side_effect=fake_glab) as glab_mock,
+            patch.object(mr_echat, "commit") as commit_mock,
+        ):
+            shipped = mr_echat.ship(SimpleNamespace(state=prepared["state_path"], force_with_lease=False))
+
+        commit_mock.assert_not_called()
+        self.assertEqual(shipped["status"], "created")
+        self.assertEqual(shipped["commit"], head_before)
+        self.assertEqual(shipped["committed_paths"], [])
+        self.assertEqual(self.git("rev-parse", "HEAD"), head_before)
+        self.assertEqual(self.git("write-tree"), index_before)
+        create_calls = [call.args for call in glab_mock.call_args_list if call.args[1:3] == ("mr", "create")]
+        self.assertEqual(len(create_calls), 1)
+        self.assertIn("update docs #T-5509", create_calls[0])
+
+    def test_clean_branch_with_no_commits_ahead_fails_and_preserves_head_and_index(self) -> None:
+        head_before = self.git("rev-parse", "HEAD")
+        index_before = self.git("write-tree")
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            with self.assertRaisesRegex(mr_echat.WorkflowError, "no changes to commit and no existing MR to update"):
+                mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=None, target_branch=None))
+        self.assertEqual(self.git("rev-parse", "HEAD"), head_before)
+        self.assertEqual(self.git("write-tree"), index_before)
+
+    def test_missing_mr_template_uses_builtin_fallback_with_warning(self) -> None:
+        self.commit_file("AGENTS.md", "desktop docs", "update desktop docs #T-5509")
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            prepared = mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=None, target_branch=None))
+        self.addCleanup(shutil.rmtree, prepared["workspace"], ignore_errors=True)
+
+        self.assertTrue(prepared["template_fallback"])
+        self.assertEqual(prepared["warnings"], [mr_echat.FALLBACK_TEMPLATE_WARNING])
+        template_text = Path(prepared["template_path"]).read_text(encoding="utf-8")
+        self.assertIn("https://spacehub.esoft.tech/entity/T-5509", template_text)
+        self.assertIn("### Краткое описание изменений", template_text)
 
 
 if __name__ == "__main__":

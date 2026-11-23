@@ -245,10 +245,22 @@ def status_fingerprint(repo: Path) -> str:
     return digest.hexdigest()
 
 
-def read_template(repo: Path, task_id: str) -> str:
+FALLBACK_MR_TEMPLATE = (
+    "Ссылка на задачу: https://spacehub.esoft.tech/entity/{task_id}\n\n"
+    "### Краткое описание изменений\n\n"
+    "### Что нужно проверить тестировщикам\n\n"
+    "### Миграции\n\n"
+    "Нет.\n"
+)
+FALLBACK_TEMPLATE_WARNING = (
+    "Repository has no .gitlab/merge_request_templates/Default.md; used the built-in fallback MR template."
+)
+
+
+def resolve_template(repo: Path, task_id: str) -> tuple[str, bool]:
     path = repo / ".gitlab" / "merge_request_templates" / "Default.md"
     if not path.is_file():
-        raise WorkflowError(f"merge request template not found: {path}")
+        return FALLBACK_MR_TEMPLATE.format(task_id=task_id), True
     text = path.read_text(encoding="utf-8")
     def replace_placeholder(match: re.Match[str]) -> str:
         suffix = match.group(1)
@@ -258,12 +270,17 @@ def read_template(repo: Path, task_id: str) -> str:
             return f"https://spacehub.esoft.tech/entity/{task_id}"
         raise WorkflowError(f"unresolved task placeholder in MR template: {match.group(0)}")
 
-    return re.sub(
+    rendered = re.sub(
         r"https?://(?:spacehub\.esoft\.tech/entity/T-|(?:youtrack|urs)\.esoft\.tech/issue/EUTP-)(<[^>]+>|[^\s)<>\"']*)",
         replace_placeholder,
         text,
         flags=re.IGNORECASE,
     )
+    return rendered, False
+
+
+def read_template(repo: Path, task_id: str) -> str:
+    return resolve_template(repo, task_id)[0]
 
 
 def existing_mr(repo: Path, branch: str) -> dict[str, Any] | None:
@@ -375,11 +392,22 @@ def ensure_target_exists(repo: Path, target: str) -> None:
         raise WorkflowError(f"target branch does not exist on origin: {target}")
 
 
-def branch_diff(repo: Path, target: str, output: Path) -> None:
+def target_ref(repo: Path, target: str) -> str:
     fetch = git(repo, "fetch", "--quiet", "origin", target, check=False)
     remote = f"origin/{target}"
-    ref = remote if not fetch.returncode and not git(repo, "rev-parse", "--verify", "--quiet", remote, check=False).returncode else target
-    result = git(repo, *diff_args(f"{ref}...HEAD"), check=False)
+    return remote if not fetch.returncode and not git(repo, "rev-parse", "--verify", "--quiet", remote, check=False).returncode else target
+
+
+def ahead_commits(repo: Path, ref: str) -> int:
+    result = git(repo, "rev-list", "--count", f"{ref}..HEAD", check=False)
+    if result.returncode or not result.stdout.strip().isdigit():
+        raise WorkflowError(f"cannot count commits ahead of {ref}: {result.stderr.strip()}")
+    return int(result.stdout.strip())
+
+
+def branch_diff(repo: Path, target: str, output: Path, *, ref: str | None = None) -> None:
+    resolved = ref or target_ref(repo, target)
+    result = git(repo, *diff_args(f"{resolved}...HEAD"), check=False)
     if result.returncode:
         raise WorkflowError(f"cannot build branch diff against {target}: {result.stderr.strip()}")
     output.write_text(result.stdout, encoding="utf-8")
@@ -412,8 +440,6 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     scope = "staged" if staged else "all"
     included = staged if staged else sorted(set(unstaged + untracked))
     mr = existing_mr(repo, branch)
-    if not included and not mr:
-        raise WorkflowError("no changes to commit and no existing MR to update")
 
     if args.target_branch and git(repo, "check-ref-format", "--branch", args.target_branch, check=False).returncode:
         raise WorkflowError(f"invalid target branch name: {args.target_branch}")
@@ -430,8 +456,14 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         )
     elif not target:
         target = default_target_branch(repo)
+    resolved_target: str | None = None
     if target:
         ensure_target_exists(repo, str(target))
+        resolved_target = target_ref(repo, str(target))
+    if not included and not mr:
+        if not resolved_target or ahead_commits(repo, resolved_target) == 0:
+            raise WorkflowError("no changes to commit and no existing MR to update")
+        scope = "commits"
 
     workspace = Path(tempfile.mkdtemp(prefix=f"claude-mr-echat-{task_id.lower()}-"))
     workspace.chmod(0o700)
@@ -443,17 +475,19 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     model_diff_path.write_text(model_diff, encoding="utf-8")
 
     template_path: Path | None = None
+    template_fallback = False
     current_description_path: Path | None = None
     branch_diff_path: Path | None = None
     if target:
         branch_diff_path = workspace / "branch.diff"
-        branch_diff(repo, str(target), branch_diff_path)
+        branch_diff(repo, str(target), branch_diff_path, ref=resolved_target)
     if mr:
         current_description_path = workspace / "current-description.md"
         current_description_path.write_text(mr_description(repo, mr["ref"]), encoding="utf-8")
     else:
         template_path = workspace / "template.md"
-        template_path.write_text(read_template(repo, task_id), encoding="utf-8")
+        template_text, template_fallback = resolve_template(repo, task_id)
+        template_path.write_text(template_text, encoding="utf-8")
 
     state_path = workspace / "state.json"
     state = {
@@ -468,11 +502,13 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         "preserved_paths": sorted(set((unstaged + untracked) if staged else [])),
         "existing_mr": mr,
         "target_branch": target,
+        "template_fallback": template_fallback,
         "workspace": str(workspace),
         "committed_sha": None,
         "pushed": False,
     }
     write_json(state_path, state)
+    warnings = [FALLBACK_TEMPLATE_WARNING] if template_fallback else []
     return {
         **state,
         "state_path": str(state_path),
@@ -482,6 +518,7 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
         "current_description_path": str(current_description_path) if current_description_path else None,
         "branch_diff_path": str(branch_diff_path) if branch_diff_path else None,
         "last_task_commit_title": previous_title(repo, task_id),
+        "warnings": warnings,
     }
 
 
@@ -582,7 +619,8 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
     repo, state = load_state(args.state)
     workspace = Path(state["workspace"])
     task_id = state["task_id"]
-    title_required = bool(state["included_paths"]) and not args.title
+    needs_title = bool(state["included_paths"]) or not state.get("existing_mr")
+    title_required = needs_title and not args.title
     notes = Path(args.notes_file).expanduser().read_text(encoding="utf-8") if args.notes_file else None
     mr_path = (workspace / "current-description.md") if state.get("existing_mr") else (workspace / "template.md")
     # The related-MR block belongs to `link`; keep it away from the model and carry it over unchanged.
@@ -638,7 +676,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
 
     title_path: Path | None = None
     title: str | None = None
-    if state["included_paths"]:
+    if needs_title:
         title = normalized_title(replace_spaced_em_dash(raw_title), task_id)
         title_path = workspace / "title.txt"
         title_path.write_text(title + "\n", encoding="utf-8")
@@ -648,6 +686,9 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
     state["title_path"] = str(title_path) if title_path else None
     state["description_path"] = str(description_path)
     write_json(Path(args.state).expanduser().resolve(), state)
+    warnings = text_warnings(model, title, description)
+    if state.get("template_fallback"):
+        warnings.append(FALLBACK_TEMPLATE_WARNING)
     return {
         "status": "generated",
         "model": model,
@@ -655,7 +696,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         "title_path": state["title_path"],
         "description": description,
         "description_path": state["description_path"],
-        "warnings": text_warnings(model, title, description),
+        "warnings": warnings,
     }
 
 
