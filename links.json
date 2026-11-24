@@ -966,6 +966,10 @@
       "target": ".gemini/antigravity-cli/statusline-command.sh"
     },
     {
+      "source": "antigravity/acp-mcp-call",
+      "target": ".local/bin/acp-mcp-call"
+    },
+    {
       "source": "claude/skills/ambition",
       "target": ".gemini/config/skills/ambition"
     },
