@@ -680,15 +680,30 @@ class GenerationFormatTests(unittest.TestCase):
     def test_update_prompt_carries_the_current_description_and_keep_rules(self) -> None:
         current = "### Что нужно проверить\n\n- `npm test`: 692 теста пройдены.\n\nПричина: старая."
         (self.workspace / "current-description.md").write_text(current, encoding="utf-8")
+        (self.workspace / "branch.diff").write_text("net mr diff\n", encoding="utf-8")
+        (self.workspace / "model.diff").write_text("pending commit diff\n", encoding="utf-8")
         self.state["existing_mr"] = {"ref": "1"}
         self.state["included_paths"] = []
         with patch.object(mr_echat, "ask_model", return_value="<description>Новое.</description>") as ask:
             self.generate()
         prompt = ask.call_args.args[0]
         self.assertIn(f"<current_description>\n{current}\n</current_description>", prompt)
+        self.assertIn("<mr_diff>\nnet mr diff\n</mr_diff>", prompt)
+        self.assertIn("<pending_diff>\n(none)\n</pending_diff>", prompt)
         self.assertIn("keep every check line of the current description", prompt)
         self.assertIn("keep the reason or cause of each earlier change", prompt)
+        self.assertIn("branch-only detail was removed", prompt)
         self.assertIn("never needed", prompt)
+
+    def test_prompt_omits_pending_diff_when_user_supplies_title(self) -> None:
+        (self.workspace / "branch.diff").write_text("final mr diff\n", encoding="utf-8")
+        (self.workspace / "model.diff").write_text("-mise exec\n+.nvmrc\n", encoding="utf-8")
+        with patch.object(mr_echat, "ask_model", return_value="<description>Итог.</description>") as ask:
+            self.generate("update docs")
+        prompt = ask.call_args.args[0]
+        self.assertIn("<mr_diff>\nfinal mr diff\n</mr_diff>", prompt)
+        self.assertIn("<pending_diff>\n(none)\n</pending_diff>", prompt)
+        self.assertNotIn("mise exec", prompt)
 
     def test_generate_clean_text_has_no_warnings(self) -> None:
         with patch.object(mr_echat, "ask_model", return_value="<title>fix rendering</title><description>Исправлен рендер T-4247 в emotion.</description>"):
@@ -871,6 +886,38 @@ class CommittedBranchAndFallbackTemplateTests(unittest.TestCase):
         template_text = Path(prepared["template_path"]).read_text(encoding="utf-8")
         self.assertIn("https://spacehub.esoft.tech/entity/T-5509", template_text)
         self.assertIn("### Краткое описание изменений", template_text)
+
+    def test_staged_followup_collapses_intermediate_branch_edits_in_mr_diff(self) -> None:
+        self.commit_file("AGENTS.md", "run via mise exec", "add check commands #T-5509")
+        (self.repo / "AGENTS.md").write_text("run with .nvmrc\n", encoding="utf-8")
+        self.git("add", "AGENTS.md")
+        (self.repo / "AGENTS.md").write_text("run with .nvmrc\nwip note\n", encoding="utf-8")
+
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            prepared = mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=None, target_branch=None))
+        self.addCleanup(shutil.rmtree, prepared["workspace"], ignore_errors=True)
+
+        mr_diff = Path(prepared["branch_diff_path"]).read_text(encoding="utf-8")
+        pending_diff = Path(prepared["model_diff_path"]).read_text(encoding="utf-8")
+        self.assertIn("+run with .nvmrc", mr_diff)
+        self.assertNotIn("mise exec", mr_diff)
+        self.assertNotIn("wip note", mr_diff)
+        self.assertIn("-run via mise exec", pending_diff)
+        self.assertIn("+run with .nvmrc", pending_diff)
+
+    def test_unstaged_followup_collapses_intermediate_branch_edits_in_mr_diff(self) -> None:
+        self.commit_file("AGENTS.md", "run via mise exec", "add check commands #T-5509")
+        (self.repo / "AGENTS.md").write_text("run with .nvmrc\n", encoding="utf-8")
+        (self.repo / "extra.md").write_text("extra doc\n", encoding="utf-8")
+
+        with patch.object(mr_echat, "existing_mr", return_value=None):
+            prepared = mr_echat.prepare(SimpleNamespace(repo=str(self.repo), branch=None, target_branch=None))
+        self.addCleanup(shutil.rmtree, prepared["workspace"], ignore_errors=True)
+
+        mr_diff = Path(prepared["branch_diff_path"]).read_text(encoding="utf-8")
+        self.assertIn("+run with .nvmrc", mr_diff)
+        self.assertIn("+extra doc", mr_diff)
+        self.assertNotIn("mise exec", mr_diff)
 
 
 if __name__ == "__main__":

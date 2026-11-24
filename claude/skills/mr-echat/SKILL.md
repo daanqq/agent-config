@@ -62,10 +62,10 @@ If the repository has no `.gitlab/merge_request_templates/Default.md`, `prepare`
 
 ## Generate the title and description
 
-`pi` with `openai-codex/gpt-5.6-luna` writes the commit title and the MR description; the prompt with all writing rules is `scripts/generate_prompt.md`. The model sees only the diffs and the MR text, so write the conversation evidence to `<workspace>/notes.md` first:
+`pi` with `openai-codex/gpt-5.6-luna` writes the commit title and the MR description; the prompt with all writing rules is `scripts/generate_prompt.md`. The model sees only the diffs and the MR text, so write the conversation evidence to `<workspace>/notes.md` first, framed as the final MR state against the target branch (not a changelog of commit-to-commit edits inside the branch; if a follow-up commit fixes or removes something introduced earlier on this same branch, describe only the final result):
 
-- confirmed user intent and implementation decisions;
-- checks that actually ran, with their exact commands and results;
+- confirmed user intent and implementation decisions for the final MR;
+- checks that actually ran and remain valid, with their exact commands and results;
 - `No checks were reported.` when none ran.
 
 Then run, with a Bash timeout of 600000 ms:
@@ -90,7 +90,7 @@ Before commit, push, or GitLab modification, show the user:
 - target branch when known;
 - the generated MR description.
 
-Ask for one explicit confirmation covering commit, push, and MR create/update. Invoking this skill, by the user or by the model, authorizes preparation, but not these writes without this confirmation. Under [`task-to-mr`](../task-to-mr/SKILL.md), its invocation is this confirmation, for a batch too: check and correct the generated text as below, ship without asking, and list these items in its report. `needs-force-with-lease` still requires asking. If you find the generated text inaccurate, apply your corrections to `title_path` and `description_path` before showing it, and name what you changed: the confirmation must cover the exact text that ships, because a published commit title can only be fixed with a force push. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly by absolute path, without `cd` into the workspace (`ship` and `cleanup` refuse to run from inside it), keeping the ` #T-<id>` title suffix, and show the result again.
+Ask for one explicit confirmation covering commit, push, and MR create/update. Invoking this skill, by the user or by the model, authorizes preparation, but not these writes without this confirmation. Under [`task-to-mr`](../task-to-mr/SKILL.md), its invocation is this confirmation, for a batch too: check and correct the generated text as below, ship without asking, and list these items in its report. `needs-force-with-lease` still requires asking. Check that `description_path` describes the final MR as a whole against the target branch and does not narrate intermediate edits or removals of branch-only details between commits. If you find the generated text inaccurate, apply your corrections to `title_path` and `description_path` before showing it, and name what you changed: the confirmation must cover the exact text that ships, because a published commit title can only be fixed with a force push. When the user asks for text changes, edit `title_path` or `description_path` from the `generate` result directly by absolute path, without `cd` into the workspace (`ship` and `cleanup` refuse to run from inside it), keeping the ` #T-<id>` title suffix, and show the result again.
 
 ## Ship
 

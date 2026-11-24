@@ -405,12 +405,37 @@ def ahead_commits(repo: Path, ref: str) -> int:
     return int(result.stdout.strip())
 
 
-def branch_diff(repo: Path, target: str, output: Path, *, ref: str | None = None) -> None:
+def branch_diff(
+    repo: Path,
+    target: str,
+    output: Path,
+    *,
+    ref: str | None = None,
+    scope: str = "commits",
+    untracked: Sequence[str] = (),
+) -> None:
     resolved = ref or target_ref(repo, target)
-    result = git(repo, *diff_args(f"{resolved}...HEAD"), check=False)
-    if result.returncode:
-        raise WorkflowError(f"cannot build branch diff against {target}: {result.stderr.strip()}")
-    output.write_text(result.stdout, encoding="utf-8")
+    if scope in ("staged", "all"):
+        base_result = git(repo, "merge-base", resolved, "HEAD", check=False)
+        if base_result.returncode or not base_result.stdout.strip():
+            raise WorkflowError(f"cannot find merge base against {target}: {base_result.stderr.strip()}")
+        base = base_result.stdout.strip()
+        if scope == "staged":
+            result = git(repo, *diff_args("--cached", "--binary", base), check=False)
+            if result.returncode:
+                raise WorkflowError(f"cannot build MR diff against {target}: {result.stderr.strip()}")
+            content = result.stdout
+        else:
+            result = git(repo, *diff_args("--binary", base), check=False)
+            if result.returncode:
+                raise WorkflowError(f"cannot build MR diff against {target}: {result.stderr.strip()}")
+            content = result.stdout + untracked_diff(repo, list(untracked))
+    else:
+        result = git(repo, *diff_args("--binary", f"{resolved}...HEAD"), check=False)
+        if result.returncode:
+            raise WorkflowError(f"cannot build branch diff against {target}: {result.stderr.strip()}")
+        content = result.stdout
+    output.write_text(content, encoding="utf-8")
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -480,7 +505,14 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     branch_diff_path: Path | None = None
     if target:
         branch_diff_path = workspace / "branch.diff"
-        branch_diff(repo, str(target), branch_diff_path, ref=resolved_target)
+        branch_diff(
+            repo,
+            str(target),
+            branch_diff_path,
+            ref=resolved_target,
+            scope=scope,
+            untracked=untracked if scope == "all" else (),
+        )
     if mr:
         current_description_path = workspace / "current-description.md"
         current_description_path.write_text(mr_description(repo, mr["ref"]), encoding="utf-8")
@@ -625,16 +657,24 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
     mr_path = (workspace / "current-description.md") if state.get("existing_mr") else (workspace / "template.md")
     # The related-MR block belongs to `link`; keep it away from the model and carry it over unchanged.
     mr_text, related = split_related(mr_path.read_text(encoding="utf-8"))
+    mr_diff_path = workspace / "branch.diff"
+    if not mr_diff_path.is_file():
+        mr_diff_path = workspace / "model.diff"
+    pending_diff = (
+        prompt_diff(workspace / "model.diff")
+        if title_required and state["included_paths"]
+        else None
+    )
     prompt = "\n\n".join(
         (
             PROMPT_PATH.read_text(encoding="utf-8").strip(),
             prompt_section("title_required", "yes" if title_required else "no"),
             prompt_section("last_task_commit_title", previous_title(repo, task_id) if title_required else None),
-            prompt_section("pending_paths", "\n".join(state["included_paths"])),
+            prompt_section("pending_paths", "\n".join(state["included_paths"]) if title_required else None),
             prompt_section("current_description" if state.get("existing_mr") else "template", mr_text),
             prompt_section("notes", notes),
-            prompt_section("branch_diff", prompt_diff(workspace / "branch.diff")),
-            prompt_section("pending_diff", prompt_diff(workspace / "model.diff")),
+            prompt_section("mr_diff", prompt_diff(mr_diff_path)),
+            prompt_section("pending_diff", pending_diff),
         )
     )
     invalid_responses: list[str] = []
