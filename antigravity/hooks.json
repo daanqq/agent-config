@@ -22,5 +22,19 @@
         ]
       }
     ]
+  },
+  "shell-guards": {
+    "PreToolUse": [
+      {
+        "matcher": "^run_command$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/libexec/agent-config/grep-literal-glob\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }

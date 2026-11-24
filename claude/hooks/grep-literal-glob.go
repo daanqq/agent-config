@@ -1,7 +1,7 @@
-// Advisory Claude PreToolUse guard, not a shell parser or security boundary.
+// Advisory Claude and Antigravity PreToolUse guard, not a shell parser or security boundary.
 // It quotes unquoted literal include/exclude globs of direct grep commands
 // (blocking the command when a partly quoted glob cannot be quoted safely), and checks test,
-// typecheck or lint commands piped straight into grep, rg or head without
+// typecheck or lint commands piped straight into grep, rg, head or tail without
 // pipefail or a PIPESTATUS read in the very next command: the pipe drops the
 // check's exit status and can hide error lines.
 // It also rejects rm with an unquoted glob over run-check log directories,
@@ -9,9 +9,13 @@
 // and git worktree prune without --dry-run, which drops records of every
 // missing worktree of the repository, not only the agent's own.
 // Unsupported substitutions, grouping and malformed shell input fail open.
-// Contract: JSON stdin; silent exit 0 allows, exit 0 + JSON stdout with
-// updatedInput and no permissionDecision rewrites the command and keeps the
-// normal permission flow, exit 2 + stderr blocks PreToolUse.
+// Contract:
+//   - Claude Code: JSON stdin with hook_event_name="PreToolUse", tool_name="Bash",
+//     tool_input.command; silent exit 0 allows, exit 0 + JSON stdout with
+//     updatedInput and no permissionDecision rewrites the command, exit 2 + stderr blocks.
+//   - Antigravity: JSON stdin with hookEventName="PreToolUse", toolCall.name="run_command",
+//     toolCall.args.CommandLine; exit 0 + JSON stdout with decision="allow" (and optional
+//     overwrite.CommandLine) or decision="deny" + reason.
 package main
 
 import (
@@ -369,7 +373,7 @@ var (
 	assignment  = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
 	checkScript = regexp.MustCompile(`^(test|typecheck|type-check|ts-check|lint|check)(:|$)`)
 	checkTools  = map[string]bool{"vitest": true, "tsc": true, "eslint": true, "oxlint": true, "jest": true}
-	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true}
+	filters     = map[string]bool{"grep": true, "egrep": true, "fgrep": true, "rg": true, "head": true, "tail": true}
 	infoFlags   = map[string]bool{"--help": true, "--version": true, "--rules": true}
 	python      = regexp.MustCompile(`^python[0-9.]*$`)
 	testScript  = regexp.MustCompile(`(^|[/._-])tests?([/._-]|$)`)
@@ -480,7 +484,7 @@ func pipeMessage(filter string) string {
 		"and can drop error lines such as the Vitest Errors block. Run it through the runner, "+
 		"which keeps the status and the full log and prints the tail: "+
 		"python3 \"$HOME/.claude/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
-		"grep the printed log path if you need specific lines. Piping into tail, set -o pipefail "+
+		"grep the printed log path if you need specific lines. Setting set -o pipefail "+
 		"before the pipe, or reading ${PIPESTATUS[0]} in the very next command is also accepted. "+
 		"The command was not executed or rewritten.\n", filter)
 }
@@ -644,15 +648,68 @@ func validUnicodeEscapes(raw json.RawMessage) bool {
 	return true
 }
 
+func writeAntigravityDecision(payload map[string]any) int {
+	output, err := json.Marshal(payload)
+	if err != nil {
+		return 0
+	}
+	fmt.Println(string(output))
+	return 0
+}
+
+func runAntigravity(payload map[string]json.RawMessage) int {
+	var event string
+	if json.Unmarshal(payload["hookEventName"], &event) != nil || event != "PreToolUse" {
+		return 0
+	}
+	var toolCall map[string]json.RawMessage
+	var tool string
+	var args map[string]json.RawMessage
+	var command string
+	if json.Unmarshal(payload["toolCall"], &toolCall) != nil ||
+		json.Unmarshal(toolCall["name"], &tool) != nil || tool != "run_command" ||
+		json.Unmarshal(toolCall["args"], &args) != nil ||
+		json.Unmarshal(args["CommandLine"], &command) != nil || !validUnicodeEscapes(args["CommandLine"]) {
+		return writeAntigravityDecision(map[string]any{"decision": "allow"})
+	}
+	message, edits := detect(command)
+	if message != "" {
+		return writeAntigravityDecision(map[string]any{
+			"decision": "deny",
+			"reason":   strings.TrimSpace(message),
+		})
+	}
+	if len(edits) == 0 {
+		return writeAntigravityDecision(map[string]any{"decision": "allow"})
+	}
+	rewritten := apply(command, edits)
+	if again, more := detect(rewritten); again != "" || len(more) > 0 {
+		return writeAntigravityDecision(map[string]any{
+			"decision": "deny",
+			"reason":   strings.TrimSpace(grepMessage(edits[0].option)),
+		})
+	}
+	return writeAntigravityDecision(map[string]any{
+		"decision":  "allow",
+		"overwrite": map[string]any{"CommandLine": rewritten},
+	})
+}
+
 func run() int {
 	raw, err := io.ReadAll(os.Stdin)
 	if err != nil || !utf8.Valid(raw) {
 		return 0
 	}
-	var payload, input map[string]json.RawMessage
+	var payload map[string]json.RawMessage
+	if json.Unmarshal(raw, &payload) != nil {
+		return 0
+	}
+	if _, ok := payload["hookEventName"]; ok {
+		return runAntigravity(payload)
+	}
+	var input map[string]json.RawMessage
 	var event, tool, command string
-	if json.Unmarshal(raw, &payload) != nil ||
-		json.Unmarshal(payload["hook_event_name"], &event) != nil || event != "PreToolUse" ||
+	if json.Unmarshal(payload["hook_event_name"], &event) != nil || event != "PreToolUse" ||
 		json.Unmarshal(payload["tool_name"], &tool) != nil || tool != "Bash" ||
 		json.Unmarshal(payload["tool_input"], &input) != nil ||
 		json.Unmarshal(input["command"], &command) != nil || !validUnicodeEscapes(input["command"]) {

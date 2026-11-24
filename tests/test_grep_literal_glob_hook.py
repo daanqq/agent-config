@@ -196,11 +196,17 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             "bash test/allocation.test.sh 2>&1 | grep -E 'pass|FAIL'",
             "sh -x tests/run.sh | head",
             "./scripts/run-tests.sh | rg FAIL",
+            "npm run test:run 2>&1 | tail -40",
+            "mise exec -- npm run test:run 2>&1 | tail -40",
+            "cd tidy-client && mise exec -- npm run lint -- --quiet && TZ=UTC mise exec -- npm run test:coverage -- --no-cache | tail -n 30",
+            "yarn ts-check --affected 2>&1 | tail -6",
+            "python3 -m unittest discover -s tests 2>&1 | tail -5",
+            "bash test/allocation.test.sh 2>&1 | tail -5",
         ], True)
 
     def test_check_output_kept_or_unrelated_pipes_allow(self):
         self.check_pipes([
-            "npm run test:run 2>&1 | tail -40",
+            "set -o pipefail; npm run test:run 2>&1 | tail -40",
             "set -o pipefail; npm run test:run | grep FAIL",
             "cd x && set -euo pipefail && npm test | rg x",
             "npm run test:run | tee log; echo ${PIPESTATUS[0]}",
@@ -213,23 +219,21 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             'python3 run-check.py --tail 40 -- n exec "$(cat .nvmrc)" npm run test:run',
             'sh -c "npm test | grep x"',
             "npm test",
-            "mise exec -- npm run test:run 2>&1 | tail -40",
             "mise exec node@24 npm test | grep x",
             "yarn add -D vitest | tail -3",
             "pnpm exec prettier --check . | head",
-            "yarn ts-check --affected 2>&1 | tail -6",
             "npx oxlint --rules | grep no-unused",
             "npx eslint --help | grep -- --fix",
             "mise exec -- npx tsc --version | head -1",
             "npx vitest --help | rg shuffle",
-            "python3 -m unittest discover -s tests 2>&1 | tail -5",
+            "set -o pipefail; python3 -m unittest discover -s tests 2>&1 | tail -5",
             "set -o pipefail; python3 -m unittest | grep FAIL",
             "python3 -m json.tool data.json | head",
             "python3 script.py -m unittest | grep x",
             "python3 -m unittest --help | grep discover",
             "npm test 2>&1 | grep passing; echo test=${PIPESTATUS[0]}",
             'npm test | grep x | head\necho "${PIPESTATUS[@]}"',
-            "bash test/allocation.test.sh 2>&1 | tail -5",
+            "set -o pipefail; bash test/allocation.test.sh 2>&1 | tail -5",
             "bash scripts/build.sh | grep error",
             "bash latest.sh | grep x",
         ], False)
@@ -294,9 +298,10 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             'cd tidy-client-T-3594; export N_PREFIX=$HOME/.n; V=$(cat .nvmrc); n exec $V npx vitest run tests/unit/MessagesNew.test.ts 2>&1 | grep -E "×|Tests "',
             'cd tidy-client-T-3594; export N_PREFIX=$HOME/.n; V=$(cat .nvmrc); n exec $V npm run typecheck:test 2>&1 | grep -c "error TS"',
             'V=${NODE_VERSION}; n exec $V npm test | head',
+            'V=$(cat .nvmrc); n exec $V npm run test:run 2>&1 | tail -40',
         ], True)
         self.check_pipes([
-            'V=$(cat .nvmrc); n exec $V npm run test:run 2>&1 | tail -40',
+            'set -o pipefail; V=$(cat .nvmrc); n exec $V npm run test:run 2>&1 | tail -40',
             'echo $(cat .nvmrc) | grep 24',
             '"V"=$(cat .nvmrc); npm test | grep x',
             'npm test $(cat args) | grep x',
@@ -337,6 +342,45 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
         handlers = [handler for group in settings["hooks"]["PreToolUse"]
                     if group["matcher"] == "Bash" for handler in group["hooks"]]
         self.assertEqual(sum(handler["command"] == HOOK_COMMAND for handler in handlers), 1)
+        for rel in ("antigravity/hooks.json", "antigravity/t3-hooks.json"):
+            ag_hooks = json.loads((ROOT / rel).read_text())
+            ag_handlers = [handler for entry in ag_hooks.values()
+                           for group in entry.get("PreToolUse", [])
+                           if group.get("matcher") == "^run_command$"
+                           for handler in group.get("hooks", [])]
+            self.assertEqual(sum(handler.get("command") == HOOK_COMMAND for handler in ag_handlers), 1, rel)
+
+    def test_antigravity_pretooluse_contract(self):
+        def invoke_ag(command, tool_name="run_command"):
+            payload = {
+                "hookEventName": "PreToolUse",
+                "toolCall": {"id": "toolu_1", "name": tool_name, "args": {"CommandLine": command}},
+                "cwd": "/nonexistent",
+            }
+            return subprocess.run([str(self.hook)], input=json.dumps(payload),
+                                  text=True, capture_output=True, timeout=5)
+
+        denied = invoke_ag("cd repo && TZ=UTC mise exec -- npm run test:coverage -- --no-cache | tail -n 30")
+        self.assertEqual(denied.returncode, 0, denied.stderr)
+        self.assertEqual(denied.stderr, "")
+        denied_out = json.loads(denied.stdout)
+        self.assertEqual(denied_out["decision"], "deny")
+        self.assertIn("tail", denied_out["reason"])
+
+        allowed = invoke_ag("set -o pipefail; TZ=UTC mise exec -- npm run test:coverage -- --no-cache | tail -n 30")
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+        self.assertEqual(json.loads(allowed.stdout), {"decision": "allow"})
+
+        rewritten = invoke_ag("grep -R --include=*.json foo .")
+        self.assertEqual(rewritten.returncode, 0, rewritten.stderr)
+        self.assertEqual(json.loads(rewritten.stdout), {
+            "decision": "allow",
+            "overwrite": {"CommandLine": "grep -R --include='*.json' foo ."},
+        })
+
+        other = invoke_ag("npm test | tail -n 5", tool_name="read_file")
+        self.assertEqual(other.returncode, 0, other.stderr)
+        self.assertEqual(json.loads(other.stdout), {"decision": "allow"})
 
     def test_install_builds_native_hook_and_preserves_it_on_build_failure(self):
         with tempfile.TemporaryDirectory(prefix="grep-install-test-") as directory:
