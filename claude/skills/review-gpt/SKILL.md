@@ -25,6 +25,7 @@ The reviewer sees nothing of this conversation, so the rest of the brief must st
 - Repository path(s) and the review scope in `code-review` terms: `branch` with its fixed point, `working-tree`, or `all`. For multiple repositories, list each.
 - Goal of the change: ticket id and its requirement, in your own summary. This is the spec for the Spec axis.
 - Agreed constraints and deliberate decisions, so they are not reported as defects.
+- Already-verified check commands when the environment needs non-obvious flags (for example, a working offline `helm template` command when `tidy-deploy` is touched; confirm a passing baseline render before testing negative cases).
 - Extra focus from the arguments.
 - Instructions: read-only, do not modify files or apply fixes. Number findings `S1`, `S2`, ... Flag code, tests, or guards the goal does not need. Answer in Russian.
 
@@ -46,20 +47,7 @@ Call `orchestrator_capabilities` once, then `delegate_task` with:
 
 The child is not tool-restricted the way `--tools read,bash` restricts the CLI, so note `git status --short` of each reviewed repository before the start and confirm it is unchanged after the reply. After the notification, read the reply from `task_status` and record the `model` and `options` it reports. Every round and every repeat review is a fresh `delegate_task` with the full brief, never `t3_thread_send` to an earlier child. Before `task_cancel` or replacing any delegate, call `task_status`: if it is `completed`, read and triage its reply first; `task_cancel` on a finished task returns `completed` and discards nothing, but the reply stays unread. A timeout, error, or empty reply that is not a GPT quota stop is not approval: `task_cancel` the task and start it once more; a second failure is a blocker for the user. If Codex or the model is missing from `orchestrator_capabilities`, report that as a blocker; never substitute another model or switch to the CLI unasked.
 
-**GPT quota.** A Codex child does not report an exhausted quota: on 2026-11-10 two children got HTTP 429 and waited silently for the retry time the server named (1-2 hours), with nothing in their log. So check the quota before every Codex round instead of waiting:
-
-1. Read `~/.cache/review-gpt/quota-until` (an ISO 8601 time written by any thread). If that time is in the future, the quota is exhausted; skip the probe.
-2. Otherwise probe once (the probe only checks the quota; the review never runs through pi):
-
-   ```bash
-   echo "Reply with the single word: ok" | timeout 120 pi --print --no-session --no-tools --no-context-files --no-skills --no-extensions --no-prompt-templates --no-approve --model openai-codex/<model>
-   ```
-
-   `ok` means the quota is available: start the round. Output with `usage limit` means it is exhausted: write the reset time to `~/.cache/review-gpt/quota-until` (from `try again at …` in the output, otherwise one hour from now; create the directory if needed) so that other threads skip Codex too. Any other failure is not a quota stop: start the round anyway.
-
-The quota is also exhausted when a child's result, error, or `task_status` contains `usage limit`; record it the same way. If a child you started is still `running` long after its last progress, probe as in step 2 before deciding anything.
-
-On an exhausted quota with `mode=auto`, run this and every later round with `target: {providerInstanceId: "claudeAgent", model: "claude-sonnet-5-5", options: {effort: "high"}}` without asking, with the same brief plus `Use the code-review skill for the review process and report format.`, and report the switch (rounds, model) in the final summary. Triage replies of already completed GPT children before the switch. Without `mode=auto`, report the quota stop as a blocker.
+**GPT quota fallback.** Do not run pre-round quota probes. If a Codex child's result, error, or `task_status` reports an exhausted quota (`usage limit`), then with `mode=auto` fall back as a last resort for this and later rounds to `target: {providerInstanceId: "antigravity_antigravitywork", model: "gemini-4-neon", options: {thought_level: "high"}}` without asking, using the same brief plus `Use the code-review skill for the review process and report format.`, and report the switch (rounds, model) in the final summary. Triage replies of already completed GPT children before the switch. Without `mode=auto`, report the quota stop as a blocker.
 
 ### CLI
 
@@ -95,8 +83,8 @@ Keep a ledger in the conversation: id, grade, outcome (`fixed`, `declined`, `dis
 
 1. Fix every open blocker and should with the smallest change; prefer deleting or narrowing code over a new lock, cache, helper, or option. Decline nits and out-of-goal findings in one line each; they become follow-ups. A finding that needs a product decision is `needs user`: do not guess it.
 2. Disagree with evidence (file:line, test, output) when the finding is wrong. Never agree just to end the loop.
-3. Rerun the checks that cover the fixes and compare `git diff --shortstat <base>` with the previous round. If review grew the diff beyond the goal, cut first.
-4. Start the next round only while a blocker or should is open or a fix changed behavior code. Reuse the round 1 brief and add the ledger and the instruction: review only code changed since the last round and the open ids; mark each old id `resolved` or `still open: <reason>`.
+3. Lock each fixed invariant with a permanent test (or live check against the task stand when runtime behavior cannot be mocked honestly), rerun the checks that cover the fixes, and compare `git diff --shortstat <base>` with the previous round. If review grew the diff beyond the goal, cut first.
+4. Start the next round only while a blocker or should is open or a fix changed behavior code. Reuse the round 1 brief and add the ledger, the full text of still-open findings, already-verified check commands from earlier rounds (including verified offline `helm template` invocations when `tidy-deploy` is touched), and the instruction: review only code changed since the last round and the open ids; mark each old id `resolved` or `still open: <reason>`.
 
 Budget: 3 rounds. Extend to 5 only for security, permissions, data loss, or state and concurrency, while a blocker or should stays open with evidence. A round with no blocker or should ends the loop; declined nits and comment or format-only fixes need no new round.
 
