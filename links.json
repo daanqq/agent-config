@@ -970,6 +970,10 @@
       "target": ".local/bin/acp-mcp-call"
     },
     {
+      "source": "antigravity/sph-issues-mcp.mjs",
+      "target": ".local/bin/sph-issues-mcp"
+    },
+    {
       "source": "claude/skills/ambition",
       "target": ".gemini/config/skills/ambition"
     },

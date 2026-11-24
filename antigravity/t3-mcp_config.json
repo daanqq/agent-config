@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "fff": {
-      "command": "/home/user/.local/bin/fff-mcp",
+      "command": "fff-mcp",
       "args": [],
       "tools": {
         "find_files": {
@@ -26,14 +26,9 @@
         "--chromeArg=--remote-debugging-port=0"
       ]
     },
-    "figma": {
-      "url": "https://mcp.figma.com/mcp"
-    },
     "sph-issues": {
-      "command": "node",
-      "args": [
-        "/home/user/.gemini/config/sph-issues-mcp.mjs"
-      ],
+      "command": "sph-issues-mcp",
+      "args": [],
       "tools": {
         "get_issue": {
           "eager": true

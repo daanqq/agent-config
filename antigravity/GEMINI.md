@@ -49,7 +49,11 @@
 
 В T3 Code не используй встроенный `invoke_subagent` для задач с поиском и командами: у его дочерних сессий запросы разрешений на `fff` и `run_command` в ACP уходят в таймаут 60 с. Запускай дочерних агентов через `delegate_task`.
 
-Если нужного инструмента `t3-code` (`delegate_task`, `schedule_task`, `t3_thread_launch`, `html_render`, `preview_open`, `preview_act`, `t3_project_update` и др.) нет в `<mcp_servers>`, не вызывай его через `call_mcp_tool` (даже если `<tool>.json` лежит в `mcp/t3-code/`): сразу используй ACP fallback `acp-mcp-call <tool>` из `<t3_code_instructions>`, читая схему параметров из `<tool>.json`.
+Если нужного инструмента `t3-code` (`delegate_task`, `schedule_task`, `t3_thread_launch`, `html_render`, `preview_open`, `preview_act`, `t3_project_update` и др.) нет в `<mcp_servers>`, не вызывай его через `call_mcp_tool` (даже если `<tool>.json` лежит в `mcp/t3-code/`): сразу используй ACP fallback `acp-mcp-call <tool> - <<'JSON'` (или `acp-mcp-call <tool> '<json>'`), читая схему параметров из `<tool>.json`.
+
+Figma MCP в Antigravity ACP не работает из-за OAuth; для чтения макетов и узлов Figma делегируй read-only задачу в провайдер `codex` через `delegate_task` (там подключён `https://mcp.figma.com/mcp`).
+
+При работе в изолированном worktree репозитория EChat вне `~/echat` (например `~/.t3/worktrees/tidy-client/...` после Context Handoff) общие правила стека и локальный стенд находятся в `/home/user/echat/AGENTS.md` и `/home/user/echat/echat-stand/bin/echat-stand`.
 
 # Output
 
