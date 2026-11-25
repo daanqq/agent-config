@@ -83,9 +83,8 @@ ask-first step.
    Its brief, triage, and fix loop apply unchanged. Without `delegate_task` or
    with Codex or the model missing from `orchestrator_capabilities`, ask under
    "Asking"; never fall back to pi. When the GPT quota is exhausted (the
-   signal is defined in review-gpt), switch the remaining rounds to Sonnet 5.5
-   through the Claude provider as review-gpt describes, without asking, and
-   name the switch in the report.
+   signal and fallback target are defined in `review-gpt/SKILL.md`), follow its
+   fallback rule without asking and name the switch in the report.
 7. **Publish** with [`mr-echat`](../mr-echat/SKILL.md). First stage exactly
    the task's files with `git add <paths>`, so its scope is `staged` and
    changes that existed before the task stay out of the commit. Its `notes.md` carries

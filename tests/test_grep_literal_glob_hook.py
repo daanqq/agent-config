@@ -413,6 +413,18 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             self.assertEqual(binary.read_bytes(), before)
             self.assertEqual(list(binary.parent.glob(".*")), [])
 
+    def test_blocks_make_check_targets_piped_to_head_or_tail(self):
+        for cmd in (
+            "cd ~/agent-config && make check 2>&1 | tail -n 50",
+            "make -C ~/agent-config test | head -n 20",
+        ):
+            with self.subTest(cmd=cmd):
+                result = self.invoke(cmd)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("$HOME/.agents/skills/prove-it-works/scripts/run-check.py", result.stderr)
+        allowed = self.invoke("make plan | head -n 20")
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

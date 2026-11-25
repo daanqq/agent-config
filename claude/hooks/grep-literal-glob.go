@@ -469,6 +469,25 @@ wrappers:
 		}
 		// yarn tsc, pnpm exec eslint and the like run the tool directly.
 		return len(args) > 0 && (args[0] == "t" || checkScript.MatchString(args[0]) || checkTools[args[0]])
+	case "make":
+		skipNext := false
+		for _, w := range words[i+1:] {
+			text := string(w.text)
+			if skipNext {
+				skipNext = false
+				continue
+			}
+			if text == "-C" || text == "-f" || text == "-I" || text == "-o" || text == "-W" || text == "--directory" || text == "--file" || text == "--makefile" {
+				skipNext = true
+				continue
+			}
+			if strings.HasPrefix(text, "-") || strings.Contains(text, "=") {
+				continue
+			}
+			if checkScript.MatchString(text) || checkTools[text] {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -483,7 +502,7 @@ func pipeMessage(filter string) string {
 	return fmt.Sprintf("A test, typecheck or lint command piped into %s loses its exit status "+
 		"and can drop error lines such as the Vitest Errors block. Run it through the runner, "+
 		"which keeps the status and the full log and prints the tail: "+
-		"python3 \"$HOME/.claude/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
+		"python3 \"$HOME/.agents/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
 		"grep the printed log path if you need specific lines. Setting set -o pipefail "+
 		"before the pipe, or reading ${PIPESTATUS[0]} in the very next command is also accepted. "+
 		"The command was not executed or rewritten.\n", filter)
