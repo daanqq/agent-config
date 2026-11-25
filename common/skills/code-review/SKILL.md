@@ -80,7 +80,7 @@ Every finding follows the **finding contract**: `file:line`, a one-sentence summ
 - The scope manifest from step 1.
 - The finding contract and these angles, pasted in full:
   - **Line scan**: read every hunk, then its enclosing function; bugs in unchanged lines of a touched function are in scope. For each line ask what input, state, timing, or platform makes it wrong.
-  - **Removed behavior**: for every deleted or replaced line, name the invariant it enforced and find where the new code re-establishes it. A removed guard, dropped error path, narrowed validation, or deleted test covering a real case is a candidate.
+  - **Removed behavior**: for every deleted or replaced line, name the invariant it enforced and find where the new code re-establishes it. A removed guard, dropped error path, narrowed validation, or deleted test covering a real case is a candidate. When a refactor changes a transport, schema, or contract, also scan the touched modules for orphaned boundary parsers, obsolete fallback branches, and unused types or tests left behind from the old path.
   - **Language pitfalls**: falsy `0` or `""` treated as missing, `==` coercion, a missing `await` or unhandled promise, an error swallowed in `catch`, a stale closure or missing hook dependency, an effect without cleanup, state mutated in place, unstable list keys, unescaped regex metacharacters.
 - The brief: "Report every bug candidate under the finding contract, most severe first. Under 400 words."
 
