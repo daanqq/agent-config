@@ -970,6 +970,10 @@
       "target": ".local/bin/acp-mcp-call"
     },
     {
+      "source": "antigravity/agy-patch",
+      "target": ".local/bin/agy-patch"
+    },
+    {
       "source": "antigravity/sph-issues-mcp.mjs",
       "target": ".local/bin/sph-issues-mcp"
     },

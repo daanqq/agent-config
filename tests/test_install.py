@@ -469,6 +469,37 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(installer.exists(self.home / "config"))
 
+    def test_warns_and_prunes_stale_skill_symlinks_pointing_inside_repo(self):
+        skill = self.repo / "common/skills/active"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("# active\n")
+        self.mappings = [{"source": "common/skills/active", "target": ".agents/skills/active"}]
+        self.write_manifest()
+
+        skills_dir = self.home / ".agents/skills"
+        skills_dir.mkdir(parents=True)
+        stale_repo = skills_dir / "renamed-old"
+        stale_repo.symlink_to(self.repo / "common/skills/renamed-old")
+        stale_foreign = skills_dir / "external-broken"
+        stale_foreign.symlink_to("/nonexistent/outside/skill")
+
+        dry_out = io.StringIO()
+        with contextlib.redirect_stdout(dry_out):
+            self.install(apply=False)
+        self.assertIn("warning: stale symlink:", dry_out.getvalue())
+        self.assertIn("renamed-old", dry_out.getvalue())
+        self.assertNotIn("external-broken", dry_out.getvalue())
+        self.assertTrue(stale_repo.is_symlink())
+        self.assertTrue(stale_foreign.is_symlink())
+
+        apply_out = io.StringIO()
+        with contextlib.redirect_stdout(apply_out):
+            self.install(apply=True)
+        self.assertIn("prune stale symlink:", apply_out.getvalue())
+        self.assertFalse(installer.exists(stale_repo))
+        self.assertTrue(stale_foreign.is_symlink())
+        self.assertTrue((skills_dir / "active").is_symlink())
+
 
 if __name__ == "__main__":
     unittest.main()

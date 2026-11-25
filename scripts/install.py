@@ -272,14 +272,49 @@ def perform_restore(home, run, journal):
     save_journal(run, journal)
 
 
+def find_stale_skill_symlinks(repo, home, entries):
+    """Find broken symlinks inside target skill directories that point into this repository."""
+    repo, home = Path(repo).resolve(), Path(home).resolve()
+    skill_dirs = sorted({
+        Path(entry["target"]).parent
+        for entry in entries
+        if Path(entry["target"]).parent.name == "skills"
+    })
+    stale = []
+    for directory in skill_dirs:
+        if not within(directory, home) or not directory.is_dir():
+            continue
+        for item in sorted(directory.iterdir()):
+            if not item.is_symlink() or item.exists():
+                continue
+            raw_target = os.readlink(item)
+            resolved_target = Path(os.path.normpath(
+                raw_target if os.path.isabs(raw_target) else os.path.join(str(directory), raw_target)
+            ))
+            if within(resolved_target, repo):
+                stale.append((item, raw_target))
+    return stale
+
+
 def install(repo, home, manifest, apply=False, backup_existing=False):
+    repo_root = Path(repo).resolve()
     home = Path(home).resolve()
-    entries = preflight(repo, home, manifest, backup_existing)
+    entries = preflight(repo_root, home, manifest, backup_existing)
+    stale = find_stale_skill_symlinks(repo_root, home, entries)
     pending = [entry for entry in entries if not entry["skip"]]
     for entry in entries:
         action = "unchanged" if entry["skip"] else "backup + link" if entry["original"] else "link"
         print(f"{action}: {entry['target']} -> {entry['source']}")
-    if not apply or not pending:
+    for item, raw_target in stale:
+        verb = "prune stale symlink" if apply else "warning: stale symlink"
+        print(f"{verb}: {item} -> {raw_target}")
+    if not apply:
+        return None
+    for item, _ in stale:
+        safe_parent(item, home)
+        if item.is_symlink() and not item.exists():
+            item.unlink()
+    if not pending:
         return None
     root = state_root(home)
     root.mkdir(parents=True, exist_ok=True, mode=0o700)

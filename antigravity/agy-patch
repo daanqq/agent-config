@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+"""Minimal auditable cross-platform (Linux + macOS) patcher for Antigravity CLI (agy).
+
+Applies two equal-length byte replacements so the binary keeps its exact size
+and ELF/Mach-O layout:
+  1. b"ineligible"  -> b"inexigible"   (the client no longer finds `ineligibleTiers`
+     in the loadCodeAssist response, so the region check does not block sign-in)
+  2. b"https_proxy" -> b"AG_LS_PROXY"  (agy reads its proxy from AG_LS_PROXY, so
+     tools it spawns do not inherit a proxy; uppercase HTTPS_PROXY still wins if set)
+
+On macOS (darwin), strips com.apple.quarantine if present and applies an ad-hoc
+signature (`codesign --force --sign -`) so AMFI accepts the modified Mach-O binary.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import os
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+BACKUP_DIR = Path.home() / ".cache" / "agy-patch-backups"
+
+REPLACEMENTS: tuple[tuple[bytes, bytes], ...] = (
+    (b"ineligible", b"inexigible"),
+    (b"https_proxy", b"AG_LS_PROXY"),
+)
+
+
+def default_target() -> Path:
+    candidates = [Path.home() / ".local" / "bin" / "agy"]
+    if sys.platform == "darwin":
+        candidates.extend([Path("/opt/homebrew/bin/agy"), Path("/usr/local/bin/agy")])
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+def inspect_bytes(data: bytes) -> dict[str, int]:
+    return {
+        "ineligible": data.count(b"ineligible"),
+        "inexigible": data.count(b"inexigible"),
+        "https_proxy": data.count(b"https_proxy"),
+        "AG_LS_PROXY": data.count(b"AG_LS_PROXY"),
+    }
+
+
+def is_patched(counts: dict[str, int]) -> bool:
+    return (
+        counts["ineligible"] == 0
+        and counts["https_proxy"] == 0
+        and counts["inexigible"] > 0
+        and counts["AG_LS_PROXY"] > 0
+    )
+
+
+def backup_original(target: Path, data: bytes) -> Path:
+    digest = hashlib.sha256(data).hexdigest()[:12]
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    backup_path = BACKUP_DIR / f"{target.name}-{digest}.orig"
+    if not backup_path.exists():
+        tmp_fd, tmp_name = tempfile.mkstemp(dir=BACKUP_DIR, prefix=".bak-")
+        try:
+            with os.fdopen(tmp_fd, "wb") as fh:
+                fh.write(data)
+            os.chmod(tmp_name, stat.S_IMODE(target.stat().st_mode))
+            os.replace(tmp_name, backup_path)
+        except BaseException:
+            if os.path.exists(tmp_name):
+                os.unlink(tmp_name)
+            raise
+    return backup_path
+
+
+def atomic_write(target: Path, data: bytes, mode: int) -> None:
+    tmp_fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.patch-")
+    try:
+        with os.fdopen(tmp_fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp_name, mode)
+        os.replace(tmp_name, target)
+    except BaseException:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+        raise
+
+
+def post_patch_darwin(target: Path) -> None:
+    if sys.platform != "darwin":
+        return
+    if shutil.which("xattr"):
+        subprocess.run(
+            ["xattr", "-d", "com.apple.quarantine", str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    if shutil.which("codesign"):
+        result = subprocess.run(
+            ["codesign", "--force", "--sign", "-", str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"codesign failed for {target}: {result.stderr.strip()}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Apply minimal 25-byte patch to agy binary.")
+    parser.add_argument("target", nargs="?", type=Path, default=default_target(), help="Path to agy binary")
+    parser.add_argument("--check", action="store_true", help="Only report patch status without modifying")
+    parser.add_argument("--no-backup", action="store_true", help="Skip saving unpatched backup")
+    args = parser.parse_args()
+
+    target: Path = args.target.expanduser().resolve()
+    if not target.is_file():
+        print(f"error: file not found: {target}", file=sys.stderr)
+        return 1
+
+    data = target.read_bytes()
+    counts = inspect_bytes(data)
+
+    if args.check:
+        state = (
+            "patched"
+            if is_patched(counts)
+            else ("unpatched" if counts["ineligible"] > 0 and counts["https_proxy"] > 0 else "unexpected")
+        )
+        print(f"{target}: {state} ({counts})")
+        return 0 if state == "patched" else (2 if state == "unpatched" else 1)
+
+    if is_patched(counts):
+        print(f"already patched: {target} ({counts})")
+        return 0
+
+    if counts["ineligible"] == 0 or counts["https_proxy"] == 0:
+        print(f"error: unexpected pattern counts in {target}: {counts}", file=sys.stderr)
+        return 1
+
+    if not args.no_backup:
+        bak = backup_original(target, data)
+        print(f"backup: {bak}")
+
+    patched = data
+    for old, new in REPLACEMENTS:
+        assert len(old) == len(new)
+        patched = patched.replace(old, new)
+
+    if len(patched) != len(data):
+        print("error: patched size mismatch, aborting", file=sys.stderr)
+        return 1
+
+    mode = stat.S_IMODE(target.stat().st_mode)
+    atomic_write(target, patched, mode)
+    try:
+        post_patch_darwin(target)
+    except RuntimeError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    after = inspect_bytes(patched)
+    print(f"patched {target}: {counts} -> {after} (sha256={hashlib.sha256(patched).hexdigest()[:16]})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
