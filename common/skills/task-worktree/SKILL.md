@@ -80,6 +80,11 @@ task identity, and intended target. Do not rename historical branches, overwrite
 user changes, or remove an existing worktree just to enforce new naming.
 
 Before implementation checks, install dependencies declared by the existing
-lockfile when missing or incomplete. Do not modify package manifests/lockfiles.
+lockfile when missing or incomplete. When creating a branch from an advanced
+`origin/<base>` in an existing checkout, check whether the lockfile changed
+(`! git diff --quiet <old-head>..HEAD -- package-lock.json`) and synchronize
+`node_modules` (`npm ci`) before the first test or lint run; never recreate
+`node_modules` or `build/` in a checkout that currently serves a running local
+stand. Do not modify package manifests/lockfiles.
 Run the requested implementation and checks in the selected checkout. Report
 installation/check failures before declaring completion.
