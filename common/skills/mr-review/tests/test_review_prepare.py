@@ -791,6 +791,27 @@ class ReviewHistoryTests(unittest.TestCase):
         self.assertIn("report is empty", stderr)
         self.assertFalse(self.history.exists())
 
+    def test_default_repo_root_falls_back_to_workspace_when_reviews_dir_missing(self) -> None:
+        from echat_mr_review.cli import default_repo_root
+
+        prev_repos = os.environ.pop("ECHAT_REVIEW_REPOS_ROOT", None)
+        prev_ws = os.environ.get("ECHAT_WORKSPACE_ROOT")
+        try:
+            os.environ["ECHAT_WORKSPACE_ROOT"] = "/tmp/fake-echat-root"
+            if not Path("/home/user/echat/reviews").is_dir():
+                self.assertEqual(default_repo_root(), Path("/tmp/fake-echat-root"))
+            os.environ["ECHAT_REVIEW_REPOS_ROOT"] = "/tmp/explicit-reviews"
+            self.assertEqual(default_repo_root(), Path("/tmp/explicit-reviews"))
+        finally:
+            if prev_repos is None:
+                os.environ.pop("ECHAT_REVIEW_REPOS_ROOT", None)
+            else:
+                os.environ["ECHAT_REVIEW_REPOS_ROOT"] = prev_repos
+            if prev_ws is None:
+                os.environ.pop("ECHAT_WORKSPACE_ROOT", None)
+            else:
+                os.environ["ECHAT_WORKSPACE_ROOT"] = prev_ws
+
 
 if __name__ == "__main__":
     unittest.main()

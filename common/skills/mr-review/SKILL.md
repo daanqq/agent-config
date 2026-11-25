@@ -24,7 +24,7 @@ python3 "$SKILL_ROOT/scripts/review_prepare.py" prepare local \
   /home/user/echat/tidy-client --base origin/master --scope all
 ```
 
-Use `prepare mr --repo-root DIR` when review clones are not under `/home/user/echat/reviews`. Use repeated `--repo NAME=PATH` overrides when clone names do not match GitLab project basenames. For local inputs, bare repository names resolve under `--workspace-root`.
+`prepare mr` resolves repository clones from `ECHAT_REVIEW_REPOS_ROOT`, `/home/user/echat/reviews` if it exists, or `/home/user/echat` otherwise. Use `prepare mr --repo-root DIR` to override that root, and repeated `--repo NAME=PATH` overrides when clone names do not match GitLab project basenames. For local inputs, bare repository names resolve under `--workspace-root`.
 
 The command writes its machine-readable result to stdout. Read both returned artifacts:
 

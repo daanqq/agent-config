@@ -20,7 +20,17 @@ from .core import (
 )
 
 
-DEFAULT_REPO_ROOT = Path(os.environ.get("ECHAT_REVIEW_REPOS_ROOT", "/home/user/echat/reviews"))
+def default_repo_root() -> Path:
+    configured = os.environ.get("ECHAT_REVIEW_REPOS_ROOT")
+    if configured:
+        return Path(configured)
+    reviews_dir = Path("/home/user/echat/reviews")
+    if reviews_dir.is_dir():
+        return reviews_dir
+    return Path(os.environ.get("ECHAT_WORKSPACE_ROOT", "/home/user/echat"))
+
+
+DEFAULT_REPO_ROOT = default_repo_root()
 DEFAULT_WORKSPACE_ROOT = Path(os.environ.get("ECHAT_WORKSPACE_ROOT", "/home/user/echat"))
 DEFAULT_OUTPUT_ROOT = Path(
     os.environ.get("MR_REVIEW_OUTPUT_ROOT", str(Path.home() / ".cache" / "echat-mr-review" / "jobs"))
@@ -41,7 +51,7 @@ def build_parser() -> ArgumentParser:
 
     mr = kinds.add_parser("mr", help="fetch GitLab MR heads into isolated worktrees")
     mr.add_argument("urls", nargs="+", help="GitLab merge request URL(s)")
-    mr.add_argument("--repo-root", type=Path, default=DEFAULT_REPO_ROOT, help="directory containing reusable review clones")
+    mr.add_argument("--repo-root", type=Path, default=default_repo_root(), help="directory containing reusable review clones")
     mr.add_argument("--repo", action="append", default=[], metavar="NAME=PATH", help="override a source clone by repo name or project path")
     mr.add_argument("--remote", default="origin", help="Git remote containing MR and target refs (default: origin)")
     mr.add_argument("--target", default="master", help="target branch fallback when metadata is unavailable")
