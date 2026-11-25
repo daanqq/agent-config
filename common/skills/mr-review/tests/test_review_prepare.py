@@ -812,6 +812,79 @@ class ReviewHistoryTests(unittest.TestCase):
             else:
                 os.environ["ECHAT_WORKSPACE_ROOT"] = prev_ws
 
+    def test_previous_review_report_body_is_deduplicated_across_targets(self) -> None:
+        from echat_mr_review.core import _render_previous_reviews
+
+        body = "# Shared cross-repo review\nFinding 1"
+        t1 = {
+            "repo": "tidy-rest",
+            "path": "/tmp/job/tidy-rest",
+            "head_sha": "aaa111",
+            "previous_review": {
+                "reviewed_at": "2026-11-23T12:00:00Z",
+                "head_sha": "aaa000",
+                "same_head": False,
+                "head_reachable": True,
+                "path": "/tmp/history/tidy-rest/1.json",
+                "report": body,
+            },
+        }
+        t2 = {
+            "repo": "tidy-client",
+            "path": "/tmp/job/tidy-client",
+            "head_sha": "bbb111",
+            "previous_review": {
+                "reviewed_at": "2026-11-23T12:00:00Z",
+                "head_sha": "bbb111",
+                "same_head": True,
+                "head_reachable": True,
+                "path": "/tmp/history/tidy-client/2.json",
+                "report": body,
+            },
+        }
+        rendered = "\n".join(_render_previous_reviews([t1, t2]))
+        self.assertEqual(rendered.count("# Shared cross-repo review"), 1)
+        self.assertIn("diff --find-renames aaa000..HEAD", rendered)
+        self.assertIn("Previous report: identical to `tidy-rest` above.", rendered)
+
+    def test_prune_stale_workspaces_removes_only_old_marked_jobs(self) -> None:
+        from echat_mr_review.core import SCHEMA_VERSION, TOOL_NAME, WORKSPACE_MARKER, prune_stale_workspaces
+
+        jobs = self.root / "prune-jobs"
+        jobs.mkdir()
+        stale = jobs / "review-20260801-000000-aaaaaaaa"
+        stale.mkdir()
+        (stale / WORKSPACE_MARKER).write_text(f"{stale.name}\n", encoding="utf-8")
+        (stale / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "tool": TOOL_NAME,
+                    "schema_version": SCHEMA_VERSION,
+                    "root": str(stale),
+                    "workspace_id": stale.name,
+                    "lock_root": str(self.root / "locks"),
+                    "worktrees": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        old_ts = 1_000_000.0
+        os.utime(stale / "manifest.json", (old_ts, old_ts))
+
+        fresh = jobs / "review-20261125-000000-bbbbbbbb"
+        fresh.mkdir()
+        (fresh / WORKSPACE_MARKER).write_text("echat-mr-review-workspace-v1\n", encoding="utf-8")
+
+        foreign = jobs / "review-20260801-000000-foreign"
+        foreign.mkdir()
+        os.utime(foreign, (old_ts, old_ts))
+
+        removed = prune_stale_workspaces(jobs, max_age_seconds=3600, now=old_ts + 7200)
+        self.assertEqual(removed, [str(stale)])
+        self.assertFalse(stale.exists())
+        self.assertTrue(fresh.exists())
+        self.assertTrue(foreign.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

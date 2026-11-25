@@ -678,6 +678,42 @@ def verification_commands(path: Path, fallback_root: Path | None = None) -> dict
 
 DEPENDENCY_INSTALL_TIMEOUT = 600
 INSTALL_DETAIL_LINES = 20
+WORKSPACE_MARKER = ".echat-mr-review-workspace"
+STALE_WORKSPACE_MAX_AGE_SECONDS = 24 * 60 * 60
+
+
+def prune_stale_workspaces(
+    output_root: Path,
+    *,
+    max_age_seconds: float = STALE_WORKSPACE_MAX_AGE_SECONDS,
+    now: float | None = None,
+) -> list[str]:
+    """Remove abandoned review-* workspaces older than max_age_seconds."""
+    root = output_root.expanduser()
+    if not root.is_dir():
+        return []
+    current = time.time() if now is None else now
+    removed: list[str] = []
+    for entry in sorted(root.iterdir()):
+        if not entry.is_dir() or entry.is_symlink() or not entry.name.startswith("review-"):
+            continue
+        marker = entry / WORKSPACE_MARKER
+        if not marker.is_file():
+            continue
+        manifest = entry / "manifest.json"
+        probe = manifest if manifest.is_file() else entry
+        try:
+            age = current - probe.stat().st_mtime
+        except OSError:
+            continue
+        if age < max_age_seconds:
+            continue
+        try:
+            cleanup_workspace(manifest if manifest.is_file() else entry, ignore_errors=True)
+            removed.append(str(entry))
+        except ReviewError:
+            continue
+    return removed
 
 
 def install_review_dependencies(worktree: Path, *, timeout: float) -> dict[str, Any]:
@@ -778,6 +814,7 @@ def prepare_local(
     network_timeout: float,
     offline: bool,
 ) -> dict[str, str]:
+    prune_stale_workspaces(output_root)
     workspace = Workspace(output_root, "local", lock_root)
     warnings: list[str] = []
     targets: list[dict[str, Any]] = []
@@ -838,6 +875,7 @@ def prepare_mr(
     duplicate_keys = [key for key in {ref.key for ref in refs} if sum(item.key == key for item in refs) > 1]
     if duplicate_keys:
         raise ReviewError(f"Duplicate merge request targets: {', '.join(sorted(duplicate_keys))}")
+    prune_stale_workspaces(output_root)
     workspace = Workspace(output_root, "mr", lock_root)
     warnings: list[str] = []
     targets: list[dict[str, Any]] = []
@@ -1028,8 +1066,7 @@ def render_context_markdown(context: dict[str, Any]) -> str:
             lines.extend(["", "Minimal review commands:", "```sh", *target["review_commands"], "```"])
     for target in targets:
         lines.extend(_render_discussions(target))
-    for target in targets:
-        lines.extend(_render_previous_review(target))
+    lines.extend(_render_previous_reviews(targets))
     for target in targets:
         lines.extend(_render_verification(target))
     if context.get("warnings"):
@@ -1056,7 +1093,22 @@ def _render_discussions(target: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _render_previous_review(target: dict[str, Any]) -> list[str]:
+def _render_previous_reviews(targets: list[dict[str, Any]]) -> list[str]:
+    lines: list[str] = []
+    seen_reports: dict[str, str] = {}
+    for target in targets:
+        previous = target.get("previous_review")
+        if not previous:
+            continue
+        report_text = str(previous.get("report") or "")
+        duplicate_of = seen_reports.get(report_text)
+        if duplicate_of is None:
+            seen_reports[report_text] = str(target["repo"])
+        lines.extend(_render_previous_review(target, duplicate_of=duplicate_of))
+    return lines
+
+
+def _render_previous_review(target: dict[str, Any], *, duplicate_of: str | None = None) -> list[str]:
     previous = target.get("previous_review")
     if not previous:
         return []
@@ -1076,8 +1128,11 @@ def _render_previous_review(target: dict[str, Any]) -> list[str]:
         lines.extend(["", "Incremental diff since the previous review:", "```sh", command, "```"])
     elif not previous["same_head"]:
         lines.extend(["", "The previous head is not in the worktree: review the whole scope and check each previous finding against it."])
-    lines.extend(["", "Previous report:", ""])
-    lines.extend(f"> {line}" for line in previous["report"].splitlines() or [""])
+    if duplicate_of is not None:
+        lines.extend(["", f"- Previous report: identical to `{duplicate_of}` above."])
+    else:
+        lines.extend(["", "Previous report:", ""])
+        lines.extend(f"> {line}" for line in previous["report"].splitlines() or [""])
     return lines
 
 
