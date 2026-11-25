@@ -885,6 +885,47 @@ class ReviewHistoryTests(unittest.TestCase):
         self.assertTrue(fresh.exists())
         self.assertTrue(foreign.exists())
 
+    def test_skipped_postinstall_and_patches_reported_in_verification(self) -> None:
+        from unittest.mock import patch
+        from echat_mr_review.core import mr_verification
+
+        wt = self.root / "wt-postinstall"
+        wt.mkdir()
+        (wt / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "tidy-client",
+                    "scripts": {"postinstall": "patch-package --error-on-fail", "test:run": "vitest run"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (wt / "package-lock.json").write_text('{"name":"tidy-client","lockfileVersion":3}\n', encoding="utf-8")
+        patches = wt / "patches"
+        patches.mkdir()
+        (patches / "react-filerobot-image-editor+4.9.1.patch").write_text("--- a\n+++ b\n", encoding="utf-8")
+        (patches / "@scope+pkg+1.2.3.patch").write_text("--- a\n+++ b\n", encoding="utf-8")
+
+        fake_install = {"status": "installed", "command": "npm ci --ignore-scripts", "detail": ""}
+        with patch("echat_mr_review.core.install_review_dependencies", return_value=fake_install):
+            result = mr_verification(
+                wt,
+                wt,
+                install_dependencies=True,
+                install_timeout=30,
+            )
+        self.assertIsNotNone(result)
+        skipped = result.get("skipped_postinstall")
+        self.assertIsNotNone(skipped)
+        self.assertEqual(skipped["script"], "patch-package --error-on-fail")
+        self.assertEqual(skipped["patches_dir"], "patches")
+        self.assertEqual(skipped["patched_packages"], ["@scope/pkg", "react-filerobot-image-editor"])
+        notes_text = "\n".join(result["notes"])
+        self.assertIn("patch-package --error-on-fail", notes_text)
+        self.assertIn("patches/", notes_text)
+        self.assertIn("react-filerobot-image-editor", notes_text)
+        self.assertIn("same SHA", notes_text)
+
 
 if __name__ == "__main__":
     unittest.main()

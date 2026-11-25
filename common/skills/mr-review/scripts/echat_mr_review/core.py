@@ -744,6 +744,45 @@ def install_review_dependencies(worktree: Path, *, timeout: float) -> dict[str, 
     return install
 
 
+def _patch_package_name(filename: str) -> str:
+    stem = filename[:-6] if filename.endswith(".patch") else filename
+    parts = stem.split("+")
+    if len(parts) >= 3 and parts[0].startswith("@"):
+        return f"{parts[0]}/{parts[1]}"
+    return parts[0]
+
+
+def _detect_skipped_postinstall(worktree: Path) -> dict[str, Any] | None:
+    package_json = worktree / "package.json"
+    postinstall: str | None = None
+    if package_json.is_file():
+        try:
+            data = json.loads(package_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = None
+        if isinstance(data, dict):
+            scripts = data.get("scripts")
+            if isinstance(scripts, dict):
+                raw_script = scripts.get("postinstall")
+                if isinstance(raw_script, str) and raw_script.strip():
+                    postinstall = raw_script.strip()
+    patches_dir = worktree / "patches"
+    patch_files = (
+        sorted(item.name for item in patches_dir.iterdir() if item.is_file() and item.name.endswith(".patch"))
+        if patches_dir.is_dir()
+        else []
+    )
+    if not postinstall and not patch_files:
+        return None
+    patched_packages = sorted({_patch_package_name(name) for name in patch_files})
+    return {
+        "script": postinstall,
+        "patches_dir": "patches" if patch_files else None,
+        "patch_files": patch_files,
+        "patched_packages": patched_packages,
+    }
+
+
 def mr_verification(worktree: Path, source_repo: Path, *, install_dependencies: bool, install_timeout: float) -> dict[str, Any] | None:
     verification = verification_commands(worktree, source_repo)
     if (
@@ -763,6 +802,24 @@ def mr_verification(worktree: Path, source_repo: Path, *, install_dependencies: 
             f"Dependencies installed from the MR lockfile into the review worktree ({install['command']}). "
             "Install scripts were skipped: report failures that need native binaries or postinstall output.",
         )
+        skipped_postinstall = _detect_skipped_postinstall(worktree)
+        if skipped_postinstall:
+            verification["skipped_postinstall"] = skipped_postinstall
+            script_desc = f'"{skipped_postinstall["script"]}"' if skipped_postinstall["script"] else "postinstall"
+            patch_files = skipped_postinstall["patch_files"]
+            if patch_files:
+                packages = ", ".join(skipped_postinstall["patched_packages"])
+                note = (
+                    f"Skipped postinstall ({script_desc}) and {len(patch_files)} patch file(s) in patches/ ({packages}): "
+                    "unit test failures importing patched vendor packages may be false positives under --ignore-scripts; "
+                    "cross-check affected tests against the MR CI pipeline on the same SHA."
+                )
+            else:
+                note = (
+                    f"Skipped postinstall ({script_desc}) under --ignore-scripts: "
+                    "cross-check any failures that rely on postinstall output against the MR CI pipeline on the same SHA."
+                )
+            verification["notes"].insert(1, note)
     else:
         verification["notes"].insert(
             0, f"Dependency install in the review worktree failed: {install['detail']}. Commands below use what is left."
