@@ -313,7 +313,7 @@
         "repository": "mattpocock-skills",
         "path": "skills/productivity/writing-for-agents",
         "overlay": "overlays/common/writing-for-agents.md",
-        "installed_hash": "7ae63ee676d4069727f05d2a011235550d60a56f746420161469b93f8ba38787"
+        "installed_hash": "f4ebf5625dfd271a47fe9c879f205c68131bcd0eb9fef46af835a6b52b067bad"
       },
       "prompt-audit": {
         "tracking": "local",
