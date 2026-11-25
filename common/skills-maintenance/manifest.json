@@ -336,7 +336,7 @@
       },
       "telegram-send": {
         "tracking": "local",
-        "installed_hash": "ee4cb310e5ee816ca6c68fbb4315db7005ff77749746c1a3fc99f4c560bd30bc"
+        "installed_hash": "bd252563ab1afc9211e61eafca507d72fe2aa28fca5fd2667a646bcffcd4f474"
       },
       "update-proxies": {
         "tracking": "local",

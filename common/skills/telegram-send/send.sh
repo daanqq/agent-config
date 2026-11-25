@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Usage: send.sh <file> [caption]    sends a document
+# Usage: send.sh --check             checks that Telegram secrets are configured (no network call)
+#        send.sh <file> [caption]    sends a document
 #        send.sh --text <message>    sends a text message
 set -euo pipefail
 
@@ -8,6 +9,19 @@ if [[ -z "${TELEGRAM_BOT_TOKEN:-}" || -z "${TELEGRAM_CHAT_ID:-}" ]]; then
   # shellcheck source=/dev/null
   [[ -r "$secrets" ]] && source "$secrets"
 fi
+
+if [[ "${1:-}" == "--check" ]]; then
+  missing=()
+  [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]] || missing+=("TELEGRAM_BOT_TOKEN")
+  [[ -n "${TELEGRAM_CHAT_ID:-}" ]] || missing+=("TELEGRAM_CHAT_ID")
+  if (( ${#missing[@]} > 0 )); then
+    echo "telegram-send: not configured (missing: ${missing[*]})" >&2
+    exit 1
+  fi
+  echo "telegram-send: configured"
+  exit 0
+fi
+
 : "${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is not set}"
 : "${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID is not set}"
 

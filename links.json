@@ -1156,6 +1156,74 @@
     {
       "source": "claude/skills/yeet",
       "target": ".gemini/config/skills/yeet"
+    },
+    {
+      "source": "claude/skills/a11y-debugging",
+      "target": ".gemini/config/skills/a11y-debugging"
+    },
+    {
+      "source": "claude/skills/code-simplification",
+      "target": ".gemini/config/skills/code-simplification"
+    },
+    {
+      "source": "claude/skills/codebase-design",
+      "target": ".gemini/config/skills/codebase-design"
+    },
+    {
+      "source": "claude/skills/coding-discipline",
+      "target": ".gemini/config/skills/coding-discipline"
+    },
+    {
+      "source": "claude/skills/cookie-debugging",
+      "target": ".gemini/config/skills/cookie-debugging"
+    },
+    {
+      "source": "claude/skills/debug-optimize-lcp",
+      "target": ".gemini/config/skills/debug-optimize-lcp"
+    },
+    {
+      "source": "claude/skills/dnd-kit-implementation",
+      "target": ".gemini/config/skills/dnd-kit-implementation"
+    },
+    {
+      "source": "claude/skills/grilling",
+      "target": ".gemini/config/skills/grilling"
+    },
+    {
+      "source": "claude/skills/memory-leak-debugging",
+      "target": ".gemini/config/skills/memory-leak-debugging"
+    },
+    {
+      "source": "claude/skills/optimize-images",
+      "target": ".gemini/config/skills/optimize-images"
+    },
+    {
+      "source": "claude/skills/session-screenshot",
+      "target": ".gemini/config/skills/session-screenshot"
+    },
+    {
+      "source": "claude/skills/show-me-your-work",
+      "target": ".gemini/config/skills/show-me-your-work"
+    },
+    {
+      "source": "claude/skills/tdd",
+      "target": ".gemini/config/skills/tdd"
+    },
+    {
+      "source": "claude/skills/telegram-send",
+      "target": ".gemini/config/skills/telegram-send"
+    },
+    {
+      "source": "claude/skills/trade-offs",
+      "target": ".gemini/config/skills/trade-offs"
+    },
+    {
+      "source": "claude/skills/troubleshooting",
+      "target": ".gemini/config/skills/troubleshooting"
+    },
+    {
+      "source": "claude/skills/why",
+      "target": ".gemini/config/skills/why"
     }
   ],
   "uninstalled_skills": {

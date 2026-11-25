@@ -9,9 +9,9 @@ from install import InstallError, manifest_links
 
 
 SKILL_TREES = {
-    "common/skills": ".agents/skills",
-    "pi/agent/skills": ".pi/agent/skills",
-    "claude/skills": ".claude/skills",
+    "common/skills": (".agents/skills",),
+    "pi/agent/skills": (".pi/agent/skills",),
+    "claude/skills": (".claude/skills", ".gemini/config/skills"),
 }
 
 
@@ -23,10 +23,12 @@ def check_links(repo):
     mappings = {(str(source), str(target))
                 for source, target, _ in manifest_links(data["links"])}
     expected = {}
-    for source_root, target_root in SKILL_TREES.items():
+    for source_root, target_roots in SKILL_TREES.items():
         for skill in (repo / source_root).iterdir():
             if (skill / "SKILL.md").is_file():
-                expected[f"{source_root}/{skill.name}"] = f"{target_root}/{skill.name}"
+                expected[f"{source_root}/{skill.name}"] = [
+                    f"{target_root}/{skill.name}" for target_root in target_roots
+                ]
 
     exclusions = data.get("uninstalled_skills", {})
     if not isinstance(exclusions, dict):
@@ -39,9 +41,12 @@ def check_links(repo):
             errors.append(f"uninstalled_skills requires a nonempty reason: {source}")
         if any(mapped_source == source for mapped_source, _ in mappings):
             errors.append(f"Skill is both mapped and excluded: {source}")
-    for source, target in sorted(expected.items()):
-        if source not in exclusions and (source, target) not in mappings:
-            errors.append(f"Missing skill HOME mapping: {source} -> {target}")
+    for source, targets in sorted(expected.items()):
+        if source in exclusions:
+            continue
+        for target in targets:
+            if (source, target) not in mappings:
+                errors.append(f"Missing skill HOME mapping: {source} -> {target}")
     return errors
 
 

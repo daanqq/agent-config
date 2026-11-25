@@ -9,9 +9,9 @@ import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/check-skill-links.py"
 TREES = {
-    "common/skills": ".agents/skills",
-    "pi/agent/skills": ".pi/agent/skills",
-    "claude/skills": ".claude/skills",
+    "common/skills": (".agents/skills",),
+    "pi/agent/skills": (".pi/agent/skills",),
+    "claude/skills": (".claude/skills", ".gemini/config/skills"),
 }
 
 
@@ -33,7 +33,8 @@ class SkillLinksTests(unittest.TestCase):
         return path
 
     def mapping(self, tree, name):
-        return {"source": f"{tree}/{name}", "target": f"{TREES[tree]}/{name}"}
+        return [{"source": f"{tree}/{name}", "target": f"{target_root}/{name}"}
+                for target_root in TREES[tree]]
 
     def run_check(self):
         (self.repo / "links.json").write_text(json.dumps(self.manifest))
@@ -57,14 +58,23 @@ class SkillLinksTests(unittest.TestCase):
         for tree, target in [("pi/agent/skills", "../../../common/skills/shared"),
                              ("claude/skills", "../../common/skills/shared")]:
             (self.repo / tree / "shared").symlink_to(target)
-        self.manifest["links"] = [self.mapping(tree, "shared") for tree in TREES]
+        self.manifest["links"] = [item for tree in TREES for item in self.mapping(tree, "shared")]
         result = self.run_check()
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_missing_gemini_skill_mapping_fails(self):
+        self.skill("claude/skills", "telegram-send")
+        self.manifest["links"] = [
+            {"source": "claude/skills/telegram-send", "target": ".claude/skills/telegram-send"},
+        ]
+        result = self.run_check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("claude/skills/telegram-send -> .gemini/config/skills/telegram-send", result.stderr)
 
     def test_missing_client_alias_mapping_is_not_hidden_by_common_mapping(self):
         self.skill("common/skills", "shared")
         (self.repo / "claude/skills/shared").symlink_to("../../common/skills/shared")
-        self.manifest["links"] = [self.mapping("common/skills", "shared")]
+        self.manifest["links"] = self.mapping("common/skills", "shared")
         result = self.run_check()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("claude/skills/shared -> .claude/skills/shared", result.stderr)
@@ -107,7 +117,7 @@ class SkillLinksTests(unittest.TestCase):
 
     def test_mapped_skill_cannot_be_excluded(self):
         self.skill("common/skills", "example")
-        self.manifest["links"] = [self.mapping("common/skills", "example")]
+        self.manifest["links"] = self.mapping("common/skills", "example")
         self.manifest["uninstalled_skills"] = {"common/skills/example": "not installed"}
         result = self.run_check()
         self.assertNotEqual(result.returncode, 0)
