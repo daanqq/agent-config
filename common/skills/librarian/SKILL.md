@@ -22,20 +22,26 @@ Example:
 
 ## Permission boundary
 
-Follow the active project instructions for read-only work and temporary artifacts. In a read-only investigation, reuse an existing checkout without updating it when its current revision is sufficient. If fresh remote content is needed, use an isolated task-owned temporary clone outside working files rather than modifying a pre-existing shared checkout. Report the revision inspected. Before concluding from an existing checkout that the repository does not do something, check its age: if its last commit (`git log -1 --format=%cs`) is older than 14 days, compare it with the remote branch head without updating the checkout (`gh api repos/<org>/<repo>/commits/<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/commits/<branch>` on GitLab) and report the drift with the conclusion. A request to cache or refresh the repository authorizes the reusable-cache workflow below; a reference URL alone does not authorize updating an existing checkout.
+Downloading remote repositories into `~/.cache/checkouts/<host>/<org>/<repo>` via `checkout.sh` is pre-authorized for read-only analysis and investigations, so agents can search (`rg`) and inspect files locally without repeated API round-trips. Follow the active project instructions for working repositories. Before concluding from an existing cached checkout that a repository does not do something, refresh it (`checkout.sh`) or check its age (`git log -1 --format=%cs`): if older than 14 days and not refreshed, compare with the remote branch head (`gh api repos/<org>/<repo>/commits/<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/commits/<branch>` on GitLab) and report the revision inspected.
 
-If the user explicitly forbids all writes, use available read-only content or explain the access limitation. Temporary cleanup follows the task-ownership checks in the active project instructions.
+If the user explicitly forbids all writes, use available read-only content or explain the access limitation.
 
-## Single file or option
+## API vs local clone threshold
 
-To check one file or option at the latest revision of a branch, do not refresh a whole checkout: a full fetch of a large repository can take many minutes. Read the file through the host API (`gh api repos/<org>/<repo>/contents/<path>?ref=<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/files/<path>/raw?ref=<branch>` on GitLab) or run `git fetch --depth=1 origin <branch>` in an isolated temporary clone. Fetch full history only when the task needs history, and start it in the background before it is needed.
+- **1-2 known files** at the latest revision of a branch: reading directly via host API is fine (`gh api repos/<org>/<repo>/contents/<path>?ref=<branch>` on GitHub, `glab api projects/<org>%2F<repo>/repository/files/<path>/raw?ref=<branch>` on GitLab) after checking `default_branch`.
+- **Code search or inspecting more than 2 files**: clone locally into `~/.cache/checkouts` via `checkout.sh` (`--shallow --path-only` when full Git history is not needed; omit `--shallow` when history is required) instead of running a chain of `glab api`/`gh api` calls.
+
+## Cache retention (30-day TTL)
+
+Every `checkout.sh` run updates `.git/librarian-last-used` in the target checkout and automatically prunes other **clean** checkouts (empty `git status --porcelain`) under `~/.cache/checkouts` that have not been used for more than 30 days (`LIBRARIAN_TTL_DAYS=30`; pass `--ttl-days 0` to disable pruning for a single call). Dirty checkouts with local edits or untracked files are never deleted.
 
 ## Cache command
 
-Resolve `checkout.sh` relative to this `SKILL.md` as `<skill-dir>`. Use this command only for an authorized cache creation or refresh. `--path-only` controls output; it does not make the command read-only.
+Resolve `checkout.sh` relative to this `SKILL.md` as `<skill-dir>`. `--path-only` prints only the checkout path.
 
 ```bash
 bash <skill-dir>/checkout.sh <repo> --path-only
+bash <skill-dir>/checkout.sh <repo> --shallow --path-only
 ```
 
 Examples:

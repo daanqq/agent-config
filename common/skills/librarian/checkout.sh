@@ -18,11 +18,14 @@ Options:
   --path-only                 Print only the checkout path.
   --force-update              Always fetch from origin and attempt fast-forward.
   --update-interval <secs>    Minimum seconds between updates (default: 300).
+  --shallow                   Use --depth=1 on initial clone (partial blobless clone).
+  --ttl-days <days>           Remove clean checkouts unused for more than N days (default: 30, 0 disables).
 
 Environment:
   LIBRARIAN_CACHE_ROOT        Override cache root (default: ~/.cache/checkouts)
   LIBRARIAN_DEFAULT_HOST      Host for owner/repo shorthand (default: github.com)
   LIBRARIAN_UPDATE_INTERVAL   Default update interval in seconds
+  LIBRARIAN_TTL_DAYS          Default TTL in days for automatic cache pruning (default: 30)
 EOF
 }
 
@@ -34,7 +37,9 @@ fi
 repo_input=""
 path_only=0
 force_update=0
+shallow=0
 update_interval="${LIBRARIAN_UPDATE_INTERVAL:-300}"
+ttl_days="${LIBRARIAN_TTL_DAYS:-30}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -46,12 +51,24 @@ while [[ $# -gt 0 ]]; do
       force_update=1
       shift
       ;;
+    --shallow)
+      shallow=1
+      shift
+      ;;
     --update-interval)
       if [[ $# -lt 2 ]]; then
         echo "error: --update-interval expects a value" >&2
         exit 2
       fi
       update_interval="$2"
+      shift 2
+      ;;
+    --ttl-days)
+      if [[ $# -lt 2 ]]; then
+        echo "error: --ttl-days expects a value" >&2
+        exit 2
+      fi
+      ttl_days="$2"
       shift 2
       ;;
     -h|--help)
@@ -77,6 +94,11 @@ fi
 
 if ! [[ "$update_interval" =~ ^[0-9]+$ ]]; then
   echo "error: update interval must be a non-negative integer" >&2
+  exit 2
+fi
+
+if ! [[ "$ttl_days" =~ ^[0-9]+$ ]]; then
+  echo "error: ttl-days must be a non-negative integer" >&2
   exit 2
 fi
 
@@ -132,6 +154,9 @@ parse_repo() {
   host="${host#*@}"
   path="${path#/}"
   path="${path%/}"
+
+  # Strip GitLab /-/ deep-link suffixes before splitting path segments.
+  path="${path%%/-/*}"
 
   # For GitHub-like deep links, use owner/repo only.
   IFS='/' read -r -a parts <<< "$path"
@@ -190,7 +215,11 @@ origin_url="https://$host/$org/$repo.git"
 mkdir -p "$(dirname "$checkout_path")"
 
 if [[ ! -d "$checkout_path/.git" ]]; then
-  git clone --filter=blob:none "$origin_url" "$checkout_path" >/dev/null
+  clone_args=(--filter=blob:none)
+  if (( shallow == 1 )); then
+    clone_args+=(--depth=1)
+  fi
+  git clone "${clone_args[@]}" "$origin_url" "$checkout_path" >/dev/null
   clone_state="cloned"
 else
   clone_state="existing"
@@ -212,7 +241,9 @@ if [[ "$current_origin" != "$origin_url" ]]; then
 fi
 
 last_fetch_file="$checkout_path/.git/librarian-last-fetch"
+last_used_file="$checkout_path/.git/librarian-last-used"
 now_epoch="$(date +%s)"
+echo "$now_epoch" > "$last_used_file"
 needs_update=1
 
 if [[ -f "$last_fetch_file" && "$force_update" -eq 0 ]]; then
@@ -249,6 +280,55 @@ if (( needs_update == 1 )); then
     ff_state="skipped-no-upstream"
   fi
 fi
+
+file_mtime_epoch() {
+  local target="$1"
+  if stat -c %Y "$target" >/dev/null 2>&1; then
+    stat -c %Y "$target"
+  elif stat -f %m "$target" >/dev/null 2>&1; then
+    stat -f %m "$target"
+  else
+    echo 0
+  fi
+}
+
+prune_stale_checkouts() {
+  (( ttl_days > 0 )) || return 0
+  [[ -d "$cache_root" ]] || return 0
+  local cutoff=$(( now_epoch - ttl_days * 86400 ))
+  local git_dir repo_dir last_used raw_val parent
+  while IFS= read -r -d '' git_dir; do
+    repo_dir="$(dirname "$git_dir")"
+    [[ "$repo_dir" == "$checkout_path" ]] && continue
+    last_used=""
+    for marker in "$git_dir/librarian-last-used" "$git_dir/librarian-last-fetch"; do
+      if [[ -f "$marker" ]]; then
+        raw_val="$(cat "$marker" 2>/dev/null || true)"
+        if [[ "$raw_val" =~ ^[0-9]+$ ]]; then
+          last_used="$raw_val"
+          break
+        fi
+      fi
+    done
+    if [[ -z "$last_used" ]]; then
+      last_used="$(file_mtime_epoch "$git_dir")"
+    fi
+    [[ "$last_used" =~ ^[0-9]+$ ]] || continue
+    (( last_used < cutoff )) || continue
+    # Never delete a checkout with local edits or untracked files.
+    if [[ -n "$(git -C "$repo_dir" status --porcelain 2>/dev/null || echo dirty)" ]]; then
+      continue
+    fi
+    rm -rf "$repo_dir"
+    parent="$(dirname "$repo_dir")"
+    while [[ "$parent" != "$cache_root" && "$parent" == "$cache_root/"* ]]; do
+      rmdir "$parent" 2>/dev/null || break
+      parent="$(dirname "$parent")"
+    done
+  done < <(find "$cache_root" -mindepth 2 -maxdepth 6 -type d -name .git -print0 2>/dev/null)
+}
+
+prune_stale_checkouts || true
 
 if (( path_only == 1 )); then
   printf '%s\n' "$checkout_path"
