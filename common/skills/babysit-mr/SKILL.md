@@ -8,13 +8,13 @@ compatibility: Requires Python 3.10+ and glab authenticated for the MR host.
 
 ## Waiting
 
-Wait only through `scripts/mr-wait` from this skill's directory (use its
-absolute path). Never write your own polling, `until`, or `sleep` loop: hand-made
-loops have run silently for hours on a lost cwd or a status they never matched.
+Wait through `mr-wait` (linked into `~/.local/bin/mr-wait`, or `scripts/mr-wait` from this skill's directory). Never write your own polling, `until`, or `sleep` loop: hand-made loops have run silently for hours on a lost cwd or a status they never matched.
 
 ```bash
-mr-wait <mr-url> [--until pipeline|any-change] [--timeout 90]
+mr-wait <mr-url> [--until pipeline|any-change] [--sha <commit>] [--timeout 90]
 ```
+
+- `--sha` (alias `--expected-head`) waits until GitLab updates the MR head to that commit (and exits `checking`/`unchecked` merge status) before evaluating conflicts or pipelines; pass `--sha "$(git rev-parse HEAD)"` right after `git push`.
 
 - `pipeline` (default) exits when the head pipeline reaches a final status.
   `manual` is final: the pipeline passed and stopped at a manual job such as

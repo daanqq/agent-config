@@ -220,6 +220,23 @@ class WatcherTest(unittest.TestCase):
         self.assertEqual(exit_.exception.code, 1)
         self.assertIn("GitLab unreachable for 10 polls", out.getvalue())
 
+    def test_expected_sha_waits_past_stale_conflict_and_checking_status(self):
+        new_sha = "b" * 40
+        polls = [
+            mr(sha=HEAD, has_conflicts=True, detailed_merge_status="conflict"),
+            mr(sha=new_sha, has_conflicts=True, detailed_merge_status="checking"),
+            mr(sha=new_sha, has_conflicts=False, detailed_merge_status="mergeable", head_pipeline=pipeline("success", sha=new_sha)),
+        ]
+        self.responses[MR] = lambda _: polls.pop(0)
+        watcher = self.watcher(expected_sha=new_sha[:12])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as exit_:
+                watcher.run(10, lambda _: None)
+        self.assertEqual(exit_.exception.code, 0)
+        self.assertIn("pipeline passed on bbbbbbbb", out.getvalue())
+        self.assertEqual(polls, [])
+
 
 class ParseTargetTest(unittest.TestCase):
     def test_accepts_mr_url_with_suffix(self):

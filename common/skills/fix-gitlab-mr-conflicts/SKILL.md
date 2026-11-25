@@ -77,13 +77,14 @@ Completion criterion: unmerged-файлов и конфликтных марке
 
 Исправляй только регрессии, вызванные merge. Если source-ветка уже была сломана относительно собственного SHA или нужная внешняя версия ещё не опубликована, не маскируй проблему обходным кодом. Зафиксируй точную ошибку в отчёте.
 
-Если merge остановился на конфликтах, создай merge-коммит через `git commit --no-edit`: так сохраняется сообщение из `git merge -m` вместе со списком `# Conflicts:`. Затем проверь:
+Если merge остановился на конфликтах, создай merge-коммит через `git commit --no-edit`: так сохраняется сообщение из `git merge -m` вместе со списком `# Conflicts:`. Затем проверь отсутствие конфликтных маркеров и whitespace в самом разрешении конфликта (не ловля предсуществующие пробелы из целевой ветки):
 
 ```sh
 git log -1 --format=%B
 git status --short --branch
 git merge-base --is-ancestor <private-target-ref> HEAD
-git diff HEAD^1..HEAD --check
+git show --format= --remerge-diff --check
+git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- $(git diff-tree --no-commit-id --name-only -r HEAD) || true
 ```
 
 Completion criterion: merge-коммит создан, его сообщение начинается со строки `Merge remote-tracking branch ...`, target ref является его предком, worktree чистый. Результаты каждой проверки известны, включая ошибки.
@@ -100,7 +101,7 @@ Completion criterion: merge-коммит создан, его сообщение
 git push <source-remote> HEAD:refs/heads/<source-branch>
 ```
 
-Не создавай тегов и не используй force push. После push проверь через GitLab API, что `sha` source-ветки равен локальному `HEAD`.
+Не создавай тегов и не используй force push. После push проверь через GitLab API (или `mr-wait <mr-url> --sha "$(git rev-parse HEAD)"`), что `sha` source-ветки равен локальному `HEAD`, и зафиксируй наблюдаемый статус удалённого пайплайна GitLab на этом SHA.
 
 Completion criterion: либо пользователь получил готовый локальный merge-коммит и путь worktree, либо GitLab MR указывает на проверенный commit после разрешённого push.
 
@@ -111,5 +112,6 @@ Completion criterion: либо пользователь получил гото�
 - путь worktree;
 - merge-коммит;
 - разрешённые файлы и ключевые решения;
-- результаты compile, lint и тестов с именами CI jobs, которым они соответствуют;
+- **Локальные проверки** (командами CI jobs `compile`, `lint`, `test` с их именами; не называй локальный прогон пройденным удалённым CI);
+- **Удалённый пайплайн GitLab** на новом SHA (ссылка и статус: запущен / пройден / ещё не завершён, если мониторинг продолжается);
 - статус push или причину остановки.

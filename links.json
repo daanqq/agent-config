@@ -974,6 +974,10 @@
       "target": ".local/bin/sph-issues-mcp"
     },
     {
+      "source": "common/skills/babysit-mr/scripts/mr-wait",
+      "target": ".local/bin/mr-wait"
+    },
+    {
       "source": "claude/skills/ambition",
       "target": ".gemini/config/skills/ambition"
     },

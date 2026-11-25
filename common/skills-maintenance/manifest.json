@@ -240,7 +240,7 @@
       },
       "babysit-mr": {
         "tracking": "local",
-        "installed_hash": "3bafd3b4a5863d293157d82b1b4b7e90847a4e7e37fb006fe6fb72dbe72f608a"
+        "installed_hash": "460d936ffec1850e500b28c7c26542de94ab20ac9bbe3f79e4a3b19a9e66803b"
       },
       "typescript-best-practices": {
         "tracking": "overlay",
@@ -332,7 +332,7 @@
       },
       "fix-gitlab-mr-conflicts": {
         "tracking": "local",
-        "installed_hash": "bd0884051ab062665e01376a3f3c13a26dbfd5e393e7e06931c9e893db6eebf1"
+        "installed_hash": "4b3f23b93dee81231f92aa48c045cbaca3de50e81795c13da1ab9134b661c5e5"
       },
       "telegram-send": {
         "tracking": "local",

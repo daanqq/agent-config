@@ -164,8 +164,10 @@ class Watcher:
         grace: float = 10 * 60,
         state_dir: Path = STATE_DIR,
         now: Callable[[], float] = time.time,
+        expected_sha: str | None = None,
     ) -> None:
         self.api, self.until, self.timeout, self.grace, self.now = api, until, timeout, grace, now
+        self.expected_sha = expected_sha.strip().lower() if expected_sha else None
         self.iid = iid
         self.project = f"projects/{quote(project, safe='')}"
         self.mr_path = f"{self.project}/merge_requests/{iid}"
@@ -242,10 +244,21 @@ class Watcher:
 
         head = mr["sha"]
         short = head[:8]
+        if self.expected_sha and not (
+            head.lower().startswith(self.expected_sha) or self.expected_sha.startswith(head.lower())
+        ):
+            self.last_status = f"waiting for MR head {self.expected_sha[:8]} (GitLab still at {short})"
+            return
+
         source, target = mr["source_branch"], mr["target_branch"]
         self.events = 0
         unresolved = self.check_discussions(url, {self.me, (mr.get("author") or {}).get("username")})
         self.check_target(head, target)
+
+        merge_status = str(mr.get("detailed_merge_status") or "")
+        if merge_status in ("checking", "unchecked", "preparing"):
+            self.last_status = f"GitLab is checking merge status for {short} ({merge_status})"
+            return
 
         if mr.get("has_conflicts"):
             line = f"conflicts with {target}: merge {target} into {source}"
@@ -397,6 +410,10 @@ def main() -> None:
     parser.add_argument(
         "--pipeline-grace", type=int, default=10, help="minutes to wait for a head pipeline to appear (default 10)"
     )
+    parser.add_argument(
+        "--sha", "--expected-head", dest="expected_sha", default=None,
+        help="wait until GitLab updates the MR head to this commit SHA before checking conflicts or pipelines",
+    )
     args = parser.parse_args()
     host, project, iid = parse_target(args.mr)
     api = glab_api(host)
@@ -408,7 +425,8 @@ def main() -> None:
     _lock = lock(STATE_DIR, state_key(host, project, iid))
     log(f"watching {args.mr} until {args.until}")
     watcher = Watcher(
-        host, project, iid, api, args.until, args.timeout * 60, args.pipeline_grace * 60
+        host, project, iid, api, args.until, args.timeout * 60, args.pipeline_grace * 60,
+        expected_sha=args.expected_sha,
     )
     watcher.run(max(args.interval, 10))
 
