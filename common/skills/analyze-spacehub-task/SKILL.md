@@ -20,17 +20,6 @@ delegating Figma or other read-only research after fetching the task, pass the
 path to the saved `task-context.md` in the brief so the delegate does not
 refetch the same SpaceHub issue.
 
-After the task context is written, resolve this skill's directory as
-`SKILL_ROOT` and label the calling Herdr tab with the task ID and title:
-
-```sh
-python3 "$SKILL_ROOT/scripts/rename-herdr-tab.py" <context_dir>/task.json
-```
-
-Renaming the tab does not change the repository and is allowed in read-only
-work. The script skips outside Herdr and only warns on failure; continue the
-analysis either way.
-
 Completion criterion: the target issue, its programming works, and relevant
 accessible attachments have been analyzed without other unrequested
 related-issue fetches.

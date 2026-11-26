@@ -20,16 +20,6 @@
             "timeout": 5
           }
         ]
-      },
-      {
-        "matcher": "^ask_question$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"ask_question is disabled by user policy. Ask the user directly in plain text instead.\"}'",
-            "timeout": 5
-          }
-        ]
       }
     ]
   },
