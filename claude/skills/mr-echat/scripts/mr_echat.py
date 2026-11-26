@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -48,10 +49,64 @@ QUOTA_EXHAUSTED_RE = re.compile(r"usage limit", re.IGNORECASE)
 PROMPT_PATH = Path(__file__).with_name("generate_prompt.md")
 # gpt-5.6-luna has a 272K-token context; two diffs of this size leave room for the rest of the prompt.
 MAX_PROMPT_DIFF_CHARS = 250_000
+STATE_DIR_ENV = "MR_ECHAT_STATE_DIR"
+WORKSPACE_PREFIX = "claude-mr-echat-"
+STALE_WORKSPACE_MAX_AGE_SECONDS = 24 * 60 * 60
 
 
 class WorkflowError(RuntimeError):
     pass
+
+
+def workspace_root(*, create: bool = False) -> Path:
+    override = os.environ.get(STATE_DIR_ENV, "").strip()
+    root = Path(override).expanduser() if override else Path.home() / ".cache" / "echat-mr-echat"
+    if create:
+        root.mkdir(parents=True, exist_ok=True)
+        root.chmod(0o700)
+    return root.resolve()
+
+
+def _workspace_mtime(entry: Path) -> float:
+    latest = entry.lstat().st_mtime
+    try:
+        for child in entry.iterdir():
+            try:
+                latest = max(latest, child.lstat().st_mtime)
+            except OSError:
+                continue
+    except OSError:
+        pass
+    return latest
+
+
+def prune_stale_workspaces(root: Path, *, keep: Path | None = None, now: float | None = None) -> None:
+    root_resolved = root.resolve()
+    if not root_resolved.is_dir():
+        return
+    cutoff = (now if now is not None else time.time()) - STALE_WORKSPACE_MAX_AGE_SECONDS
+    keep_resolved = keep.resolve() if keep is not None else None
+    try:
+        cwd = Path.cwd().resolve()
+    except FileNotFoundError:
+        cwd = None
+    try:
+        entries = list(root_resolved.iterdir())
+    except OSError:
+        return
+    for entry in entries:
+        if not entry.name.startswith(WORKSPACE_PREFIX) or entry.is_symlink() or not entry.is_dir():
+            continue
+        resolved = entry.resolve()
+        if resolved.parent != root_resolved or resolved == keep_resolved:
+            continue
+        if cwd is not None and (cwd == resolved or resolved in cwd.parents):
+            continue
+        try:
+            if _workspace_mtime(entry) < cutoff:
+                shutil.rmtree(entry)
+        except OSError:
+            continue
 
 
 def run(
@@ -490,8 +545,10 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             raise WorkflowError("no changes to commit and no existing MR to update")
         scope = "commits"
 
-    workspace = Path(tempfile.mkdtemp(prefix=f"claude-mr-echat-{task_id.lower()}-"))
+    state_root = workspace_root(create=True)
+    workspace = Path(tempfile.mkdtemp(prefix=f"{WORKSPACE_PREFIX}{task_id.lower()}-", dir=state_root)).resolve()
     workspace.chmod(0o700)
+    prune_stale_workspaces(state_root, keep=workspace)
     model_diff_path = workspace / "model.diff"
     if staged:
         model_diff = git(repo, *diff_args("--cached", "--binary")).stdout
@@ -899,8 +956,8 @@ def cleanup(args: argparse.Namespace) -> dict[str, Any]:
     _, state = load_state(args.state)
     state_path = Path(args.state).expanduser().resolve()
     workspace = Path(state.get("workspace", "")).resolve()
-    temp_root = Path(tempfile.gettempdir()).resolve()
-    if workspace.parent != temp_root or not workspace.name.startswith("claude-mr-echat-"):
+    state_root = workspace_root()
+    if workspace.parent != state_root or not workspace.name.startswith(WORKSPACE_PREFIX):
         raise WorkflowError(f"refusing to remove unowned workspace: {workspace}")
     if state_path.parent != workspace or not state.get("published"):
         raise WorkflowError("refusing cleanup before successful publication")

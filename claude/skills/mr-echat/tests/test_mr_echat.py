@@ -1,8 +1,10 @@
 import importlib.util
 import os
 import shutil
+import stat
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,7 +18,19 @@ mr_echat = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mr_echat)
 
 
+def _isolate_state_dir(case: unittest.TestCase) -> Path:
+    state_dir = tempfile.TemporaryDirectory(prefix="mr-echat-state-")
+    case.addCleanup(state_dir.cleanup)
+    patcher = patch.dict(os.environ, {mr_echat.STATE_DIR_ENV: state_dir.name})
+    patcher.start()
+    case.addCleanup(patcher.stop)
+    return Path(state_dir.name).resolve()
+
+
 class MrEchatTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.state_root = _isolate_state_dir(self)
+
     def test_extracts_normalized_task_id(self) -> None:
         self.assertEqual(mr_echat.task_id_for("feature/t-123"), "T-123")
 
@@ -397,7 +411,8 @@ class MrEchatTests(unittest.TestCase):
 
 class WorkspaceCwdTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-1-"))
+        self.state_root = _isolate_state_dir(self)
+        self.workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-1-", dir=self.state_root))
         self.addCleanup(shutil.rmtree, self.workspace, ignore_errors=True)
         (self.workspace / "nested").mkdir()
         self.state_path = self.workspace / "state.json"
@@ -437,7 +452,7 @@ class WorkspaceCwdTests(unittest.TestCase):
             tempfile.tempdir = None
             try:
                 with patch.dict(os.environ, {"TMPDIR": custom_tmp}):
-                    workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-99-"))
+                    workspace = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-99-", dir=self.state_root))
                     self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
                     state_path = workspace / "state.json"
                     state = {"workspace": str(workspace), "published": True}
@@ -445,12 +460,150 @@ class WorkspaceCwdTests(unittest.TestCase):
                         os.chdir("/")
                         self.assertEqual(mr_echat.cleanup(SimpleNamespace(state=str(state_path)))["status"], "cleaned")
                         self.assertFalse(workspace.exists())
+
+                    unowned = Path(tempfile.mkdtemp(prefix="claude-mr-echat-t-100-", dir=custom_tmp))
+                    self.addCleanup(shutil.rmtree, unowned, ignore_errors=True)
+                    unowned_state = {"workspace": str(unowned), "published": True}
+                    with patch.object(mr_echat, "load_state", return_value=(unowned, unowned_state)):
+                        with self.assertRaisesRegex(mr_echat.WorkflowError, "unowned workspace"):
+                            mr_echat.cleanup(SimpleNamespace(state=str(unowned / "state.json")))
+                        self.assertTrue(unowned.exists())
             finally:
                 tempfile.tempdir = previous_tempdir
 
 
+class PersistentWorkspaceCacheTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.state_root = _isolate_state_dir(self)
+
+    def test_default_workspace_root_uses_private_home_cache(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="fake-home-") as fake_home:
+            env = {k: v for k, v in os.environ.items() if k != mr_echat.STATE_DIR_ENV}
+            with patch.dict(os.environ, env, clear=True), patch.object(Path, "home", return_value=Path(fake_home)):
+                root = mr_echat.workspace_root(create=True)
+                expected = (Path(fake_home) / ".cache" / "echat-mr-echat").resolve()
+                self.assertEqual(root, expected)
+                self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
+
+    def test_prepare_generate_and_ship_survives_tmpdir_change(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            remote = Path(directory) / "remote.git"
+            repo = Path(directory) / "repo"
+            tmp_a = Path(directory) / "tmp-a"
+            tmp_b = Path(directory) / "tmp-b"
+            tmp_a.mkdir()
+            tmp_b.mkdir()
+            subprocess.run(["git", "init", "--bare", "--initial-branch=master", remote], check=True, stdout=subprocess.DEVNULL)
+            subprocess.run(["git", "clone", str(remote), str(repo)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            def git(*args: str) -> str:
+                return subprocess.run(
+                    ["git", *args], cwd=repo, check=True, text=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                ).stdout.strip()
+
+            git("config", "user.name", "Test User")
+            git("config", "user.email", "test@example.com")
+            template = repo / ".gitlab" / "merge_request_templates" / "Default.md"
+            template.parent.mkdir(parents=True)
+            template.write_text("### Описание\n\nhttps://spacehub.esoft.tech/entity/T-…\n", encoding="utf-8")
+            (repo / "file.txt").write_text("base\n", encoding="utf-8")
+            git("add", ".")
+            git("commit", "-m", "initial")
+            git("push", "-u", "origin", "master")
+            git("switch", "-c", "feature/T-2346")
+            (repo / "file.txt").write_text("approved change\n", encoding="utf-8")
+
+            previous_tempdir = tempfile.tempdir
+            tempfile.tempdir = None
+            try:
+                with patch.dict(os.environ, {"TMPDIR": str(tmp_a)}):
+                    with patch.object(mr_echat, "existing_mr", return_value=None):
+                        prepared = mr_echat.prepare(SimpleNamespace(repo=str(repo), branch=None, target_branch=None))
+                workspace = Path(prepared["workspace"])
+                self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+                self.assertEqual(workspace.parent, self.state_root)
+                self.assertEqual(stat.S_IMODE(self.state_root.stat().st_mode), 0o700)
+                self.assertEqual(stat.S_IMODE(workspace.stat().st_mode), 0o700)
+
+                answer = "<title>approved title #T-2346</title>\n<description>\n### Описание\n\nОдобренный текст.\n</description>\n"
+                with patch.object(mr_echat, "ask_model", return_value=answer):
+                    mr_echat.generate(SimpleNamespace(state=prepared["state_path"], notes_file=None, title=None))
+
+                # Simulate T3 Code / Antigravity restart that deletes the old per-run TMPDIR.
+                shutil.rmtree(tmp_a)
+                tempfile.tempdir = None
+                glab_calls: list[tuple[str, ...]] = []
+
+                def fake_glab(_repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+                    glab_calls.append(args)
+                    return subprocess.CompletedProcess(args, 0, stdout="https://gitlab.example/mr/2346\n", stderr="")
+
+                with patch.dict(os.environ, {"TMPDIR": str(tmp_b)}):
+                    with patch.object(mr_echat, "existing_mr", return_value=None), patch.object(mr_echat, "glab", fake_glab):
+                        shipped = mr_echat.ship(SimpleNamespace(state=prepared["state_path"], force_with_lease=False))
+
+                self.assertEqual(shipped["status"], "created")
+                self.assertEqual(git("log", "-1", "--format=%s"), "approved title #T-2346")
+                create = next(call for call in glab_calls if call[:2] == ("mr", "create"))
+                self.assertEqual(create[create.index("--title") + 1], "approved title #T-2346")
+                self.assertEqual(create[create.index("--description") + 1], "### Описание\n\nОдобренный текст.")
+                self.assertFalse(workspace.exists())
+            finally:
+                tempfile.tempdir = previous_tempdir
+
+    def test_prepare_prunes_stale_owned_workspaces_only(self) -> None:
+        stale = self.state_root / "claude-mr-echat-t-old-abc"
+        fresh = self.state_root / "claude-mr-echat-t-fresh-def"
+        foreign = self.state_root / "other-dir"
+        stray_file = self.state_root / "claude-mr-echat-file"
+        external = tempfile.TemporaryDirectory(prefix="external-target-")
+        self.addCleanup(external.cleanup)
+        external_path = Path(external.name)
+        symlink = self.state_root / "claude-mr-echat-t-link-ghi"
+
+        for directory in (stale, fresh, foreign):
+            directory.mkdir()
+        (stale / "state.json").write_text("{}\n", encoding="utf-8")
+        stray_file.write_text("keep\n", encoding="utf-8")
+        symlink.symlink_to(external_path)
+
+        old_ts = time.time() - mr_echat.STALE_WORKSPACE_MAX_AGE_SECONDS - 3600
+        fresh_ts = time.time() - 3600
+        os.utime(stale / "state.json", (old_ts, old_ts))
+        os.utime(stale, (old_ts, old_ts))
+        os.utime(foreign, (old_ts, old_ts))
+        os.utime(stray_file, (old_ts, old_ts))
+        os.utime(fresh, (fresh_ts, fresh_ts))
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory) / "repo"
+            subprocess.run(["git", "init", "--initial-branch=master", repo], check=True, stdout=subprocess.DEVNULL)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "file.txt").write_text("base\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
+            subprocess.run(["git", "switch", "-c", "feature/T-2347"], cwd=repo, check=True, stderr=subprocess.DEVNULL)
+            (repo / "file.txt").write_text("change\n", encoding="utf-8")
+
+            with patch.object(mr_echat, "existing_mr", return_value=None):
+                prepared = mr_echat.prepare(SimpleNamespace(repo=str(repo), branch=None, target_branch=None))
+            current = Path(prepared["workspace"])
+            self.addCleanup(shutil.rmtree, current, ignore_errors=True)
+
+            self.assertFalse(stale.exists())
+            self.assertTrue(current.exists())
+            self.assertTrue(fresh.exists())
+            self.assertTrue(foreign.exists())
+            self.assertTrue(stray_file.exists())
+            self.assertTrue(symlink.is_symlink())
+            self.assertTrue(external_path.exists())
+
+
 class TaskChainTargetTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.state_root = _isolate_state_dir(self)
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         root = Path(self.directory.name)
@@ -790,6 +943,7 @@ class GenerationFormatTests(unittest.TestCase):
 
 class CommittedBranchAndFallbackTemplateTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.state_root = _isolate_state_dir(self)
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         root = Path(self.directory.name)
