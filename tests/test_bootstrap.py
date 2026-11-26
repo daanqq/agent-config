@@ -95,6 +95,40 @@ class BootstrapTests(unittest.TestCase):
         repeat = bootstrap.link_t3_antigravity(ROOT, self.home, apply=True, backup_existing=True)
         self.assertEqual(repeat, {"linked": 0, "unchanged": 5, "instances": 1})
 
+    def test_t3_antigravity_skips_helper_and_textgen_profiles(self):
+        root = self.home / ".t3/userdata/providers/antigravity"
+        regular = root / "deadbeef1234"
+        helper = root / "deadbeef1234-helper"
+        default_textgen = root / bootstrap.t3_antigravity_profile_hash("antigravity_antigravitytextgen")
+        custom_textgen = root / bootstrap.t3_antigravity_profile_hash("antigravity_fast")
+        for profile in (regular, helper, default_textgen, custom_textgen):
+            (profile / "config").mkdir(parents=True)
+        (default_textgen / "config/config.json").write_text("{}\n", encoding="utf-8")
+
+        settings_path = self.home / ".t3/userdata/settings.json"
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(
+            json.dumps(
+                {
+                    "providerInstances": {
+                        "antigravity_fast": {
+                            "driver": "antigravity",
+                            "displayName": "Antigravity TextGen Fast",
+                        },
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        summary = bootstrap.link_t3_antigravity(ROOT, self.home, apply=True, backup_existing=False)
+        self.assertEqual(summary, {"linked": 4, "unchanged": 0, "instances": 1})
+        self.assertTrue((regular / "config/hooks.json").is_symlink())
+        for skipped in (helper, default_textgen, custom_textgen):
+            self.assertFalse((skipped / "config/hooks.json").exists())
+            self.assertFalse((skipped / "config/mcp_config.json").exists())
+            self.assertFalse((skipped / "GEMINI.md").exists())
+
     def test_claude_mcp_sync_registers_only_missing_servers(self):
         (self.home / ".claude.json").write_text(
             json.dumps({"mcpServers": {"fff": {"type": "stdio"}}}),

@@ -2,6 +2,7 @@
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,7 @@ import sys
 
 
 BACKUP_STATE = Path(".local/state/agent-config/backups")
+T3_ANTIGRAVITY_EXCLUDED_INSTANCE_IDS = ("antigravity_antigravitytextgen",)
 
 
 class BootstrapError(Exception):
@@ -40,13 +42,41 @@ def is_same_resolved_link(target, source):
     return target.is_symlink() and target.resolve() == source.resolve()
 
 
+def t3_antigravity_profile_hash(instance_id):
+    return hashlib.sha256(instance_id.encode("utf-8")).hexdigest()
+
+
+def excluded_t3_antigravity_profiles(home):
+    excluded = {t3_antigravity_profile_hash(name) for name in T3_ANTIGRAVITY_EXCLUDED_INSTANCE_IDS}
+    settings_path = home / ".t3/userdata/settings.json"
+    if settings_path.is_file():
+        try:
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            data = None
+        if isinstance(data, dict) and isinstance(data.get("providerInstances"), dict):
+            for instance_id, cfg in data["providerInstances"].items():
+                if not isinstance(cfg, dict) or cfg.get("driver") != "antigravity":
+                    continue
+                display_name = str(cfg.get("displayName", ""))
+                if "textgen" in instance_id.lower() or "textgen" in display_name.lower():
+                    excluded.add(t3_antigravity_profile_hash(instance_id))
+    return excluded
+
+
 def link_t3_antigravity(repo, home, apply=False, backup_existing=False):
     root = home / ".t3/userdata/providers/antigravity"
     if not root.is_dir():
         print(f"skip (no T3 Antigravity providers dir): {root}")
         return {"linked": 0, "unchanged": 0, "instances": 0}
 
-    instances = sorted(p for p in root.iterdir() if p.is_dir() and not p.is_symlink())
+    excluded = excluded_t3_antigravity_profiles(home)
+    instances = []
+    for candidate in sorted(p for p in root.iterdir() if p.is_dir() and not p.is_symlink()):
+        if candidate.name.endswith("-helper") or candidate.name in excluded:
+            print(f"skip (excluded T3 Antigravity profile): {candidate}")
+            continue
+        instances.append(candidate)
     if not instances:
         print(f"skip (no T3 Antigravity provider instances): {root}")
         return {"linked": 0, "unchanged": 0, "instances": 0}
