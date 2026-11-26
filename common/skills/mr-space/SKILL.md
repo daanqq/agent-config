@@ -11,3 +11,7 @@ Space repositories name the work by its branch, not by a summary of the change:
 - **MR title**: the same branch name, `feature/T-3052`.
 
 The EChat format `<summary> #T-<id>` from `mr-echat` does not apply here.
+
+## Opening the MR
+
+Prefer `glab mr create --source-branch <branch> --target-branch <target> --title <branch> --description "<description>" --yes`. If you use `glab api -X POST projects/:id/merge_requests --input -` with a JSON payload on stdin, always include `-H "Content-Type: application/json"` (without it GitLab returns HTTP 415).
