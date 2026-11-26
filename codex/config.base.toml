@@ -8,7 +8,7 @@ plan_mode_reasoning_effort = "medium"
 suppress_unstable_features_warning = true
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-developer_instructions = "For local `exec_command` calls, set the `shell` argument to `/usr/bin/bash`."
+developer_instructions = "For local `exec_command` calls, set the `shell` argument to `/usr/bin/bash`. For Figma MCP calls, do not set a short `yield_time_ms` (such as 1000) that causes empty `wait` polls, and read the `figma-design-to-code` guide from MCP resource `skill://figma/figma-design-to-code/SKILL.md` instead of searching local files."
 
 [model_providers.cliproxy]
 name = "CLIProxyAPI"

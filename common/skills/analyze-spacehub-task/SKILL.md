@@ -15,7 +15,10 @@ programming works; when they disagree, the programming work wins for
 implementation and the disagreement is reported.
 Before writing conclusions, apply the checks in
 [`references/analysis-checks.md`](references/analysis-checks.md) whose condition
-matches the task, such as spatial claims from screenshots or video.
+matches the task, such as spatial claims from screenshots or video. When
+delegating Figma or other read-only research after fetching the task, pass the
+path to the saved `task-context.md` in the brief so the delegate does not
+refetch the same SpaceHub issue.
 
 After the task context is written, resolve this skill's directory as
 `SKILL_ROOT` and label the calling Herdr tab with the task ID and title:
