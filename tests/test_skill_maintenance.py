@@ -84,6 +84,34 @@ class SkillMaintenanceTests(unittest.TestCase):
         refreshed = json.loads(check.MANIFEST.read_text())
         self.assertEqual(refreshed["skills"]["common"]["shared"]["installed_hash"], check.directory_hash(check.SKILL_ROOTS["common"] / "shared"))
 
+    def test_refresh_single_skill_leaves_other_drifted_skill_in_same_scope_untouched(self):
+        self.skill("common", "alpha")
+        self.skill("common", "beta")
+        records = self.records({"common": ["alpha", "beta"]})
+        records["common"]["alpha"]["installed_hash"] = "old-alpha"
+        records["common"]["beta"]["installed_hash"] = "old-beta"
+        self.manifest(records)
+        self.assertEqual(check.main(["--refresh-installed-hashes", "--skill", "common/alpha"]), 0)
+        refreshed = json.loads(check.MANIFEST.read_text())
+        self.assertEqual(
+            refreshed["skills"]["common"]["alpha"]["installed_hash"],
+            check.directory_hash(check.SKILL_ROOTS["common"] / "alpha"),
+        )
+        self.assertEqual(refreshed["skills"]["common"]["beta"]["installed_hash"], "old-beta")
+
+    def test_refresh_rejects_unknown_or_invalid_skill_selector(self):
+        self.skill("common", "alpha")
+        records = self.records({"common": ["alpha"]})
+        records["common"]["alpha"]["installed_hash"] = "old-alpha"
+        self.manifest(records)
+        before = check.MANIFEST.read_text()
+        self.assertNotEqual(check.main(["--refresh-installed-hashes", "--skill", "common/missing"]), 0)
+        self.assertNotEqual(check.main(["--refresh-installed-hashes", "--skill", "alpha"]), 0)
+        self.assertNotEqual(
+            check.main(["--scope", "pi", "--refresh-installed-hashes", "--skill", "common/alpha"]), 0
+        )
+        self.assertEqual(check.MANIFEST.read_text(), before)
+
     def test_hash_algorithm_keeps_symlink_kind(self):
         path = self.skill("common", "shared")
         (path / "file").write_text("x")

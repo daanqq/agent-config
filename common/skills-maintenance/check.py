@@ -175,9 +175,32 @@ def _repository_errors(repositories: object) -> list[str]:
     return errors
 
 
+def _parse_skill_selectors(
+    raw_skills: list[str], scope_filter: str | None
+) -> tuple[set[tuple[str, str]] | None, list[str]]:
+    if not raw_skills:
+        return None, []
+    targets: set[tuple[str, str]] = set()
+    errors: list[str] = []
+    for raw in raw_skills:
+        parts = raw.split("/")
+        if len(parts) != 2 or parts[0] not in SCOPES or not parts[1]:
+            errors.append(
+                f"invalid --skill selector {raw!r} (expected <scope>/<name> with scope in {', '.join(SCOPES)})"
+            )
+            continue
+        skill_scope, skill_name = parts
+        if scope_filter and skill_scope != scope_filter:
+            errors.append(f"{raw}: conflicts with --scope {scope_filter}")
+            continue
+        targets.add((skill_scope, skill_name))
+    return targets, errors
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scope", choices=SCOPES, default=None)
+    parser.add_argument("--skill", action="append", default=[], metavar="SCOPE/NAME")
     parser.add_argument("--check-sources", action="store_true")
     parser.add_argument("--refresh-installed-hashes", action="store_true")
     args = parser.parse_args(argv)
@@ -213,6 +236,17 @@ def main(argv: list[str] | None = None) -> int:
                 if alias.resolve(strict=False) != expected.resolve():
                     errors.append(f"{scope}: alias {alias.name} does not point to common/{alias.name}")
     selected = (args.scope,) if args.scope else SCOPES
+    selected_skills, selector_errors = _parse_skill_selectors(args.skill, args.scope)
+    errors += selector_errors
+    if selected_skills is not None:
+        for skill_scope, skill_name in sorted(selected_skills):
+            scope_records = declared.get(skill_scope)
+            if (
+                not isinstance(scope_records, dict)
+                or skill_name not in scope_records
+                or skill_name not in physical[skill_scope]
+            ):
+                errors.append(f"{skill_scope}/{skill_name}: unknown skill")
     for scope in SCOPES:
         records = declared.get(scope, {})
         if not isinstance(records, dict):
@@ -226,7 +260,11 @@ def main(argv: list[str] | None = None) -> int:
                 errors.append(f"{scope}/{name}: record must be an object")
                 continue
             skill_dir = physical[scope].get(name)
-            if skill_dir is None or scope not in selected:
+            if (
+                skill_dir is None
+                or scope not in selected
+                or (selected_skills is not None and (scope, name) not in selected_skills)
+            ):
                 continue
             skill_file = skill_dir / "SKILL.md"
             if not skill_file.is_file():
