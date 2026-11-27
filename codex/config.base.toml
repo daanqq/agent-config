@@ -27,8 +27,8 @@ multi_agent = true
 prevent_idle_sleep = true
 js_repl = true
 terminal_resize_reflow = true
-goals = true
-apps = true
+goals = false
+apps = false
 image_generation = true
 
 [memories]
