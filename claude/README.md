@@ -7,7 +7,7 @@ statusline, and theme.
 
 - `git`, `jq`, `curl`, `python3`
 - [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI): API key in `~/.claude/secrets/cliproxy-api-key`, management settings in `~/.pi/agent/secrets/cliproxy-management.json` (statusline quota)
-- Optional: `glab` (GitLab MR skills), `herdr` (session hook), `pngquant`, `optipng` (`optimize-images`)
+- Optional: `glab` (GitLab MR skills), `pngquant`, `optipng` (`optimize-images`)
 
 ## Install
 

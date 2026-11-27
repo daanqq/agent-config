@@ -39,10 +39,7 @@ python3 common/skills-maintenance/check.py --check-sources
 python3 scripts/install.py --backup-existing
 ```
 
-`make check-extensions` runs the dependency-free TypeScript regression tests
-without starting Pi, Herdr or model calls. It is included in `make check` and
-runs from a staged snapshot without node_modules or dependency installation.
-When editing Pi extensions or `pi/agent/scripts/install-dependencies.mjs`, also
+When editing Pi extensions or `pi/agent/scripts/install-dependencies.mjs`,
 run `make dep-dev && make check-extensions-dev` to execute per-extension test
 suites (`firecrawl-search`, `background-terminals`) that rely on `devDependencies`.
 

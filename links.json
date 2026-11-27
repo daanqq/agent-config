@@ -70,10 +70,6 @@
       "target": ".agents/skills/handoff"
     },
     {
-      "source": "common/skills/herdr-build",
-      "target": ".agents/skills/herdr-build"
-    },
-    {
       "source": "common/skills/improve-react",
       "target": ".agents/skills/improve-react"
     },
@@ -234,10 +230,6 @@
       "target": ".claude/CLAUDE.md"
     },
     {
-      "source": "claude/hooks/herdr-agent-state.sh",
-      "target": ".claude/hooks/herdr-agent-state.sh"
-    },
-    {
       "source": "claude/keybindings.json",
       "target": ".claude/keybindings.json"
     },
@@ -356,10 +348,6 @@
     {
       "source": "claude/skills/handoff",
       "target": ".claude/skills/handoff"
-    },
-    {
-      "source": "claude/skills/herdr-build",
-      "target": ".claude/skills/herdr-build"
     },
     {
       "source": "claude/skills/how",
@@ -578,20 +566,8 @@
       "target": ".pi/agent/extensions/firecrawl-search"
     },
     {
-      "source": "pi/agent/extensions/herdr-agent-state.ts",
-      "target": ".pi/agent/extensions/herdr-agent-state.ts"
-    },
-    {
-      "source": "pi/agent/extensions/herdr-pi-session-name.ts",
-      "target": ".pi/agent/extensions/herdr-pi-session-name.ts"
-    },
-    {
       "source": "pi/agent/extensions/mr-echat.ts",
       "target": ".pi/agent/extensions/mr-echat.ts"
-    },
-    {
-      "source": "pi/agent/extensions/orca-agent-status.ts",
-      "target": ".pi/agent/extensions/orca-agent-status.ts"
     },
     {
       "source": "pi/agent/extensions/package-lock.json",
@@ -782,10 +758,6 @@
       "target": ".pi/agent/skills/handoff"
     },
     {
-      "source": "pi/agent/skills/herdr-build",
-      "target": ".pi/agent/skills/herdr-build"
-    },
-    {
       "source": "pi/agent/skills/how",
       "target": ".pi/agent/skills/how"
     },
@@ -950,10 +922,6 @@
       "target": ".gemini/config/mcp_config.json"
     },
     {
-      "source": "antigravity/sph-issues-mcp.mjs",
-      "target": ".gemini/config/sph-issues-mcp.mjs"
-    },
-    {
       "source": "antigravity/config.json",
       "target": ".gemini/config/config.json"
     },
@@ -1040,10 +1008,6 @@
     {
       "source": "claude/skills/handoff",
       "target": ".gemini/config/skills/handoff"
-    },
-    {
-      "source": "claude/skills/herdr-build",
-      "target": ".gemini/config/skills/herdr-build"
     },
     {
       "source": "claude/skills/how",
@@ -1233,10 +1197,5 @@
       "source": "claude/skills/why",
       "target": ".gemini/config/skills/why"
     }
-  ],
-  "uninstalled_skills": {
-    "common/skills/herdr": "Disabled across all harnesses; kept in repository for reference.",
-    "claude/skills/herdr": "Disabled across all harnesses; kept in repository for reference.",
-    "pi/agent/skills/herdr": "Disabled across all harnesses; kept in repository for reference."
-  }
+  ]
 }

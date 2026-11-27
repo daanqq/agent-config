@@ -21,11 +21,6 @@
       "cache": "github.com/cursor/plugins",
       "revision": "57fc467a229cf2853329f19c9e6a9fd83ddc2ea2"
     },
-    "herdr": {
-      "url": "https://github.com/herdrdev/herdr.git",
-      "cache": "github.com/herdrdev/herdr",
-      "revision": "7b116c05bfda646af39d2524c54e70c751f57ee8"
-    },
     "humanlayer-skills": {
       "url": "https://github.com/humanlayer/skills.git",
       "cache": "github.com/humanlayer/skills",
@@ -113,17 +108,6 @@
         "path": "skills/productivity/handoff",
         "overlay": "overlays/common/handoff.md",
         "installed_hash": "1853cc5aeb572376219714595a8874331752d04ba3ef35916fa51c6f61901842"
-      },
-      "herdr-build": {
-        "tracking": "local",
-        "installed_hash": "480f2d40f9e53a0c7992112a156d9dab1beab5b8bb0bb2ee15c7a6122cf89317"
-      },
-      "herdr": {
-        "tracking": "overlay",
-        "repository": "herdr",
-        "path": "skills/herdr",
-        "overlay": "overlays/common/herdr.md",
-        "installed_hash": "c43d9f1b59d48dbf38395554ebfb232cdc20f7d7dde4fc8917f02efaca114fef"
       },
       "improve-react": {
         "tracking": "overlay",
@@ -222,7 +206,7 @@
       },
       "analyze-spacehub-task": {
         "tracking": "local",
-        "installed_hash": "01940b8ad44a8522259af3065bdd7a7afefda75514b516c2bb1e646452266b3d"
+        "installed_hash": "4dbc2e914e5b38fdf64e389ed24be5472ce6c4f55ed9f9d096897a4169f7429b"
       },
       "retro": {
         "tracking": "overlay",

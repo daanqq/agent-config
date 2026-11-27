@@ -24,7 +24,6 @@ Personal configuration for the `pi` coding agent.
 | `codex-gpt62-prompt/` | Adds model-specific instructions to outgoing GPT-6.2 Sol and Astra requests. | |
 | `codex-native-compaction.ts` | Compacts OpenAI Codex sessions with the native encrypted server checkpoint instead of a text summary. | — |
 | `context-limit-warning.ts` | Warns when context exceeds 128k tokens. | — |
-| `herdr-agent-state.ts` | Reports Pi session and agent state to Herdr. | — |
 | `mr-echat.ts` | Commits, pushes, and creates EChat merge requests. | `/mr-echat [--name=<ветка>]` |
 | `pi-paste.ts` | Restores long pasted text after a repeated paste. | — |
 | `session-delete.ts` | Deletes the current session safely. | `/delete` |

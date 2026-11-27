@@ -1,4 +1,4 @@
-.PHONY: check check-extensions check-extensions-dev dep dep-dev plan install install-hooks bootstrap-plan bootstrap
+.PHONY: check check-extensions-dev dep dep-dev plan install install-hooks bootstrap-plan bootstrap
 
 check:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests --buffer
@@ -9,11 +9,7 @@ check:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/check-skill-links.py
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/install.py --backup-existing > /dev/null
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/bootstrap.py --backup-existing > /dev/null
-	$(MAKE) check-extensions
 	git diff --check
-
-check-extensions:
-	node --test --experimental-strip-types pi/agent/extensions/tests/00-ui-transition.test.ts pi/agent/extensions/tests/herdr-pi-session-name.test.ts
 
 check-extensions-dev:
 	@for dir in pi/agent/extensions/firecrawl-search pi/agent/extensions/background-terminals; do \
