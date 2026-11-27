@@ -44,6 +44,8 @@
 
 Figma MCP в Antigravity ACP не работает из-за OAuth; для чтения макетов и узлов Figma делегируй read-only задачу в провайдер `codex` через `delegate_task` (там подключён `https://mcp.figma.com/mcp`), передавая в бриф путь к уже сохранённому `task-context.md` (если задача уже загружена), чтобы делегат не ходил в SpaceHub повторно.
 
+Для браузерных задач по умолчанию используй MCP `chrome-devtools` (изолированный headless-профиль). Используй `chrome-devtools-shared` только когда пользователь явно попросил об этом или из контекста понятно, что нужен общий с пользователем профиль браузера с подготовленной сессией (SSO, 2FA, капча, авторизованный стенд).
+
 При работе в изолированном worktree репозитория EChat вне `~/echat` (например `~/.t3/worktrees/tidy-client/...` после Context Handoff) общие правила стека и локальный стенд находятся в `/home/user/echat/AGENTS.md` и `/home/user/echat/echat-stand/bin/echat-stand`.
 
 # Output
