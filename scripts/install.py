@@ -325,6 +325,7 @@ def perform_restore(home, run, journal):
 def find_stale_skill_symlinks(repo, home, entries):
     """Find broken symlinks inside target skill directories that point into this repository."""
     repo, home = Path(repo).resolve(), Path(home).resolve()
+    planned = {Path(entry["target"]) for entry in entries}
     skill_dirs = sorted({
         Path(entry["target"]).parent
         for entry in entries
@@ -335,7 +336,7 @@ def find_stale_skill_symlinks(repo, home, entries):
         if not within(directory, home) or not directory.is_dir():
             continue
         for item in sorted(directory.iterdir()):
-            if not item.is_symlink() or item.exists():
+            if item in planned or not item.is_symlink() or item.exists():
                 continue
             raw_target = os.readlink(item)
             resolved_target = Path(os.path.normpath(

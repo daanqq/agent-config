@@ -500,6 +500,22 @@ class InstallTests(unittest.TestCase):
         self.assertTrue(stale_foreign.is_symlink())
         self.assertTrue((skills_dir / "active").is_symlink())
 
+    def test_broken_repo_symlink_at_planned_skill_target_is_replaced_not_pruned(self):
+        skill = self.repo / "antigravity/skills/moved"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("# moved\n")
+        self.mappings = [{"source": "antigravity/skills/moved", "target": ".agents/skills/moved"}]
+        self.write_manifest()
+
+        skills_dir = self.home / ".agents/skills"
+        skills_dir.mkdir(parents=True)
+        target = skills_dir / "moved"
+        target.symlink_to(self.repo / "claude/skills/moved")
+
+        run = self.install(apply=True, backup_existing=True)
+        self.assertIsNotNone(run)
+        self.assertEqual(target.resolve(), skill.resolve())
+
     def make_skill(self, tree, name):
         path = self.repo / tree / name
         path.mkdir(parents=True)
