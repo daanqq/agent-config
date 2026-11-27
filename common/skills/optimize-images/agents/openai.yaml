@@ -1,0 +1,5 @@
+interface:
+  display_name: "Optimize Images"
+  short_description: "Compress PNG assets while preserving originals"
+policy:
+  allow_implicit_invocation: false

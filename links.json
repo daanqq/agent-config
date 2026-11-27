@@ -240,6 +240,10 @@
     {
       "source": "common/bin/agent-chrome",
       "target": ".local/bin/agent-chrome"
+    },
+    {
+      "source": "common/bin/run-check.py",
+      "target": ".local/bin/run-check.py"
     }
   ]
 }

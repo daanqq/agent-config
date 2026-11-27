@@ -46,7 +46,7 @@ Tests build their own temporary binary.
   Single-quotes unquoted globs in grep `--include`/`--exclude` through `updatedInput`
   (a partly quoted glob is blocked instead), blocks test/typecheck/lint commands
   piped straight into `grep`, `rg`, or `head` without `pipefail` or a `PIPESTATUS`
-  read (pointing to `prove-it-works/scripts/run-check.py`), and blocks `rm` with
+  read (pointing to `~/.local/bin/run-check.py`), and blocks `rm` with
   an unquoted glob over shared `run-check-*` log directories.
 
 ## Skill maintenance checks
@@ -57,7 +57,8 @@ python3 common/skills-maintenance/check.py --scope pi
 python3 common/skills-maintenance/check.py --scope antigravity
 ```
 
-Use the shared `update-skills` skill for upstream reconciliation. The global
-source lock is shared; client-specific behavior is preserved in scoped overlays.
-Refresh hashes only after classifying accepted changes, never to hide unrelated
-drift. See [common/skills-maintenance/README.md](../common/skills-maintenance/README.md).
+Follow the upstream reconciliation procedure in
+[common/skills-maintenance/README.md](../common/skills-maintenance/README.md).
+The global source lock is shared; client-specific behavior is preserved in scoped
+overlays. Refresh hashes only after classifying accepted changes, never to hide
+unrelated drift.

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Cookie Debugging"
+  short_description: "Debug cookies, auth redirects, and session state via Chrome DevTools MCP"
+policy:
+  allow_implicit_invocation: false

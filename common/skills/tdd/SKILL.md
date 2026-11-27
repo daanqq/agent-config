@@ -21,8 +21,6 @@ A **seam** is the public boundary you test at: the interface where you observe b
 
 Choose the narrowest existing public boundary that exercises the requested behavior, using the owning code and repository tests. Record the boundary and intended observable result in working notes, then proceed without routine confirmation. Ask when the expected contract is genuinely disputed or the choice would materially change scope or a public interface; continue independent authorized work while awaiting an answer.
 
-When the shape of that interface is itself in question, read [codebase-design](../codebase-design/SKILL.md) for the interface and module-design vocabulary. Consult it as reference rather than starting a separate design workflow.
-
 ## Anti-patterns
 
 - **Implementation-coupled**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.

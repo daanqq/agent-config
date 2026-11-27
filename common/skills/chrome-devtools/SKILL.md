@@ -86,12 +86,11 @@ You can send multiple tool calls in parallel, but maintain correct order: naviga
 
 ## Specialized workflows
 
-These skills are hidden from automatic selection in Claude Code; read the matching `SKILL.md` and follow it when the task is:
+These skills are hidden from automatic selection; read the matching `SKILL.md` and follow it when the task is:
 
 - 401/403, login redirects, sessions, `Cookie`/`Set-Cookie`, SameSite or consent banners: [`cookie-debugging`](../cookie-debugging/SKILL.md).
-- slow page load, LCP or Core Web Vitals: [`debug-optimize-lcp`](../debug-optimize-lcp/SKILL.md).
 - memory growth, OOM or heap snapshots: [`memory-leak-debugging`](../memory-leak-debugging/SKILL.md).
-- accessibility: semantics, ARIA, focus, keyboard, contrast, tap targets: [`a11y-debugging`](../a11y-debugging/SKILL.md).
+- MCP connection, target, or server startup failures (`list_pages`, `new_page`, `navigate_page`): [`troubleshooting`](../troubleshooting/SKILL.md).
 
 ## Troubleshooting
 

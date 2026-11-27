@@ -1,6 +1,7 @@
 ---
 name: optimize-images
 description: Optimize PNG assets when the user asks to reduce image size or adds PNGs that need compression, preserving each source in a sibling originals/ directory for manual review and deletion.
+disable-model-invocation: true
 ---
 
 # Optimize images

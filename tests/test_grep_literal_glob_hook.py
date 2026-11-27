@@ -158,7 +158,7 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2 if blocked else 0, result.stderr)
                 self.assertEqual(result.stdout, "")
                 if blocked:
-                    self.assertIn("prove-it-works/scripts/run-check.py", result.stderr)
+                    self.assertIn("$HOME/.local/bin/run-check.py", result.stderr)
                     self.assertIn("not executed or rewritten", result.stderr)
                 else:
                     self.assertEqual(result.stderr, "")
@@ -417,7 +417,7 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
             with self.subTest(cmd=cmd):
                 result = self.invoke(cmd)
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-                self.assertIn("$HOME/.agents/skills/prove-it-works/scripts/run-check.py", result.stderr)
+                self.assertIn("$HOME/.local/bin/run-check.py", result.stderr)
         allowed = self.invoke("make plan | head -n 20")
         self.assertEqual(allowed.returncode, 0, allowed.stderr)
 

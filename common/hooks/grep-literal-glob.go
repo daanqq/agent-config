@@ -502,7 +502,7 @@ func pipeMessage(filter string) string {
 	return fmt.Sprintf("A test, typecheck or lint command piped into %s loses its exit status "+
 		"and can drop error lines such as the Vitest Errors block. Run it through the runner, "+
 		"which keeps the status and the full log and prints the tail: "+
-		"python3 \"$HOME/.agents/skills/prove-it-works/scripts/run-check.py\" --tail 40 -- <check command>; "+
+		"python3 \"$HOME/.local/bin/run-check.py\" --tail 40 -- <check command>; "+
 		"grep the printed log path if you need specific lines. Setting set -o pipefail "+
 		"before the pipe, or reading ${PIPESTATUS[0]} in the very next command is also accepted. "+
 		"The command was not executed or rewritten.\n", filter)

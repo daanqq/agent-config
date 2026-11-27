@@ -2,9 +2,9 @@
 
 ## Preserve
 
-- Keep the skill as an explicit, minimal alias for the installed `grilling` workflow.
-- Reach `grilling` through a relative file link instead of a nonexistent Skill tool.
+- Keep `disable-model-invocation: true` in `SKILL.md` frontmatter and `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
+- Inline the `grilling` design-tree interview workflow directly in `grill-me/SKILL.md` (the standalone `grilling` skill was removed).
 
 ## Acceptance
 
-Explicit invocation loads and executes `../grilling/SKILL.md` without duplicating its instructions.
+Explicit invocation runs the full design-tree interview workflow directly from `grill-me/SKILL.md` without depending on a separate `grilling` skill.

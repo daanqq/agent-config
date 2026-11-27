@@ -1,0 +1,5 @@
+interface:
+  display_name: "Memory Leak Debugging"
+  short_description: "Capture and compare heap snapshots with Chrome DevTools MCP"
+policy:
+  allow_implicit_invocation: false

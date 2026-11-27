@@ -1,6 +1,7 @@
 ---
 name: memory-leak-debugging
 description: Diagnoses and resolves memory leaks in JavaScript/Node.js applications. Use when a user reports high memory usage, OOM errors, or wants to capture, compare, or inspect heap snapshots with Chrome DevTools MCP memory tools.
+disable-model-invocation: true
 ---
 
 # Memory Leak Debugging

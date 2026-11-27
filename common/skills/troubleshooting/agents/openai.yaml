@@ -1,0 +1,5 @@
+interface:
+  display_name: "Chrome DevTools Troubleshooting"
+  short_description: "Troubleshoot Chrome DevTools MCP connection and target errors"
+policy:
+  allow_implicit_invocation: false

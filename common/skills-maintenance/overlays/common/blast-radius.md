@@ -2,7 +2,7 @@
 
 ## Preserve
 
-- Keep automatic model invocation and the shared trigger description.
+- Keep automatic model invocation and the proactive trigger description (allows the agent to self-trigger whenever the change's size or reach risks regressions outside the diff).
 - Keep the explicit evidence ladder, with level 4 as the boundary for a proven claim.
 - Follow repository permissions: read-only reviews use existing checks or task-owned temporary scripts; database access, external writes, and repository edits require the applicable authorization.
 - Limit delegation to one genuinely independent slice by default and verify delegated findings in the parent.

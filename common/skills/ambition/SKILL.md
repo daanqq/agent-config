@@ -24,7 +24,7 @@ Answer each question for this task:
 - **Rawest material.** The lowest-level source to start from: raw logs, profiles, production data, the protocol spec, instead of summaries or someone's description.
 - **Instruments.** The specific methods and tools that practitioner would use: profiler, heap snapshot, database query, property-based test, statistical model.
 - **Belief under test.** The assumption the task rests on ("the slowness is rendering", "users drop off at onboarding") and how to try to falsify it against the raw material.
-- **Outside judge.** An executable check that would prove the result without the model grading itself. Rank it with the evidence levels in [`prove-it-works`](../prove-it-works/SKILL.md).
+- **Outside judge.** An executable check that would prove the result without the model grading itself.
 
 When the task has a measurable target, add a _stretch target_ an order of magnitude past the stated one (5s → 200ms) and what would have to be true to reach it. The brief must require reporting the number actually reached and must not accept "impossible" without evidence.
 

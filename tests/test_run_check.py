@@ -12,7 +12,7 @@ import unittest
 
 
 ROOT = Path(__file__).parents[1]
-RUN_CHECK = ROOT / "common/skills/prove-it-works/scripts/run-check.py"
+RUN_CHECK = ROOT / "common/bin/run-check.py"
 
 
 class RunCheckTests(unittest.TestCase):
