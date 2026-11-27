@@ -13,7 +13,7 @@ statusline, and theme.
 
 `~/.claude` is not a checkout. `scripts/install.py` links selected files and
 skill directories from this directory into `~/.claude` according to
-`links.json`; see the repository [README](../README.md) for the dry run,
+`links.json`; see [docs/install-and-restore.md](../docs/install-and-restore.md) for the dry run,
 backups, and restore.
 
 Runtime state and credentials stay in `~/.claude` and are not tracked here.
