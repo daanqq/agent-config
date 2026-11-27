@@ -21,7 +21,7 @@ Read [`references/epistemics.md`](references/epistemics.md) before synthesizing.
    - git history, code comments, tests, and local ADRs or docs;
    - GitLab MR context through the installed review tooling when the target came from an MR;
    - SpaceHub through `fetch-spacehub-task` when the target has a task identifier;
-   - local Claude transcripts for past sessions when they can contain relevant decisions;
+   - local session history (`~/agent-automations/agent-retro/runs/`, Antigravity transcripts, or archived Claude transcripts) when past sessions can contain relevant decisions;
    - other connected MCP sources only after checking their instructions and confirming the calls are read-only.
 4. **Investigate proportionally.** Start with source control and the strongest named source. Add another source when it can distinguish competing explanations or fill a material gap. Use at most one subagent by default for an independent evidence category; the parent owns synthesis and citation checks.
 5. **Test alternatives.** Ask what evidence would exist if a competing explanation were true and search for it. Preserve contradictions instead of choosing the smoothest story.
@@ -31,7 +31,7 @@ Do not query production or shared develop databases. Obtain permission before an
 
 ## Session-history discipline
 
-- Search `~/.claude/projects/` by session id, workspace, topic, or date. Read the relevant transcript tail so later corrections and final decisions are not missed.
+- Start session-history lookups in `~/agent-automations/agent-retro/runs/` (fast text index and daily session summaries by date, topic, or task id), then inspect the matching Antigravity transcripts under `~/.t3/userdata/providers/antigravity/*/antigravity-acp/brain/*/.system_generated/logs/transcript.jsonl` (`transcript_full.jsonl` when truncated) if exact details are needed. Keep `~/.claude/projects/` as an archive for older tasks only. Read the relevant transcript tail so later corrections and final decisions are not missed.
 - Treat transcript entries as historical evidence, not as proof that an action succeeded. Verify commands, diffs, and artifacts independently when the answer depends on them.
 - Use a connected history or MCP source only after confirming that it is available and read-only. Do not invent tool names.
 - A missing result means only that the available history did not surface evidence.

@@ -437,7 +437,7 @@
         "repository": "cursor-plugins",
         "path": "pstack/skills/why",
         "overlay": "overlays/claude/why.md",
-        "installed_hash": "a24895694573ec70fdd0d78ab29d948798bf762ce05f1dac3dc60eaccb2d39b5"
+        "installed_hash": "a9585ad8b1323e706a57ee1aa9f747dbce296c045ca553281aaae7ad5d8077c9"
       }
     }
   }
