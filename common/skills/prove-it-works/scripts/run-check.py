@@ -17,6 +17,7 @@ from typing import Sequence
 
 
 DEFAULT_TAIL_LINES = 40
+MAX_TAP_FAILURE_LINES = 15
 START_FAILURE_STATUS = 127
 
 
@@ -66,12 +67,28 @@ def _create_log() -> tuple[Path, Path, object]:
     return log_dir, Path(raw_log_path), os.fdopen(fd, "wb")
 
 
-def _tail(path: Path, line_count: int) -> list[bytes]:
+def _is_tap_failure(line: bytes) -> bool:
+    return line.lstrip(b" \t").startswith(b"not ok ")
+
+
+def _tail_has_failure_line(lines: Sequence[bytes]) -> bool:
+    return any(b"not ok " in line or b"FAIL " in line for line in lines)
+
+
+def _read_log_summary(
+    path: Path, line_count: int, *, collect_tap_failures: bool
+) -> tuple[list[bytes], list[bytes], int]:
     lines: deque[bytes] = deque(maxlen=line_count)
+    tap_failures: list[bytes] = []
+    tap_failure_total = 0
     with path.open("rb") as stream:
         for line in stream:
             lines.append(line)
-    return list(lines)
+            if collect_tap_failures and _is_tap_failure(line):
+                tap_failure_total += 1
+                if len(tap_failures) < MAX_TAP_FAILURE_LINES:
+                    tap_failures.append(line)
+    return list(lines), tap_failures, tap_failure_total
 
 
 def _diagnostic(message: str) -> None:
@@ -90,17 +107,7 @@ def _safe_print(value: str, *, end: str = "\n") -> bool:
     return True
 
 
-def _print_report(log_path: Path, line_count: int, status: int) -> None:
-    if not _safe_print(f"Output tail (last {line_count} lines):"):
-        _diagnostic(f"report log: {log_path}")
-        return
-
-    try:
-        lines = _tail(log_path, line_count)
-    except Exception as error:
-        _diagnostic(f"unable to read output log {log_path}: {error}")
-        lines = []
-
+def _print_log_lines(lines: Sequence[bytes], log_path: Path) -> bool:
     for raw_line in lines:
         try:
             line = raw_line.decode("utf-8", errors="replace")
@@ -109,7 +116,41 @@ def _print_report(log_path: Path, line_count: int, status: int) -> None:
             break
         if not _safe_print(line, end="" if line.endswith("\n") else "\n"):
             _diagnostic(f"report log: {log_path}")
+            return False
+    return True
+
+
+def _print_report(log_path: Path, line_count: int, status: int) -> None:
+    try:
+        lines, tap_failures, tap_failure_total = _read_log_summary(
+            log_path, line_count, collect_tap_failures=status != 0
+        )
+    except Exception as error:
+        _diagnostic(f"unable to read output log {log_path}: {error}")
+        lines, tap_failures, tap_failure_total = [], [], 0
+
+    if status != 0 and tap_failure_total > 0 and not _tail_has_failure_line(lines):
+        if tap_failure_total > len(tap_failures):
+            header = f"TAP failures (first {len(tap_failures)} of {tap_failure_total}):"
+        else:
+            header = f"TAP failures ({tap_failure_total}):"
+        if not _safe_print(header):
+            _diagnostic(f"report log: {log_path}")
             return
+        if not _print_log_lines(tap_failures, log_path):
+            return
+        if tap_failure_total > len(tap_failures):
+            omitted = tap_failure_total - len(tap_failures)
+            if not _safe_print(f"... ({omitted} more in full log)"):
+                _diagnostic(f"report log: {log_path}")
+                return
+
+    if not _safe_print(f"Output tail (last {line_count} lines):"):
+        _diagnostic(f"report log: {log_path}")
+        return
+
+    if not _print_log_lines(lines, log_path):
+        return
 
     if not _safe_print(f"Log: {log_path}"):
         _diagnostic(f"report log: {log_path}")

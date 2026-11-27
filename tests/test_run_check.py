@@ -353,6 +353,80 @@ class RunCheckTests(unittest.TestCase):
         self.assertIn("Status: 127", result.stdout)
         self.assertIn("Result: FAIL", result.stdout)
 
+    def test_tap_failures_outside_tail_are_printed_before_tail(self):
+        command = (
+            "import sys; "
+            "print('not ok 1 - early failure'); "
+            "print('    not ok 1 - nested subtest failure'); "
+            "[print(f'ok {i} - passing test') for i in range(2, 22)]; "
+            "print('# fail 2'); "
+            "sys.exit(1)"
+        )
+        result = self.run_check("--tail", "5", "--", sys.executable, "-u", "-c", command)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("TAP failures (2):", result.stdout)
+        self.assertIn("not ok 1 - early failure", result.stdout)
+        self.assertIn("    not ok 1 - nested subtest failure", result.stdout)
+        self.assertLess(
+            result.stdout.index("TAP failures (2):"),
+            result.stdout.index("Output tail (last 5 lines):"),
+        )
+        self.assertIn("Result: FAIL", result.stdout)
+
+    def test_tap_failures_above_limit_are_truncated_with_note(self):
+        command = (
+            "import sys; "
+            "[print(f'not ok {i} - fail {i}') for i in range(1, 19)]; "
+            "[print(f'ok {i} - pass') for i in range(1, 11)]; "
+            "sys.exit(1)"
+        )
+        result = self.run_check("--tail", "5", "--", sys.executable, "-u", "-c", command)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("TAP failures (first 15 of 18):", result.stdout)
+        self.assertIn("not ok 15 - fail 15", result.stdout)
+        self.assertNotIn("not ok 16 - fail 16", result.stdout)
+        self.assertIn("... (3 more in full log)", result.stdout)
+        self.assertLess(
+            result.stdout.index("... (3 more in full log)"),
+            result.stdout.index("Output tail (last 5 lines):"),
+        )
+
+    def test_tap_failures_already_in_tail_are_not_duplicated(self):
+        cases = [
+            (
+                "not ok in tail",
+                "import sys; print('not ok 1 - visible failure'); print('ok 2 - pass'); sys.exit(1)",
+            ),
+            (
+                "FAIL in tail",
+                (
+                    "import sys; print('not ok 1 - early failure'); "
+                    "[print(f'ok {i} - pass') for i in range(2, 12)]; "
+                    "print('FAIL suite.test.ts'); sys.exit(1)"
+                ),
+            ),
+        ]
+        for label, command in cases:
+            with self.subTest(label=label):
+                result = self.run_check("--tail", "5", "--", sys.executable, "-u", "-c", command)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertNotIn("TAP failures", result.stdout)
+                if label == "not ok in tail":
+                    self.assertEqual(result.stdout.count("not ok 1 - visible failure"), 1)
+
+    def test_tap_failures_block_is_omitted_on_success(self):
+        command = (
+            "print('not ok 1 - non-fatal log line'); "
+            "[print(f'ok {i} - pass') for i in range(1, 15)]"
+        )
+        result = self.run_check("--tail", "5", "--", sys.executable, "-u", "-c", command)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Result: PASS", result.stdout)
+        self.assertNotIn("TAP failures", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
