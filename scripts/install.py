@@ -110,6 +110,53 @@ def manifest_links(mappings):
             yield source.parent / "node_modules", target.parent / "node_modules", True
 
 
+def skill_tree_links(data, repo, explicit_sources):
+    trees = data.get("skill_trees", [])
+    if not isinstance(trees, list):
+        raise InstallError("skill_trees must be a list of {source, targets}")
+    exclusions = data.get("uninstalled_skills", {})
+    if not isinstance(exclusions, dict):
+        raise InstallError("uninstalled_skills must map skill source paths to reasons")
+
+    discovered = {}
+    seen_roots = set()
+    for tree in trees:
+        if not isinstance(tree, dict) or set(tree) != {"source", "targets"}:
+            raise InstallError("Each skill_trees entry must contain source and targets")
+        source_root = relative_path(tree["source"])
+        if source_root in seen_roots:
+            raise InstallError(f"Duplicate skill_trees source: {source_root}")
+        seen_roots.add(source_root)
+        raw_targets = tree["targets"]
+        if not isinstance(raw_targets, list) or not raw_targets:
+            raise InstallError(f"skill_trees targets must be a nonempty list: {source_root}")
+        target_roots = [relative_path(t) for t in raw_targets]
+        source_dir = repo / source_root
+        if not source_dir.is_dir() or not within(source_dir.resolve(), repo):
+            raise InstallError(f"Invalid skill_trees source directory: {source_root}")
+        for item in sorted(source_dir.iterdir(), key=lambda p: p.name):
+            if (item / "SKILL.md").is_file():
+                discovered[f"{source_root}/{item.name}"] = (
+                    source_root / item.name,
+                    [target_root / item.name for target_root in target_roots],
+                )
+
+    for source, reason in exclusions.items():
+        if source not in discovered:
+            raise InstallError(f"Stale uninstalled_skills entry: {source}")
+        if not isinstance(reason, str) or not reason.strip():
+            raise InstallError(f"uninstalled_skills requires a nonempty reason: {source}")
+        if source in explicit_sources:
+            raise InstallError(f"Skill is both mapped and excluded: {source}")
+
+    for key in sorted(discovered):
+        if key in exclusions:
+            continue
+        source_path, target_paths = discovered[key]
+        for target_path in target_paths:
+            yield source_path, target_path, False
+
+
 def preflight(repo, home, manifest, backup_existing=False):
     repo, home = Path(repo).resolve(), Path(home).resolve()
     if not home.is_dir():
@@ -118,8 +165,11 @@ def preflight(repo, home, manifest, backup_existing=False):
     if (not isinstance(data, dict) or type(data.get("version")) is not int
             or data["version"] != 1 or not isinstance(data.get("links"), list)):
         raise InstallError("Expected manifest {version: 1, links: [...]}")
+    explicit = list(manifest_links(data["links"]))
+    explicit_sources = {str(source_path) for source_path, _, _ in explicit}
+    all_links = [*explicit, *skill_tree_links(data, repo, explicit_sources)]
     entries, targets = [], []
-    for source_path, target_path, dependency in manifest_links(data["links"]):
+    for source_path, target_path, dependency in all_links:
         source = repo / source_path
         target = home / target_path
         if dependency:

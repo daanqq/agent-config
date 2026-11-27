@@ -500,6 +500,97 @@ class InstallTests(unittest.TestCase):
         self.assertTrue(stale_foreign.is_symlink())
         self.assertTrue((skills_dir / "active").is_symlink())
 
+    def make_skill(self, tree, name):
+        path = self.repo / tree / name
+        path.mkdir(parents=True)
+        (path / "SKILL.md").write_text(f"---\nname: {name}\ndescription: test\n---\n")
+        return path
+
+    def test_skill_trees_expand_skills_and_aliases_and_ignore_non_skills(self):
+        self.make_skill("common/skills", "shared")
+        (self.repo / "claude/skills").mkdir(parents=True)
+        (self.repo / "claude/skills/shared").symlink_to("../../common/skills/shared")
+        (self.repo / "claude/skills/not-a-skill").mkdir()
+        self.manifest.write_text(json.dumps({
+            "version": 1,
+            "skill_trees": [
+                {"source": "common/skills", "targets": [".agents/skills"]},
+                {"source": "claude/skills", "targets": [".claude/skills", ".gemini/config/skills"]},
+            ],
+            "links": self.mappings,
+        }))
+
+        self.install(apply=True)
+
+        self.assertTrue((self.home / ".agents/skills/shared").is_symlink())
+        self.assertTrue((self.home / ".claude/skills/shared").is_symlink())
+        self.assertTrue((self.home / ".gemini/config/skills/shared").is_symlink())
+        self.assertFalse(installer.exists(self.home / ".claude/skills/not-a-skill"))
+
+    def test_skill_trees_respects_and_validates_uninstalled_skills(self):
+        self.make_skill("common/skills", "kept")
+        self.make_skill("common/skills", "disabled")
+        base_manifest = {
+            "version": 1,
+            "skill_trees": [{"source": "common/skills", "targets": [".agents/skills"]}],
+            "links": [],
+        }
+
+        self.manifest.write_text(json.dumps({
+            **base_manifest,
+            "uninstalled_skills": {"common/skills/disabled": "Repository-only helper."},
+        }))
+        self.install(apply=True)
+        self.assertTrue((self.home / ".agents/skills/kept").is_symlink())
+        self.assertFalse(installer.exists(self.home / ".agents/skills/disabled"))
+
+        for bad_exclusions, pattern in (
+            ({"common/skills/missing": "obsolete"}, "Stale uninstalled_skills entry"),
+            ({"common/skills/disabled": " "}, "requires a nonempty reason"),
+            ([], "must map skill source paths to reasons"),
+        ):
+            with self.subTest(bad_exclusions=bad_exclusions):
+                self.manifest.write_text(json.dumps({
+                    **base_manifest,
+                    "uninstalled_skills": bad_exclusions,
+                }))
+                with self.assertRaisesRegex(installer.InstallError, pattern):
+                    self.install()
+
+        self.manifest.write_text(json.dumps({
+            **base_manifest,
+            "links": [{"source": "common/skills/disabled", "target": ".claude/skills/disabled"}],
+            "uninstalled_skills": {"common/skills/disabled": "Repository-only helper."},
+        }))
+        with self.assertRaisesRegex(installer.InstallError, "both mapped and excluded"):
+            self.install()
+
+    def test_invalid_skill_trees_fail(self):
+        for trees in (
+            "not-a-list",
+            [{"source": "common/skills"}],
+            [{"source": "common/skills", "targets": []}],
+            [{"source": "missing/skills", "targets": [".agents/skills"]}],
+        ):
+            with self.subTest(trees=trees):
+                self.manifest.write_text(json.dumps({
+                    "version": 1,
+                    "skill_trees": trees,
+                    "links": [],
+                }))
+                with self.assertRaises(installer.InstallError):
+                    self.install()
+
+    def test_repo_manifest_declares_all_skill_trees(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        data = json.loads((repo_root / "links.json").read_text(encoding="utf-8"))
+        trees = {entry["source"]: tuple(entry["targets"]) for entry in data.get("skill_trees", [])}
+        self.assertEqual(trees, {
+            "common/skills": (".agents/skills",),
+            "claude/skills": (".claude/skills", ".gemini/config/skills"),
+            "pi/agent/skills": (".pi/agent/skills",),
+        })
+
 
 if __name__ == "__main__":
     unittest.main()

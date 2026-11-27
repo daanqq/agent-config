@@ -6,7 +6,6 @@ check:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s common/skills/mr-review/tests --buffer
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s common/skills/babysit-mr/tests --buffer
 	PYTHONDONTWRITEBYTECODE=1 python3 common/skills-maintenance/check.py
-	PYTHONDONTWRITEBYTECODE=1 python3 scripts/check-skill-links.py
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/install.py --backup-existing > /dev/null
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/bootstrap.py --backup-existing > /dev/null
 	git diff --check
