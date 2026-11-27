@@ -32,11 +32,8 @@ apps = true
 image_generation = true
 
 [memories]
-use_memories = true
-generate_memories = true
-disable_on_external_context = true
-extract_model = "gpt-5.4-mini"
-consolidation_model = "gpt-5.4-mini"
+use_memories = false
+generate_memories = false
 
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"
