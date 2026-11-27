@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chrome (Agents)
+Comment=Persistent Chrome profile shared with AI agents (CDP on 127.0.0.1:9223)
+Exec={{HOME}}/.local/bin/agent-chrome %U
+Icon=google-chrome
+Terminal=false
+StartupWMClass=chrome-agent-profile
+Categories=Network;WebBrowser;

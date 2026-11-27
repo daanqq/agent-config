@@ -982,6 +982,10 @@
       "target": ".local/bin/mr-wait"
     },
     {
+      "source": "common/bin/agent-chrome",
+      "target": ".local/bin/agent-chrome"
+    },
+    {
       "source": "claude/skills/ambition",
       "target": ".gemini/config/skills/ambition"
     },

@@ -87,7 +87,7 @@
       },
       "task-worktree": {
         "tracking": "local",
-        "installed_hash": "15399427c01d9d02384ca56cbd5fde6a2e9427f1bb096cb730522108edc1d99c"
+        "installed_hash": "dc037dcddaf365f897172e4636ee96586525798f785b360096166c28f605083f"
       },
       "task-worktree-transfer": {
         "tracking": "local",
@@ -194,7 +194,7 @@
         "repository": "chrome-devtools-mcp",
         "path": "skills/chrome-devtools",
         "overlay": "overlays/common/chrome-devtools.md",
-        "installed_hash": "5161947064d90779f4add6a0b77977380ca33bdf73ced74c2910fea1daf33b49"
+        "installed_hash": "68bf3c1732ae4adc848e6855c1a91fbe7a6ef941b65d41d1318fd8baae5e726f"
       },
       "cookie-debugging": {
         "tracking": "exact",

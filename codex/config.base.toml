@@ -45,6 +45,10 @@ url = "https://mcp.figma.com/mcp"
 command = "npx"
 args = ["-y", "chrome-devtools-mcp@latest", "--headless", "--userDataDir={{HOME}}/.cache/chrome-devtools-mcp/chrome-profile", "--chromeArg=--window-size=1920,1080"]
 
+[mcp_servers.chrome-devtools-shared]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest", "--browserUrl", "http://127.0.0.1:9223"]
+
 [plugins."figma@openai-curated"]
 enabled = true
 

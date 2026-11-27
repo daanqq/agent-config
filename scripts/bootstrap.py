@@ -233,6 +233,13 @@ def run_bootstrap(repo, home, apply=False, backup_existing=False, claude_bin=Non
             apply=apply,
             expand_home=True,
         ),
+        "agent_chrome_desktop": seed_file(
+            repo / "common/desktop/agent-chrome.desktop",
+            home / ".local/share/applications/agent-chrome.desktop",
+            home,
+            apply=apply,
+            expand_home=True,
+        ),
     }
     t3_links = link_t3_antigravity(repo, home, apply=apply, backup_existing=backup_existing)
     mcp = sync_claude_mcp(repo, home, apply=apply, claude_bin=claude_bin)

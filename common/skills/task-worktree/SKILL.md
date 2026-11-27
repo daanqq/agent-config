@@ -63,17 +63,7 @@ back, continue in that checkout.
   without `--no-track` a plain push goes to the release branch. Its MR targets
   `hotfix/<version>`; until the user prepares that branch, target the release branch.
 
-When isolation is required, create one worktree per affected repository under
-`~/echat/worktrees/` unless the user specifies another location. Name it
-`<repository>-T-<task-id>`, for example `tidy-client-T-123123`. Ordinary feature
-worktrees start from the agreed integration base; decomposed task worktrees
-start from their parent feature branch. For EChat repositories, do not launch a
-task thread with T3 Code's `workspaceStrategy: "worktree"` from a subproject
-(such as `tidy-client` or `tidy-rest`): T3 creates that worktree under
-`~/.t3/worktrees/`, outside `~/echat/`, which cuts the session and its delegated
-reviewers off from `~/echat/AGENTS.md`, `~/echat/docs/agent/coding-standards/`,
-and `~/echat/.agents/skills/`. Launch EChat task threads in the `echat` project
-(`~/echat`) and create repository worktrees under `~/echat/worktrees/`.
+When running inside a T3 Code metarepo worktree of `~/echat` (e.g. `~/.t3/worktrees/echat/<slug>/`, configured via `~/echat/t3.json`), isolation is already provided by T3 for the 8 core repositories (`tidy-client`, `tidy-rest`, `tidy-server`, `tidy-adm`, `tidy-proto`, `miniapp`, `esoft-rn-monorepo`, `echat-desktop-app`). Work directly in `./<repository>` inside that T3 worktree so T3 tracks diffs across all modified repositories in its Changes UI, and rename any auto-generated `t3/...` branch to the contract branch (`feature/T-<task-id>` or `task/T-<child-task-id>`) in each modified child repository before committing or opening an MR; leave the metarepo root itself clean. For repositories excluded from `t3.json` or when running from the root `~/echat` checkout (without a T3 worktree), create one worktree per affected repository under `~/echat/worktrees/` unless the user specifies another location, named `<repository>-T-<task-id>` (for example `tidy-client-T-123123`). Ordinary feature worktrees start from the agreed integration base; decomposed task worktrees start from their parent feature branch. Do not launch a task thread with T3 Code's `workspaceStrategy: "worktree"` from a subproject (such as `tidy-client` or `tidy-rest`): a single-repo worktree under `~/.t3/worktrees/<repo>/` cuts the session and its delegated reviewers off from `~/echat/AGENTS.md`, `~/echat/docs/agent/coding-standards/`, and `~/echat/.agents/skills/`. Launch EChat task threads in the `echat` project (`~/echat`).
 
 Reuse a matching established branch/worktree only after verifying repository,
 task identity, and intended target. Do not rename historical branches, overwrite

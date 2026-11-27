@@ -33,6 +33,10 @@ When a page requires a login and the project has no login script, request the cr
 
 `take_screenshot` of a page that is not in the foreground hangs until `Page.captureScreenshot timed out` (about 3 minutes). Before a screenshot of a page you opened with `new_page`, or after working in another page, call `select_page` with that `pageId` and `bringToFront: true`. If a screenshot still times out, bring the page to the front before retrying; never repeat the same call as is.
 
+### Shared persistent browser (`chrome-devtools-shared`)
+
+When a task needs a persistent login/session prepared by the user (for example a dev stand with SSO, 2FA, or captcha) or the user asks to validate in the shared agent browser, use the `chrome-devtools-shared` MCP server (`http://127.0.0.1:9223`) instead of `chrome-devtools`. Keep `chrome-devtools` as the default for isolated checks. If `chrome-devtools-shared` cannot connect, ask the user to open the **Chrome (Agents)** shortcut (or run `agent-chrome`) and retry once it is running.
+
 ### Connecting to the user's own browser
 
 When the user asks you to look at their browser (a reproduction in their tabs, their session), the MCP server of this session cannot help: it runs with `--headless --isolated` and sees only its own empty Chrome. Do not change the MCP configuration. Instead:
@@ -43,7 +47,7 @@ When the user asks you to look at their browser (a reproduction in their tabs, t
 
 ### Efficient data retrieval
 
-- Use `filePath` parameter for large outputs (screenshots, snapshots, traces)
+- Use `filePath` parameter for large outputs (screenshots, snapshots, traces). In `chrome-devtools-shared` / Antigravity, any `filePath` outside the configured workspace roots (including `/tmp/...`) is rejected with `Access denied`: either omit `filePath` (output is saved under `.system_generated/steps/`) or pass a path inside the workspace.
 - Use pagination (`pageIdx`, `pageSize`) and filtering (`types`) to minimize data
 - Set `includeSnapshot: false` on input actions unless you need updated page state
 

@@ -12,6 +12,16 @@
       ],
       "directTools": false
     },
+    "chrome-devtools-shared": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--browserUrl",
+        "http://127.0.0.1:9223"
+      ],
+      "directTools": false
+    },
     "figma": {
       "url": "https://mcp.figma.com/mcp",
       "oauth": {

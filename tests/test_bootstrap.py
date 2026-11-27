@@ -34,6 +34,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(result["seeded"]["t3_settings"], "planned")
         self.assertEqual(result["seeded"]["t3_keybindings"], "planned")
         self.assertEqual(result["seeded"]["antigravity_cli_settings"], "planned")
+        self.assertEqual(result["seeded"]["agent_chrome_desktop"], "planned")
         self.assertEqual(list(self.home.iterdir()), [])
 
     def test_clean_home_seeds_templates_with_expanded_home_and_no_overwrite(self):
@@ -42,6 +43,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(result["seeded"]["t3_settings"], "seeded")
         self.assertEqual(result["seeded"]["t3_keybindings"], "seeded")
         self.assertEqual(result["seeded"]["antigravity_cli_settings"], "seeded")
+        self.assertEqual(result["seeded"]["agent_chrome_desktop"], "seeded")
 
         codex_cfg = (self.home / ".codex/config.toml").read_text(encoding="utf-8")
         self.assertIn(f'CURL_HOME = "{self.home}/.config/codex-curl"', codex_cfg)
@@ -64,6 +66,10 @@ class BootstrapTests(unittest.TestCase):
         self.assertTrue(ag_cli_settings["allowNonWorkspaceAccess"])
         self.assertNotIn("trustedWorkspaces", ag_cli_settings)
 
+        desktop = (self.home / ".local/share/applications/agent-chrome.desktop").read_text(encoding="utf-8")
+        self.assertIn(f"Exec={self.home}/.local/bin/agent-chrome %U", desktop)
+        self.assertNotIn("{{HOME}}", desktop)
+
         # Existing files must never be overwritten on repeated runs.
         (self.home / ".codex/config.toml").write_text("custom = true\n", encoding="utf-8")
         second = bootstrap.run_bootstrap(ROOT, self.home, apply=True, claude_bin="")
@@ -71,6 +77,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(second["seeded"]["t3_settings"], "skipped")
         self.assertEqual(second["seeded"]["t3_keybindings"], "skipped")
         self.assertEqual(second["seeded"]["antigravity_cli_settings"], "skipped")
+        self.assertEqual(second["seeded"]["agent_chrome_desktop"], "skipped")
         self.assertEqual((self.home / ".codex/config.toml").read_text(encoding="utf-8"), "custom = true\n")
 
     def test_dynamic_t3_antigravity_linking_and_backup(self):
@@ -143,10 +150,11 @@ class BootstrapTests(unittest.TestCase):
         fake_claude.chmod(fake_claude.stat().st_mode | stat.S_IXUSR)
 
         result = bootstrap.sync_claude_mcp(ROOT, self.home, apply=True, claude_bin=str(fake_claude))
-        self.assertEqual(result, {"added": 1, "skipped": 1})
+        self.assertEqual(result, {"added": 2, "skipped": 1})
         calls = log.read_text(encoding="utf-8").splitlines()
-        self.assertEqual(len(calls), 1)
+        self.assertEqual(len(calls), 2)
         self.assertTrue(calls[0].startswith("mcp add-json -s user chrome-devtools "))
+        self.assertTrue(calls[1].startswith("mcp add-json -s user chrome-devtools-shared "))
 
     def test_cli_dry_run_exits_zero_on_clean_home(self):
         result = subprocess.run(

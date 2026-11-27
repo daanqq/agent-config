@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+profile_dir="${AGENT_CHROME_PROFILE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/chrome-agent-profile}"
+debug_port="${AGENT_CHROME_DEBUG_PORT:-9223}"
+
+chrome_bin="${AGENT_CHROME_BIN:-}"
+if [[ -z "$chrome_bin" ]]; then
+  for candidate in google-chrome-stable google-chrome chromium chromium-browser; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      chrome_bin="$candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$chrome_bin" ]]; then
+  echo "agent-chrome: Chrome/Chromium binary not found in PATH" >&2
+  exit 1
+fi
+
+mkdir -p -m 700 "$profile_dir"
+
+exec "$chrome_bin" \
+  --user-data-dir="$profile_dir" \
+  --remote-debugging-address=127.0.0.1 \
+  --remote-debugging-port="$debug_port" \
+  --class=chrome-agent-profile \
+  --no-first-run \
+  --no-default-browser-check \
+  "$@"
