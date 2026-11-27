@@ -19,11 +19,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MAINTENANCE = Path(__file__).resolve().parent
 MANIFEST = MAINTENANCE / "manifest.json"
-SCOPES = ("common", "pi", "claude")
+SCOPES = ("common", "pi", "antigravity")
 SKILL_ROOTS = {
     "common": ROOT / "common" / "skills",
     "pi": ROOT / "pi" / "agent" / "skills",
-    "claude": ROOT / "claude" / "skills",
+    "antigravity": ROOT / "antigravity" / "skills",
 }
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -218,14 +218,14 @@ def main(argv: list[str] | None = None) -> int:
     errors += _repository_errors(data.get("repositories"))
     declared = data.get("skills")
     if not isinstance(declared, dict) or set(declared) != set(SCOPES):
-        errors.append("skills must contain exactly common, pi, and claude")
+        errors.append("skills must contain exactly common, pi, and antigravity")
         declared = {scope: {} for scope in SCOPES}
     physical = {}
     for scope in SCOPES:
         physical[scope], scope_errors = _skill_dirs(scope)
         errors += scope_errors
     common_names = set(physical["common"])
-    for scope in ("pi", "claude"):
+    for scope in ("pi", "antigravity"):
         own = set(physical[scope])
         overlap = common_names & own
         if overlap:

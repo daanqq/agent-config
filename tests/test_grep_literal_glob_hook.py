@@ -7,7 +7,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "claude/hooks/grep-literal-glob.go"
+SOURCE = ROOT / "common/hooks/grep-literal-glob.go"
 HOOK_COMMAND = '"$HOME/.local/libexec/agent-config/grep-literal-glob"'
 
 
@@ -338,10 +338,6 @@ class GrepLiteralGlobHookTests(unittest.TestCase):
                 self.assertFalse(target.exists())
 
     def test_settings_use_compiled_hook(self):
-        settings = json.loads((ROOT / "claude/settings.json").read_text())
-        handlers = [handler for group in settings["hooks"]["PreToolUse"]
-                    if group["matcher"] == "Bash" for handler in group["hooks"]]
-        self.assertEqual(sum(handler["command"] == HOOK_COMMAND for handler in handlers), 1)
         for rel in ("antigravity/hooks.json", "antigravity/t3-hooks.json"):
             ag_hooks = json.loads((ROOT / rel).read_text())
             ag_handlers = [handler for entry in ag_hooks.values()

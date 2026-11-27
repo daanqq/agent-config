@@ -384,7 +384,7 @@
         "installed_hash": "678f26981def0b51bd10bc50fb7093bab00f241f8b5fbf77533246f1bb69fa37"
       }
     },
-    "claude": {
+    "antigravity": {
       "mr-echat": {
         "tracking": "local",
         "installed_hash": "9c52de8a43b501f6a28f9d519c26845cf1dd6d993a4b857fc466eecd69866de4"
@@ -405,12 +405,8 @@
         "tracking": "overlay",
         "repository": "cursor-plugins",
         "path": "pstack/skills/show-me-your-work",
-        "overlay": "overlays/claude/show-me-your-work.md",
+        "overlay": "overlays/antigravity/show-me-your-work.md",
         "installed_hash": "3af1b79e0c4844128d64f1bab5497cdb78af3bdd08fc9f062208f45ee82a155d"
-      },
-      "session-screenshot": {
-        "tracking": "local",
-        "installed_hash": "82831b76ab2cb21b32a7bbc3b0c80c2d84f00fd6aa44df54d6205ebacfde616b"
       },
       "trade-offs": {
         "tracking": "local",
@@ -420,7 +416,7 @@
         "tracking": "overlay",
         "repository": "cursor-plugins",
         "path": "pstack/skills/why",
-        "overlay": "overlays/claude/why.md",
+        "overlay": "overlays/antigravity/why.md",
         "installed_hash": "a9585ad8b1323e706a57ee1aa9f747dbce296c045ca553281aaae7ad5d8077c9"
       }
     }

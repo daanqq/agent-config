@@ -8,9 +8,8 @@
       ]
     },
     {
-      "source": "claude/skills",
+      "source": "antigravity/skills",
       "targets": [
-        ".claude/skills",
         ".gemini/config/skills"
       ]
     },
@@ -23,44 +22,16 @@
   ],
   "links": [
     {
-      "source": "claude/skills/mr-echat",
+      "source": "antigravity/skills/mr-echat",
       "target": ".agents/skills/mr-echat"
     },
     {
-      "source": "claude/skills/task-to-mr",
+      "source": "antigravity/skills/task-to-mr",
       "target": ".agents/skills/task-to-mr"
     },
     {
-      "source": "claude/skills/review-gpt",
+      "source": "antigravity/skills/review-gpt",
       "target": ".agents/skills/review-gpt"
-    },
-    {
-      "source": "claude/CLAUDE.md",
-      "target": ".claude/CLAUDE.md"
-    },
-    {
-      "source": "claude/keybindings.json",
-      "target": ".claude/keybindings.json"
-    },
-    {
-      "source": "claude/settings.json",
-      "target": ".claude/settings.json"
-    },
-    {
-      "source": "claude/skills-maintenance",
-      "target": ".claude/skills-maintenance"
-    },
-    {
-      "source": "claude/statusline-command.sh",
-      "target": ".claude/statusline-command.sh"
-    },
-    {
-      "source": "claude/statusline-quota-refresh.sh",
-      "target": ".claude/statusline-quota-refresh.sh"
-    },
-    {
-      "source": "claude/themes/alabaster.json",
-      "target": ".claude/themes/alabaster.json"
     },
     {
       "source": "pi/agent/AGENTS.md",

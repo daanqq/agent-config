@@ -31,7 +31,7 @@ class SkillMaintenanceTests(unittest.TestCase):
         check.SKILL_ROOTS = {
             "common": self.root / "common" / "skills",
             "pi": self.root / "pi" / "agent" / "skills",
-            "claude": self.root / "claude" / "skills",
+            "antigravity": self.root / "antigravity" / "skills",
         }
 
     def tearDown(self):

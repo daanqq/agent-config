@@ -2,7 +2,7 @@
 
 check:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests --buffer
-	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s claude/skills/mr-echat/tests --buffer
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s antigravity/skills/mr-echat/tests --buffer
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s common/skills/mr-review/tests --buffer
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s common/skills/babysit-mr/tests --buffer
 	PYTHONDONTWRITEBYTECODE=1 python3 common/skills-maintenance/check.py
@@ -33,7 +33,7 @@ bootstrap-plan:
 	python3 scripts/install.py --backup-existing
 	python3 scripts/bootstrap.py --backup-existing
 
-hooks := grep-literal-glob reply-language
+hooks := grep-literal-glob
 
 install-hooks:
 	@set -eu; \
@@ -43,7 +43,7 @@ install-hooks:
 		trap 'rm -rf "$$stage"' EXIT; \
 		for name in $(hooks); do \
 			CGO_ENABLED=0 GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off \
-				go build -trimpath -o "$$stage/$$name" "claude/hooks/$$name.go"; \
+				go build -trimpath -o "$$stage/$$name" "common/hooks/$$name.go"; \
 		done; \
 		for name in $(hooks); do \
 			mv -f "$$stage/$$name" "$$dir/$$name"; \

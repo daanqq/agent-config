@@ -3,7 +3,7 @@
 ## Dry run and activation
 
 This checkout is prepared separately; existing clients are not switched
-automatically. Review the dry run and stop Pi and Claude Code before connecting
+automatically. Review the dry run and stop running clients before connecting
 to avoid concurrent settings writes:
 
 ```bash
@@ -19,7 +19,7 @@ lets it plan replacing occupied paths; no HOME paths are changed without `--appl
 1. `make install-hooks`: builds and atomically replaces native Go hooks under `~/.local/libexec/agent-config/`.
 2. `make dep`: installs consolidated runtime extension dependencies in `pi/agent/extensions` (`npm ci --omit=dev --ignore-scripts`).
 3. `make install`: links files and skills from `links.json` into HOME, moving occupied paths into a private backup directory.
-4. `scripts/bootstrap.py --backup-existing --apply`: seeds missing `~/.codex/config.toml`, `~/.t3/userdata/{settings,keybindings}.json`, `~/.gemini/antigravity-cli/settings.json`, and `~/.local/share/applications/agent-chrome.desktop`, links active T3 Antigravity provider instances dynamically, and registers missing global Claude MCP servers from `claude/mcp.json`. Existing local configs are never overwritten.
+4. `scripts/bootstrap.py --backup-existing --apply`: seeds missing `~/.codex/config.toml`, `~/.t3/userdata/{settings,keybindings}.json`, `~/.gemini/antigravity-cli/settings.json`, and `~/.local/share/applications/agent-chrome.desktop`, and links active T3 Antigravity provider instances dynamically. Existing local configs are never overwritten.
 
 ## Manifest and `skill_trees`
 

@@ -587,7 +587,7 @@ class InstallTests(unittest.TestCase):
         trees = {entry["source"]: tuple(entry["targets"]) for entry in data.get("skill_trees", [])}
         self.assertEqual(trees, {
             "common/skills": (".agents/skills",),
-            "claude/skills": (".claude/skills", ".gemini/config/skills"),
+            "antigravity/skills": (".gemini/config/skills",),
             "pi/agent/skills": (".pi/agent/skills",),
         })
 

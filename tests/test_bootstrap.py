@@ -4,7 +4,6 @@ import io
 import json
 import os
 from pathlib import Path
-import stat
 import subprocess
 import sys
 import tempfile
@@ -38,7 +37,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(list(self.home.iterdir()), [])
 
     def test_clean_home_seeds_templates_with_expanded_home_and_no_overwrite(self):
-        result = bootstrap.run_bootstrap(ROOT, self.home, apply=True, claude_bin="")
+        result = bootstrap.run_bootstrap(ROOT, self.home, apply=True)
         self.assertEqual(result["seeded"]["codex_config"], "seeded")
         self.assertEqual(result["seeded"]["t3_settings"], "seeded")
         self.assertEqual(result["seeded"]["t3_keybindings"], "seeded")
@@ -72,7 +71,7 @@ class BootstrapTests(unittest.TestCase):
 
         # Existing files must never be overwritten on repeated runs.
         (self.home / ".codex/config.toml").write_text("custom = true\n", encoding="utf-8")
-        second = bootstrap.run_bootstrap(ROOT, self.home, apply=True, claude_bin="")
+        second = bootstrap.run_bootstrap(ROOT, self.home, apply=True)
         self.assertEqual(second["seeded"]["codex_config"], "skipped")
         self.assertEqual(second["seeded"]["t3_settings"], "skipped")
         self.assertEqual(second["seeded"]["t3_keybindings"], "skipped")
@@ -135,26 +134,6 @@ class BootstrapTests(unittest.TestCase):
             self.assertFalse((skipped / "config/hooks.json").exists())
             self.assertFalse((skipped / "config/mcp_config.json").exists())
             self.assertFalse((skipped / "GEMINI.md").exists())
-
-    def test_claude_mcp_sync_registers_only_missing_servers(self):
-        (self.home / ".claude.json").write_text(
-            json.dumps({"mcpServers": {"fff": {"type": "stdio"}}}),
-            encoding="utf-8",
-        )
-        log = self.home / "claude-calls.log"
-        fake_claude = self.home / "fake-claude"
-        fake_claude.write_text(
-            f"#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{log}'\n",
-            encoding="utf-8",
-        )
-        fake_claude.chmod(fake_claude.stat().st_mode | stat.S_IXUSR)
-
-        result = bootstrap.sync_claude_mcp(ROOT, self.home, apply=True, claude_bin=str(fake_claude))
-        self.assertEqual(result, {"added": 2, "skipped": 1})
-        calls = log.read_text(encoding="utf-8").splitlines()
-        self.assertEqual(len(calls), 2)
-        self.assertTrue(calls[0].startswith("mcp add-json -s user chrome-devtools "))
-        self.assertTrue(calls[1].startswith("mcp add-json -s user chrome-devtools-shared "))
 
     def test_cli_dry_run_exits_zero_on_clean_home(self):
         result = subprocess.run(

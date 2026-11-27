@@ -34,33 +34,27 @@ index, install links, or refresh skill hashes. Unstaged fixes cannot hide a
 broken staged snapshot; unrelated unstaged files remain untouched. Stage the
 intended code, manifest entries, and links together before committing.
 
-## Native Go hooks
+## Native Go hook
 
-`make install-hooks` builds and atomically replaces both binaries under
+`make install-hooks` builds and atomically replaces the binary under
 `~/.local/libexec/agent-config/` using only the Go standard library (offline);
 a failed build retains the installed version. Run `make install-hooks` after
-editing either source file, or the clients will keep running the old binary.
+editing the source file, or Antigravity/T3 will keep running the old binary.
 Tests build their own temporary binary.
 
-- **`grep-literal-glob`** (`claude/hooks/grep-literal-glob.go`): Bash `PreToolUse` guard.
+- **`grep-literal-glob`** (`common/hooks/grep-literal-glob.go`): Bash/shell `PreToolUse` guard.
   Single-quotes unquoted globs in grep `--include`/`--exclude` through `updatedInput`
   (a partly quoted glob is blocked instead), blocks test/typecheck/lint commands
   piped straight into `grep`, `rg`, or `head` without `pipefail` or a `PIPESTATUS`
   read (pointing to `prove-it-works/scripts/run-check.py`), and blocks `rm` with
   an unquoted glob over shared `run-check-*` log directories.
-- **`reply-language`** (`claude/hooks/reply-language.go`): `Stop` hook.
-  When the last real user message contains Cyrillic but the final reply has no
-  Cyrillic and more than 200 letters outside code, inline code, URLs, and paths,
-  returns `{"decision":"block","reason":...}` asking for a Russian rewrite. Does
-  nothing when `stop_hook_active` is true (fires at most once in a row) and fails
-  open on input or transcript errors.
 
 ## Skill maintenance checks
 
 ```bash
 python3 common/skills-maintenance/check.py
 python3 common/skills-maintenance/check.py --scope pi
-python3 common/skills-maintenance/check.py --scope claude
+python3 common/skills-maintenance/check.py --scope antigravity
 ```
 
 Use the shared `update-skills` skill for upstream reconciliation. The global

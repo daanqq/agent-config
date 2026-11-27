@@ -123,7 +123,7 @@ class PreCommitTests(unittest.TestCase):
             "import unittest\nclass RootTest(unittest.TestCase):\n"
             "    def test_passes(self): pass\n", encoding="utf-8",
         )
-        mr_tests = self.repo / "claude/skills/mr-echat/tests"
+        mr_tests = self.repo / "antigravity/skills/mr-echat/tests"
         mr_tests.mkdir(parents=True)
         test = mr_tests / "test_guard.py"
         test.write_text(

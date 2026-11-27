@@ -1,4 +1,4 @@
-"""Idempotent post-link bootstrap for mutable configs, T3 Antigravity providers, and Claude MCP."""
+"""Idempotent post-link bootstrap for mutable configs and T3 Antigravity providers."""
 
 import argparse
 from datetime import datetime, timezone
@@ -6,8 +6,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
-import subprocess
 import sys
 
 
@@ -132,61 +130,9 @@ def link_t3_antigravity(repo, home, apply=False, backup_existing=False):
     return {"linked": linked, "unchanged": unchanged, "instances": len(instances)}
 
 
-def sync_claude_mcp(repo, home, apply=False, claude_bin=None):
-    spec_path = repo / "claude/mcp.json"
-    if not spec_path.is_file():
-        return {"added": 0, "skipped": 0}
-    spec = json.loads(expand_template(spec_path.read_text(encoding="utf-8"), home))
-    servers = spec.get("mcpServers", {})
-    if not isinstance(servers, dict):
-        raise BootstrapError(f"Invalid mcpServers in {spec_path}")
-
-    existing = {}
-    claude_json = home / ".claude.json"
-    if claude_json.is_file():
-        try:
-            data = json.loads(claude_json.read_text(encoding="utf-8"))
-            if isinstance(data, dict) and isinstance(data.get("mcpServers"), dict):
-                existing = data["mcpServers"]
-        except json.JSONDecodeError as error:
-            raise BootstrapError(f"Invalid JSON in {claude_json}: {error}") from error
-
-    missing = [(name, cfg) for name, cfg in servers.items() if name not in existing]
-    for name in servers:
-        if name in existing:
-            print(f"unchanged mcp: {name}")
-    if not missing:
-        return {"added": 0, "skipped": len(servers)}
-
-    binary = shutil.which("claude") if claude_bin is None else claude_bin
-    added = 0
-    for name, cfg in missing:
-        if not apply:
-            print(f"add mcp (claude -s user): {name}")
-            added += 1
-            continue
-        if not binary:
-            print(f"skip mcp (claude CLI not found): {name}")
-            continue
-        payload = json.dumps(cfg, separators=(",", ":"))
-        env = {**os.environ, "HOME": str(home)}
-        result = subprocess.run(
-            [binary, "mcp", "add-json", "-s", "user", name, payload],
-            env=env,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout).strip()
-            raise BootstrapError(f"claude mcp add-json failed for {name}: {detail}")
-        print(f"added mcp: {name}")
-        added += 1
-    return {"added": added, "skipped": len(servers) - len(missing)}
-
-
 def report_missing_secrets(home):
     expected = [
-        (home / ".claude/secrets/cliproxy-api-key", "Claude/Codex CLIProxy API key (via chezmoi)"),
+        (home / ".claude/secrets/cliproxy-api-key", "Codex CLIProxy API key (via chezmoi)"),
         (home / ".pi/agent/models.json", "Pi models config (copy pi/agent/models.example.json or render via chezmoi)"),
         (home / ".pi/agent/secrets/cliproxy-management.json", "CLIProxy management credentials (optional, for quota)"),
     ]
@@ -198,7 +144,7 @@ def report_missing_secrets(home):
     return [str(path) for path, _ in missing]
 
 
-def run_bootstrap(repo, home, apply=False, backup_existing=False, claude_bin=None):
+def run_bootstrap(repo, home, apply=False, backup_existing=False):
     repo = Path(repo).resolve()
     home = Path(home).resolve()
     if not home.is_dir():
@@ -242,12 +188,10 @@ def run_bootstrap(repo, home, apply=False, backup_existing=False, claude_bin=Non
         ),
     }
     t3_links = link_t3_antigravity(repo, home, apply=apply, backup_existing=backup_existing)
-    mcp = sync_claude_mcp(repo, home, apply=apply, claude_bin=claude_bin)
     missing_secrets = report_missing_secrets(home)
     return {
         "seeded": seeded,
         "t3_links": t3_links,
-        "mcp": mcp,
         "missing_secrets": missing_secrets,
     }
 
