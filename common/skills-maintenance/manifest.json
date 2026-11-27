@@ -415,7 +415,7 @@
       },
       "task-to-mr": {
         "tracking": "local",
-        "installed_hash": "55035ce26ed26e893a38287633852d7c48aa98735c5f6ce82363f3f856b54e9f"
+        "installed_hash": "2e361c80ddae20c709f0e4a577249bd9e6999bc3781acf48a2de6ae4967fc603"
       },
       "show-me-your-work": {
         "tracking": "overlay",

@@ -80,7 +80,10 @@ ask-first step.
    checks that cover each fix. Run every round through the Codex provider,
    not pi: use review-gpt's T3 Code route with
    `target: {providerInstanceId: "codex", model: "gpt-6.2-sol", options: {reasoningEffort: "high"}}`.
-   Its brief, triage, and fix loop apply unchanged. Without `delegate_task` or
+   Its brief, triage, and fix loop apply unchanged, except the round-1 brief
+   and the final report must both include a `Blast radius` section (findings,
+   executable checks run, and fixes, or confirmed none) so the step cannot be
+   skipped silently. Without `delegate_task` or
    with Codex or the model missing from `orchestrator_capabilities`, ask under
    "Asking"; never fall back to pi. When the GPT quota is exhausted (the
    signal and fallback target are defined in `review-gpt/SKILL.md`), follow its
@@ -153,6 +156,7 @@ Write in the user's language and lead with the outcome:
 - the task stand, after `echat-stand status <name>` shows it `running`: its
   `web=` and `mobile=` URLs from the latest `READY`, the refs it serves, and
   `echat-stand down <name>` to stop it;
+- blast-radius: findings, executable checks run, and fixes (or confirmed none);
 - review: rounds, model, fixed, declined, and disputed findings with both sides;
 - the `Merge requests` artifact update;
 - the decisions you made for the user;
