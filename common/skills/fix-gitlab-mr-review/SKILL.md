@@ -68,13 +68,13 @@ MR and unresolved count, and `/tmp/mr-review.json` contains every item from
 For each unresolved discussion, read all replies, the positioned file context, and the MR diff against the target branch. Classify it as exactly one of:
 
 - **Mechanical and valid:** one behavior-preserving interpretation is evident from code and repository conventions. Examples: remove duplication, name a magic value, fix imports/types/formatting, use an established wrapper without changing semantics.
-- **Business:** it can change validation, permissions, persisted data, API/protocol/schema contracts, error codes or user-visible errors, ordering, transaction behavior, or product behavior.
+- **Business:** it can change validation, permissions, persisted data, API/protocol/schema contracts, error codes or user-visible errors, dependency-failure handling, ordering, transaction behavior, or product behavior.
 - **Ambiguous:** more than one reasonable implementation exists or the reviewer proposes a direction without enough context. Treat this as business.
 - **Outdated or invalid:** current source already addresses it, its premise is false, or the proposed change would regress documented behavior.
 
-Do not classify from the comment text alone. A review suggestion becomes mechanical only after the current code and local conventions establish a single behavior-preserving fix.
+Do not classify from the comment text alone. A review suggestion becomes mechanical only after the current code and local conventions establish a single behavior-preserving fix. For any discussion touching API responses, error payloads or codes, or dependency-failure handling, record the contract before and after the change first; any change to response schema, status/error codes, or behavior when a dependency fails must be classified as **Business** and moved to the batched question before editing rather than treated as mechanical.
 
-**Completion criterion:** every unresolved discussion has a classification, evidence from current code, and either a concrete fix or a concrete question.
+**Completion criterion:** every unresolved discussion has a classification, evidence from current code, an explicit before-and-after contract check for any API-response, error, or dependency-failure discussion (with contract or failure-behavior changes routed to the batched question before editing), and either a concrete fix or a concrete question.
 
 ## 4. Apply safe fixes and stop at product decisions
 

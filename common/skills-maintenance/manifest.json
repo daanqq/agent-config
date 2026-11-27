@@ -269,7 +269,7 @@
       },
       "fix-gitlab-mr-review": {
         "tracking": "local",
-        "installed_hash": "c588d4b3de0e120042b088fdbbc1bc1bb06a1360b78dddae25f6aa055b62c854"
+        "installed_hash": "7cd6fcf73b2a51c6e0e7cf780e32e9af3707f2dc4d03cd9c7c6e8488d248b5fe"
       },
       "gitlab-write": {
         "tracking": "local",
