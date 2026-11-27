@@ -34,6 +34,18 @@
         "--browserUrl",
         "http://127.0.0.1:9223"
       ]
+    },
+    "sph-issues": {
+      "command": "sph-issues-mcp",
+      "args": [],
+      "tools": {
+        "get_issue": {
+          "eager": true
+        },
+        "find_issues": {
+          "eager": true
+        }
+      }
     }
   }
 }

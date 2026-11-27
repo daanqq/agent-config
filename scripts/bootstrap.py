@@ -86,7 +86,7 @@ def link_t3_antigravity(repo, home, apply=False, backup_existing=False):
             (repo / "antigravity/GEMINI.md", instance / "GEMINI.md", False),
             (repo / "antigravity/config.json", instance / "config/config.json", False),
             (repo / "antigravity/t3-hooks.json", instance / "config/hooks.json", False),
-            (repo / "antigravity/t3-mcp_config.json", instance / "config/mcp_config.json", False),
+            (repo / "antigravity/mcp_config.json", instance / "config/mcp_config.json", False),
         ]
         if os.path.lexists(gemini_skills):
             mappings.append((gemini_skills, instance / "config/skills", True))

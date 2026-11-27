@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"Built-in Antigravity subagent tools are disabled in T3 Code due to ACP permission timeouts. Use T3 delegate_task (via acp-mcp-call delegate_task) instead.\"}'",
+            "command": "printf '%s\\n' '{\"decision\":\"deny\",\"reason\":\"Built-in Antigravity subagent tools are disabled in T3 Code due to ACP permission timeouts. Use T3 delegate_task instead.\"}'",
             "timeout": 5
           }
         ]

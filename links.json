@@ -226,14 +226,6 @@
       "target": ".gemini/config/hooks.json"
     },
     {
-      "source": "antigravity/statusline-command.sh",
-      "target": ".gemini/antigravity-cli/statusline-command.sh"
-    },
-    {
-      "source": "antigravity/acp-mcp-call",
-      "target": ".local/bin/acp-mcp-call"
-    },
-    {
       "source": "antigravity/agy-patch",
       "target": ".local/bin/agy-patch"
     },

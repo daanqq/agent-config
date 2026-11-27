@@ -94,7 +94,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual((instance / "GEMINI.md").resolve(), (ROOT / "antigravity/GEMINI.md").resolve())
         self.assertEqual((instance / "config/config.json").resolve(), (ROOT / "antigravity/config.json").resolve())
         self.assertEqual((instance / "config/hooks.json").resolve(), (ROOT / "antigravity/t3-hooks.json").resolve())
-        self.assertEqual((instance / "config/mcp_config.json").resolve(), (ROOT / "antigravity/t3-mcp_config.json").resolve())
+        self.assertEqual((instance / "config/mcp_config.json").resolve(), (ROOT / "antigravity/mcp_config.json").resolve())
         self.assertEqual((instance / "config/skills").resolve(), gemini_skills.resolve())
 
         # Second run is a no-op.
